@@ -1,0 +1,101 @@
+/*
+ * Copyright 2015 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.android.agera;
+
+import static com.google.android.agera.Observables.updateDispatcher;
+import static com.google.android.agera.Preconditions.checkNotNull;
+import static com.google.android.agera.Preconditions.checkState;
+
+import com.google.android.agera.RepositoryCompilerStates.REventSource;
+
+import android.os.Looper;
+import android.support.annotation.NonNull;
+
+/**
+ * Utility methods for obtaining {@link Repository} instances.
+ *
+ * <p>Any {@link Repository} created by this class have to be created from a {@link Looper} thread
+ * or they will throw an {@link IllegalStateException}
+ */
+public final class Repositories {
+
+  /**
+   * Returns a static {@link Repository} of the given {@code object}.
+   */
+  @NonNull
+  public static <T> Repository<T> repository(@NonNull final T object) {
+    return new SimpleRepository<>(object, false);
+  }
+
+  /**
+   * Starts the declaration of a compiled repository. See more at {@link RepositoryCompilerStates}.
+   */
+  @NonNull
+  public static <T> REventSource<T, T> repositoryWithInitialValue(@NonNull final T initialValue) {
+    return RepositoryCompiler.repositoryWithInitialValue(initialValue);
+  }
+
+  /**
+   * Returns a {@link MutableRepository} with the given {@code object} as the initial data.
+   */
+  @NonNull
+  public static <T> MutableRepository<T> mutableRepository(@NonNull final T object) {
+    return new SimpleRepository<>(object, true);
+  }
+
+  private static final class SimpleRepository<T> implements MutableRepository<T> {
+    private final boolean mutable;
+    @NonNull
+    private final UpdateDispatcher updateDispatcher;
+    @NonNull
+    private T reference;
+
+    SimpleRepository(@NonNull final T reference, boolean mutable) {
+      this.mutable = mutable;
+      this.updateDispatcher = updateDispatcher();
+      this.reference = checkNotNull(reference);
+    }
+
+    @NonNull
+    @Override
+    public synchronized T get() {
+      return reference;
+    }
+
+    @Override
+    public synchronized void accept(@NonNull final T reference) {
+      checkState(mutable, "So you cast me?");
+      if (this.reference.equals(checkNotNull(reference))) {
+        // Keep the old reference to have a slight performance edge if GC is generational.
+        return;
+      }
+      this.reference = reference;
+      updateDispatcher.update();
+    }
+
+    @Override
+    public void addUpdatable(@NonNull final Updatable updatable) {
+      updateDispatcher.addUpdatable(updatable);
+    }
+
+    @Override
+    public void removeUpdatable(@NonNull final Updatable updatable) {
+      updateDispatcher.removeUpdatable(updatable);
+    }
+  }
+
+  private Repositories() {}
+}
