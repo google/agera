@@ -32,8 +32,8 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.robolectric.Shadows.shadowOf;
 import static org.robolectric.annotation.Config.NONE;
+import static org.robolectric.internal.ShadowExtractor.extract;
 import static org.robolectric.shadows.ShadowLooper.idleMainLooper;
 
 import com.google.android.agera.test.mocks.MockUpdatable;
@@ -49,6 +49,7 @@ import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.util.Scheduler;
 
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public final class ObservablesTest {
   public void setUp() {
     initMocks(this);
     //noinspection ConstantConditions
-    scheduler = shadowOf(myLooper()).getScheduler();
+    scheduler = ((ShadowLooper) extract(myLooper())).getScheduler();
     updateDispatcherWithUpdatablesChanged = updateDispatcher(mockUpdatablesChanged);
     updateDispatcher = updateDispatcher();
     firstUpdateDispatcher = updateDispatcher();

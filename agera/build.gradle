@@ -17,7 +17,6 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 
 android {
-    useLibrary 'org.apache.http.legacy' //Robolectric Shadow dep
     defaultConfig {
         minSdkVersion 9
         compileSdkVersion 23
