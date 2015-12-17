@@ -35,7 +35,7 @@ public final class SqlDatabaseSupplierTest {
   private static final String DATABASE_NAME = "database";
 
   @Test
-  public void shouldSupplyDatabaseWithFirstConstructor() throws Throwable {
+  public void shouldSupplyDatabase() throws Throwable {
     final SqlDatabaseSupplier sqlDatabaseSupplier = new SqlDatabaseSupplier(
         application.getApplicationContext(), DATABASE_NAME, 1, null) {
       @Override
@@ -49,23 +49,9 @@ public final class SqlDatabaseSupplierTest {
   }
 
   @Test
-  public void shouldSupplyDatabaseWithSecondConstructor() throws Throwable {
-    final SqlDatabaseSupplier sqlDatabaseSupplier = new SqlDatabaseSupplier(
-        application.getApplicationContext(), DATABASE_NAME, 1, null, null) {
-      @Override
-      public void onCreate(final SQLiteDatabase sqLiteDatabase) {}
-
-      @Override
-      public void onUpgrade(final SQLiteDatabase sqLiteDatabase, final int i, final int i1) {}
-    };
-
-    assertThat(sqlDatabaseSupplier.get().get(), instanceOf(SQLiteDatabase.class));
-  }
-
-  @Test
   public void shouldSupplyFailureIfFailingOnCreate() throws Throwable {
     final SqlDatabaseSupplier sqlDatabaseSupplier = new SqlDatabaseSupplier(
-        application.getApplicationContext(), DATABASE_NAME, 1, null, null) {
+        application.getApplicationContext(), DATABASE_NAME, 1, null) {
       @Override
       public void onCreate(final SQLiteDatabase sqLiteDatabase) {
         throw new SQLException();

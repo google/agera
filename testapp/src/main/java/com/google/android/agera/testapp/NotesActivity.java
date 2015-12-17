@@ -112,10 +112,8 @@ public final class NotesActivity extends Activity implements Updatable {
     final Receiver<Bitmap> setBackgroundReceiver = new Receiver<Bitmap>() {
       @Override
       public void accept(@NonNull final Bitmap value) {
-        if (!isDestroyed()) {
-          final ImageView viewById = (ImageView) findViewById(R.id.background);
-          viewById.setImageBitmap(value);
-        }
+        final ImageView viewById = (ImageView) findViewById(R.id.background);
+        viewById.setImageBitmap(value);
       }
     };
     networkExecutor = newSingleThreadExecutor();

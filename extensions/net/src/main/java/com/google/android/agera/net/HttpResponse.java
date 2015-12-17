@@ -162,7 +162,7 @@ public final class HttpResponse {
     public Result<String> apply(@NonNull final String contentType) {
       final String[] parameters = contentType.split(";");
       for (final String parameter : parameters) {
-        final String trimmedLowerCaseParameter = parameter.trim().toLowerCase();
+        final String trimmedLowerCaseParameter = parameter.trim().toLowerCase(US);
         if (trimmedLowerCaseParameter.startsWith(CHARSET)) {
           return present(trimmedLowerCaseParameter.substring(CHARSET.length()));
         }
