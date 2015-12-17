@@ -45,17 +45,19 @@ public final class SqlUpdateRequest {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof SqlUpdateRequest)) {
+      return false;
+    }
 
     final SqlUpdateRequest that = (SqlUpdateRequest) o;
 
-    if (!contentValues.equals(that.contentValues)) return false;
-    // Probably incorrect - comparing Object[] arrays with Arrays.equals
-    if (!Arrays.equals(arguments, that.arguments)) return false;
-    if (!table.equals(that.table)) return false;
-    return where.equals(that.where);
-
+    return contentValues.equals(that.contentValues)
+        && Arrays.equals(arguments, that.arguments)
+        && table.equals(that.table)
+        && where.equals(that.where);
   }
 
   @Override

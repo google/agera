@@ -396,14 +396,21 @@ public final class Result<T> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof Result)) {
+      return false;
+    }
 
-    Result<?> other = (Result<?>) o;
+    final Result<?> other = (Result<?>) o;
 
-    if (value != null ? !value.equals(other.value) : other.value != null) return false;
-    if (failure != null ? !failure.equals(other.failure) : other.failure != null) return false;
-    return true;
+    if (value != null) {
+      return value.equals(other.value);
+    } else {
+      //noinspection ConstantConditions -- value == null implies failure != null
+      return failure.equals(other.failure);
+    }
   }
 
   @Override

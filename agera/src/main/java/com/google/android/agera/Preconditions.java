@@ -18,6 +18,9 @@ package com.google.android.agera;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+/**
+ * Precondition checks.
+ */
 public final class Preconditions {
   public static void checkState(final boolean expression, @NonNull final String errorMessage) {
     if (!expression) {

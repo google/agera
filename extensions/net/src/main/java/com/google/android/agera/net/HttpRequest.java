@@ -53,16 +53,19 @@ public final class HttpRequest {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof HttpRequest)) {
+      return false;
+    }
 
     final HttpRequest that = (HttpRequest) o;
 
-    if (!method.equals(that.method)) return false;
-    if (!url.equals(that.url)) return false;
-    if (!Arrays.equals(body, that.body)) return false;
-    return header.equals(that.header);
-
+    return method.equals(that.method)
+        && url.equals(that.url)
+        && Arrays.equals(body, that.body)
+        && header.equals(that.header);
   }
 
   @Override

@@ -17,18 +17,12 @@ package com.google.android.agera;
 
 import static com.google.android.agera.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-
-import java.util.concurrent.Executor;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)
