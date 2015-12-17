@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.agera.example;
+package com.google.android.agera.testapp;
 
 import static android.os.StrictMode.ThreadPolicy;
 import static android.os.StrictMode.VmPolicy;
 import static android.os.StrictMode.setThreadPolicy;
 import static android.os.StrictMode.setVmPolicy;
-import static com.google.android.agera.example.NotesStore.notesStore;
-import static com.google.android.agera.example.UrlToBitmapReactionFactory.urlToBitmapReactionFactory;
+import static com.google.android.agera.testapp.NotesStore.notesStore;
+import static com.google.android.agera.testapp.UrlToBitmapReactionFactory.urlToBitmapReactionFactory;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
