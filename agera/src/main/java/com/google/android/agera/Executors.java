@@ -18,13 +18,9 @@ package com.google.android.agera;
 import static com.google.android.agera.Common.getHandler;
 import static com.google.android.agera.Preconditions.checkState;
 
-import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
 
-import java.lang.ref.WeakReference;
 import java.util.concurrent.Executor;
-import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Utility methods for obtaining {@link Executor} instances.

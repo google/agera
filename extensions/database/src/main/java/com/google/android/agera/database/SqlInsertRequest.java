@@ -36,14 +36,17 @@ public final class SqlInsertRequest {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof SqlInsertRequest)) {
+      return false;
+    }
 
     final SqlInsertRequest that = (SqlInsertRequest) o;
 
-    if (!contentValues.equals(that.contentValues)) return false;
-    return table.equals(that.table);
-
+    return contentValues.equals(that.contentValues)
+        && table.equals(that.table);
   }
 
   @Override

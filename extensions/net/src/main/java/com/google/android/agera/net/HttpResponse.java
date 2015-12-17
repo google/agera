@@ -120,16 +120,19 @@ public final class HttpResponse {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof HttpResponse)) {
+      return false;
+    }
 
     final HttpResponse that = (HttpResponse) o;
 
-    if (responseCode != that.responseCode) return false;
-    if (!responseMessage.equals(that.responseMessage)) return false;
-    if (!Arrays.equals(body, that.body)) return false;
-    return header.equals(that.header);
-
+    return responseCode == that.responseCode
+        && responseMessage.equals(that.responseMessage)
+        && Arrays.equals(body, that.body)
+        && header.equals(that.header);
   }
 
   @Override

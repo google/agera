@@ -115,10 +115,13 @@ final class RexCompiler implements
   private Predicate casePredicate;
   private boolean goLazyUsed;
   private Merger notifyChecker = objectsUnequal();
-  private @RexConfig int deactivationConfig;
-  private @RexConfig int concurrentUpdateConfig;
+  @RexConfig
+  private int deactivationConfig;
+  @RexConfig
+  private int concurrentUpdateConfig;
 
-  private @Expect int expect;
+  @Expect
+  private int expect;
   @Nullable
   private Reservoir reservoirForReaction;
 
@@ -131,11 +134,11 @@ final class RexCompiler implements
     return this;
   }
 
-  private void checkExpect(final @Expect int accept) {
+  private void checkExpect(@Expect final int accept) {
     checkState(expect == accept, "Unexpected compiler state");
   }
 
-  private void checkExpect(final @Expect int accept1, final @Expect int accept2) {
+  private void checkExpect(@Expect final int accept1, @Expect final int accept2) {
     checkState(expect == accept1 || expect == accept2, "Unexpected compiler state");
   }
 
@@ -390,7 +393,7 @@ final class RexCompiler implements
   @Override
   public RexCompiler orSkip() {
     // available to both rexes
-    terminate(null, null);
+    terminate(null);
     return this;
   }
 
@@ -398,7 +401,7 @@ final class RexCompiler implements
   @Override
   public RexCompiler orEnd() {
     checkCompilingReaction();
-    terminate(null, REACTION_TRIGGER_STATIC_FUNCTION);
+    terminate(REACTION_TRIGGER_STATIC_FUNCTION);
     return this;
   }
 
@@ -406,17 +409,16 @@ final class RexCompiler implements
   @Override
   public RexCompiler orEnd(@NonNull final Function valueFunction) {
     checkCompilingRepository();
-    terminate(null, valueFunction);
+    terminate(valueFunction);
     return this;
   }
 
-  private void terminate(
-      @Nullable final Receiver caseReporter, @Nullable final Function valueFunction) {
+  private void terminate(@Nullable final Function valueFunction) {
     checkExpect(TERMINATE_THEN_FLOW, TERMINATE_THEN_END);
     if (caseExtractor != null) {
-      addCheck(caseExtractor, checkNotNull(casePredicate), caseReporter, valueFunction, directives);
+      addCheck(caseExtractor, checkNotNull(casePredicate), valueFunction, directives);
     } else {
-      addFilterSuccess(caseReporter, valueFunction, directives);
+      addFilterSuccess(valueFunction, directives);
     }
     caseExtractor = null;
     casePredicate = null;
@@ -442,7 +444,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler onDeactivation(final @RexConfig int deactivationConfig) {
+  public RexCompiler onDeactivation(@RexConfig final int deactivationConfig) {
     // available to both rexes
     checkExpect(CONFIG);
     this.deactivationConfig = deactivationConfig;
@@ -451,7 +453,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler onConcurrentUpdate(final @RexConfig int concurrentUpdateConfig) {
+  public RexCompiler onConcurrentUpdate(@RexConfig final int concurrentUpdateConfig) {
     // available to both rexes
     checkExpect(CONFIG);
     this.concurrentUpdateConfig = concurrentUpdateConfig;
@@ -469,7 +471,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler compileIntoRepositoryWithInitialValue(final @NonNull Object value) {
+  public RexCompiler compileIntoRepositoryWithInitialValue(@NonNull final Object value) {
     checkCompilingRepository();
     Repository repository = (Repository) compileRexAndReset();
     // Don't recycle, instead sneak in the first directive and start the second repository

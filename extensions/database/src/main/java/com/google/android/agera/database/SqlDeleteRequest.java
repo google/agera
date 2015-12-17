@@ -41,15 +41,18 @@ public final class SqlDeleteRequest {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof SqlDeleteRequest)) {
+      return false;
+    }
 
     final SqlDeleteRequest that = (SqlDeleteRequest) o;
 
-    if (!Arrays.equals(arguments, that.arguments)) return false;
-    if (!table.equals(that.table)) return false;
-    return where.equals(that.where);
-
+    return Arrays.equals(arguments, that.arguments)
+        && table.equals(that.table)
+        && where.equals(that.where);
   }
 
   @Override

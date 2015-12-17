@@ -37,7 +37,7 @@ final class Rex implements Repository, Reaction {
   @NonNull
   private final UpdateDispatcher updateDispatcher;
 
-  private Rex(@NonNull final RexRunner runner, final @Nullable Receiver reservoir) {
+  private Rex(@NonNull final RexRunner runner, @Nullable final Receiver reservoir) {
     this.reservoir = reservoir;
     this.runner = runner;
     this.updateDispatcher = updateDispatcher(runner);
@@ -51,8 +51,8 @@ final class Rex implements Repository, Reaction {
       final int frequency,
       @NonNull final List<Object> directives,
       @NonNull final Merger<Object, Object, Boolean> notifyChecker,
-      final @RexConfig int concurrentUpdateConfig,
-      final @RexConfig int deactivationConfig) {
+      @RexConfig final int concurrentUpdateConfig,
+      @RexConfig final int deactivationConfig) {
     Observable eventSource = perMillisecondFilterObservable(frequency,
         compositeObservable(eventSources.toArray(new Observable[eventSources.size()])));
     Object[] directiveArray = directives.toArray();
@@ -66,8 +66,8 @@ final class Rex implements Repository, Reaction {
       @NonNull final Object triggerValue,
       @NonNull final Reservoir reservoir,
       @NonNull final List<Object> directives,
-      final @RexConfig int concurrentUpdateConfig,
-      final @RexConfig int deactivationConfig) {
+      @RexConfig final int concurrentUpdateConfig,
+      @RexConfig final int deactivationConfig) {
     Object[] directiveArray = directives.toArray();
     RexRunner runner = new RexRunner(triggerValue, reservoir, directiveArray,
         ALWAYS_NOTIFY, deactivationConfig, concurrentUpdateConfig);

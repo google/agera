@@ -37,15 +37,17 @@ public final class SqlRequest {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof SqlRequest)) {
+      return false;
+    }
 
     final SqlRequest that = (SqlRequest) o;
 
-    // Probably incorrect - comparing Object[] arrays with Arrays.equals
-    if (!Arrays.equals(arguments, that.arguments)) return false;
-    return sql.equals(that.sql);
-
+    return Arrays.equals(arguments, that.arguments)
+        && sql.equals(that.sql);
   }
 
   @Override

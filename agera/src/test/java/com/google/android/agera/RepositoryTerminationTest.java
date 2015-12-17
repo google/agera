@@ -26,7 +26,6 @@ import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;

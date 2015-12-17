@@ -33,7 +33,7 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
     this.functions = new ArrayList<>();
   }
 
-  private void addFunction(final @NonNull Function function) {
+  private void addFunction(@NonNull final Function function) {
     if (function != IDENTITY_FUNCTION) {
       functions.add(function);
     }

@@ -58,8 +58,10 @@ final class RexRunner extends Handler
   private final Object[] directives;
   @NonNull
   private final Merger<Object, Object, Boolean> notifyChecker;
-  private final @RexConfig int deactivationConfig;
-  private final @RexConfig int concurrentUpdateConfig;
+  @RexConfig
+  private final int deactivationConfig;
+  @RexConfig
+  private final int concurrentUpdateConfig;
 
   /**
    * The UpdatableDispatcher to notify of updates. Technically a non-null invariant but left
@@ -73,8 +75,8 @@ final class RexRunner extends Handler
       @NonNull final Observable eventSource,
       @NonNull final Object[] directives,
       @NonNull final Merger<Object, Object, Boolean> notifyChecker,
-      final @RexConfig int deactivationConfig,
-      final @RexConfig int concurrentUpdateConfig) {
+      @RexConfig final int deactivationConfig,
+      @RexConfig final int concurrentUpdateConfig) {
     super(Looper.myLooper());
     this.initialValue = initialValue;
     this.currentValue = initialValue;      // non-final field but with @NonNull requirement
@@ -105,7 +107,8 @@ final class RexRunner extends Handler
   private static final int PAUSED_AT_GO_LAZY = 4;
   private static final int RUNNING_LAZILY = 5;
 
-  private @RunState int runState = IDLE;
+  @RunState
+  private int runState = IDLE;
   private boolean restartNeeded;
   /** Index of the last goTo()/goLazy() directive, for resuming, or -1 for other directives. */
   private int lastDirectiveIndex = -1;
@@ -206,14 +209,14 @@ final class RexRunner extends Handler
    * Checks if the current data processing flow has been requested cancellation. Acknowledges the
    * request if so. This must be called while locked in a synchronized context.
    *
-   * @return Whether the data processing flow can continue.
+   * @return Whether the data processing flow is cancelled.
    */
   private boolean checkCancellationLocked() {
     if (runState == CANCEL_REQUESTED) {
       sendEmptyMessage(MSG_ACKNOWLEDGE_CANCEL);
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   /**
@@ -272,7 +275,7 @@ final class RexRunner extends Handler
         // For goTo and goLazy, because they need to change the states and suspend the flow, they
         // need the lock and are therefore treated specially here.
         synchronized (this) {
-          if (!checkCancellationLocked()) {
+          if (checkCancellationLocked()) {
             break;
           }
           if (directiveType == GO_TO) {
@@ -361,26 +364,24 @@ final class RexRunner extends Handler
 
   static void addCheck(@NonNull final Function caseFunction,
       @NonNull final Predicate casePredicate,
-      @Nullable final Receiver caseReporter, @Nullable final Function terminatingValueFunction,
+      @Nullable final Function terminatingValueFunction,
       @NonNull final List<Object> directives) {
     directives.add(CHECK);
     directives.add(caseFunction);
     directives.add(casePredicate);
-    directives.add(caseReporter);
     directives.add(terminatingValueFunction);
   }
 
   private int runCheck(@NonNull final Object[] directives, final int index) {
     Function caseFunction = (Function) directives[index + 1];
     Predicate casePredicate = (Predicate) directives[index + 2];
-    Receiver caseReporter = (Receiver) directives[index + 3];
-    Function terminatingValueFunction = (Function) directives[index + 4];
+    Function terminatingValueFunction = (Function) directives[index + 3];
 
     Object caseValue = caseFunction.apply(intermediateValue);
     if (casePredicate.apply(caseValue)) {
-      return index + 5;
+      return index + 4;
     } else {
-      runTerminate(caseValue, caseReporter, terminatingValueFunction);
+      runTerminate(caseValue, terminatingValueFunction);
       return -1;
     }
   }
@@ -437,32 +438,26 @@ final class RexRunner extends Handler
     return index + 3;
   }
 
-  static void addFilterSuccess(@Nullable final Receiver errorHandler,
+  static void addFilterSuccess(
       @Nullable final Function terminatingValueFunction, @NonNull final List<Object> directives) {
     directives.add(FILTER_SUCCESS);
-    directives.add(errorHandler);
     directives.add(terminatingValueFunction);
   }
 
   private int runFilterSuccess(@NonNull final Object[] directives, final int index) {
-    Receiver errorHandler = (Receiver) directives[index + 1];
-    Function terminatingValueFunction = (Function) directives[index + 2];
+    Function terminatingValueFunction = (Function) directives[index + 1];
 
     Result tryValue = (Result) intermediateValue;
     if (tryValue.succeeded()) {
       intermediateValue = tryValue.get();
-      return index + 3;
+      return index + 2;
     } else {
-      runTerminate(tryValue.getFailure(), errorHandler, terminatingValueFunction);
+      runTerminate(tryValue.getFailure(), terminatingValueFunction);
       return -1;
     }
   }
 
-  private void runTerminate(Object caseValue, @Nullable Receiver caseReporter,
-      @Nullable Function terminatingValueFunction) {
-    if (caseReporter != null) {
-      caseReporter.accept(caseValue);
-    }
+  private void runTerminate(Object caseValue, @Nullable Function terminatingValueFunction) {
     if (terminatingValueFunction == null) {
       skipAndEndFlow();
     } else {
@@ -531,7 +526,7 @@ final class RexRunner extends Handler
           "Illegal call of Runnable.run()");
       lastDirectiveIndex = -1;
 
-      if (!checkCancellationLocked()) {
+      if (checkCancellationLocked()) {
         return;
       }
       runState = RUNNING;
