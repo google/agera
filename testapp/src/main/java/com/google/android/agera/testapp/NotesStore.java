@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.agera.example;
+package com.google.android.agera.testapp;
 
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Reactions.reactionTo;
@@ -28,11 +28,11 @@ import static com.google.android.agera.database.SqlRequests.sqlDeleteRequest;
 import static com.google.android.agera.database.SqlRequests.sqlInsertRequest;
 import static com.google.android.agera.database.SqlRequests.sqlRequest;
 import static com.google.android.agera.database.SqlRequests.sqlUpdateRequest;
-import static com.google.android.agera.example.Note.note;
-import static com.google.android.agera.example.NotesSqlDatabaseSupplier.NOTES_NOTE_COLUMN;
-import static com.google.android.agera.example.NotesSqlDatabaseSupplier.NOTES_NOTE_ID_COLUMN;
-import static com.google.android.agera.example.NotesSqlDatabaseSupplier.NOTES_TABLE;
-import static com.google.android.agera.example.NotesSqlDatabaseSupplier.databaseSupplier;
+import static com.google.android.agera.testapp.Note.note;
+import static com.google.android.agera.testapp.NotesSqlDatabaseSupplier.NOTES_NOTE_COLUMN;
+import static com.google.android.agera.testapp.NotesSqlDatabaseSupplier.NOTES_NOTE_ID_COLUMN;
+import static com.google.android.agera.testapp.NotesSqlDatabaseSupplier.NOTES_TABLE;
+import static com.google.android.agera.testapp.NotesSqlDatabaseSupplier.databaseSupplier;
 import static java.lang.String.valueOf;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;

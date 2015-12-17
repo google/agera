@@ -15,10 +15,10 @@
   ~ limitations under the License.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.android.agera.example">
+    package="com.google.android.agera.testapp">
   <uses-permission android:name="android.permission.INTERNET" />
   <application>
-    <activity android:name=".NotesActivity"
+    <activity android:name="com.google.android.agera.testapp.NotesActivity"
         android:label="@string/agera"
         android:theme="@android:style/Theme.Material.Light">
       <intent-filter>

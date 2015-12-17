@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.agera.example;
+package com.google.android.agera.testapp;
 
 import com.google.android.agera.database.SqlDatabaseSupplier;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.agera.example;
+package com.google.android.agera.testapp;
 
 import static android.graphics.BitmapFactory.decodeByteArray;
 import static com.google.android.agera.Executors.currentLooperExecutor;
@@ -23,7 +23,6 @@ import static com.google.android.agera.RexConfig.SEND_INTERRUPT;
 import static com.google.android.agera.net.HttpFunctions.httpFunction;
 import static com.google.android.agera.net.HttpRequests.httpGetRequest;
 
-import com.google.android.agera.Executors;
 import com.google.android.agera.Function;
 import com.google.android.agera.Reaction;
 import com.google.android.agera.Receiver;
