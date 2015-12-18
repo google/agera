@@ -146,8 +146,8 @@ public final class NotesActivity extends Activity implements Updatable {
     super.onDestroy();
     // Close the notes store and the associated database
     notesStore.close();
-    networkExecutor.shutdownNow();
-    calculationExecutor.shutdownNow();
+    networkExecutor.shutdown();
+    calculationExecutor.shutdown();
   }
 
   @Override

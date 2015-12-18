@@ -196,7 +196,7 @@ final class NotesStore implements Updatable {
   }
 
   public void close() {
-    executor.shutdownNow();
+    executor.shutdown();
     databaseSupplier.close();
     eventSources.removeUpdatable(this);
   }
