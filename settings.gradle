@@ -14,8 +14,25 @@
  * limitations under the License.
  */
 include ':agera'
-include ':extensions:content', ':extensions:rvadapter', ':extensions:database', 'extensions:net'
+include ':extensions:content'
+include ':extensions:rvadapter'
+include ':extensions:database'
+include ':extensions:net'
 include ':testapp'
+
+gradle.ext.versionCode = 10000
+gradle.ext.versionName = '1.0.0-SNAPSHOT'
+
+gradle.ext.group = 'com.google.android.agera'
+gradle.ext.url = 'https://github.com/google/agera'
+gradle.ext.gitUrl = 'https://github.com/google/agera.git'
+gradle.ext.licenseName = 'The Apache Software License, Version 2.0'
+gradle.ext.licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+
+gradle.ext.minSdkVersion = 9
+gradle.ext.compileSdkVersion = 23
+gradle.ext.buildToolsVersion = '23.0.2'
+gradle.ext.supportLibraryVersion = '23.1.1'
 
 gradle.allprojects {
     buildscript {
@@ -48,11 +65,11 @@ gradle.allprojects {
         if (project.hasProperty("android")) {
             android {
                 defaultConfig {
-                    minSdkVersion 9
-                    compileSdkVersion 23
-                    buildToolsVersion '23.0.2'
-                    versionCode 10000
-                    versionName '1.0.0'
+                    minSdkVersion gradle.minSdkVersion
+                    compileSdkVersion gradle.compileSdkVersion
+                    buildToolsVersion gradle.buildToolsVersion
+                    versionCode gradle.versionCode
+                    versionName gradle.versionName
                 }
                 compileOptions {
                     sourceCompatibility JavaVersion.VERSION_1_7
@@ -60,10 +77,8 @@ gradle.allprojects {
                 }
             }
             if (android.hasProperty('libraryVariants')) {
-
-                version = android.defaultConfig.versionName
-                group = "com.google.android.agera"
-
+                version = gradle.versionName
+                group = gradle.group
                 android {
                     lintOptions {
                         abortOnError true
@@ -79,13 +94,13 @@ gradle.allprojects {
                     }
                 }
                 dependencies {
-                    compile 'com.android.support:support-annotations:23.1.1'
+                    compile 'com.android.support:support-annotations:' +
+                            gradle.supportLibraryVersion
                     testCompile "org.hamcrest:hamcrest-library:1.3"
                     testCompile 'junit:junit:4.12'
                     testCompile 'org.robolectric:robolectric:3.0'
                     testCompile "org.mockito:mockito-core:1.9.5"
                 }
-
                 task sourcesJar(type: Jar) {
                     from android.sourceSets.main.java.srcDirs
                     classifier = 'sources'
@@ -118,7 +133,6 @@ gradle.allprojects {
                         html.destination = "${buildDir}/reports/jacoco"
                     }
                 }
-
                 android.libraryVariants.all { variant ->
                     task("${variant.name}Javadoc", type: Javadoc) {
                         description "Generates Javadoc for $variant.name."
@@ -129,14 +143,12 @@ gradle.allprojects {
                         exclude '**/R.java'
                     }
                 }
-
                 task javadocJar(type: Jar, dependsOn: 'releaseJavadoc') {
                     classifier = 'javadoc'
                     from {
                         releaseJavadoc.destinationDir
                     }
                 }
-
                 artifacts {
                     archives javadocJar
                     archives sourcesJar

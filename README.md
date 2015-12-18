@@ -12,7 +12,7 @@ Usage
 To add a dependency using Gradle:
 
 ```
-  compile 'com.google.android.agera:agera:1.0.0'
+  compile 'com.google.android.agera:agera:1.0.0-SNAPSHOT'
 ```
 
 Learn about Agera
@@ -33,10 +33,10 @@ A few sample extension libraries for Agera are also provided. These are:
 To add dependencies to these using Gradle:
 
 ```
-  compile 'com.google.android.agera:content:1.0.0'
-  compile 'com.google.android.agera:database:1.0.0'
-  compile 'com.google.android.agera:net:1.0.0'
-  compile 'com.google.android.agera:rvadapter:1.0.0'
+  compile 'com.google.android.agera:content:1.0.0-SNAPSHOT'
+  compile 'com.google.android.agera:database:1.0.0-SNAPSHOT'
+  compile 'com.google.android.agera:net:1.0.0-SNAPSHOT'
+  compile 'com.google.android.agera:rvadapter:1.0.0-SNAPSHOT'
 ```
 
 Links
