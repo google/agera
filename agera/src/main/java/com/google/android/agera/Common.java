@@ -168,6 +168,7 @@ final class Common {
     private void remove(final Updatable updatable) {
       for (int index = 0; index < updatablesAndHandlers.length; index += 2) {
         if (updatablesAndHandlers[index] == updatable) {
+          ((UpdateDispatcherHandler) updatablesAndHandlers[index + 1]).clearUpdatable(updatable);
           updatablesAndHandlers[index] = null;
           updatablesAndHandlers[index + 1] = null;
           size--;
@@ -225,6 +226,10 @@ final class Common {
 
     void callUpdatable(Updatable updatable) {
       obtainMessage(MSG_CALL_UPDATABLE, updatable).sendToTarget();
+    }
+
+    void clearUpdatable(Updatable updatable) {
+      removeMessages(MSG_CALL_UPDATABLE, updatable);
     }
 
     @Override
