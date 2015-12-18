@@ -15,19 +15,30 @@
  */
 package com.google.android.agera.testapp;
 
+import static android.graphics.BitmapFactory.decodeByteArray;
 import static android.os.StrictMode.ThreadPolicy;
 import static android.os.StrictMode.VmPolicy;
 import static android.os.StrictMode.setThreadPolicy;
 import static android.os.StrictMode.setVmPolicy;
-import static com.google.android.agera.testapp.NotesStore.notesStore;
-import static com.google.android.agera.testapp.UrlToBitmapReactionFactory.urlToBitmapReactionFactory;
+import static com.google.android.agera.Repositories.repositoryWithInitialValue;
+import static com.google.android.agera.Result.absentIfNull;
+import static com.google.android.agera.RexConfig.SEND_INTERRUPT;
+import static com.google.android.agera.Suppliers.staticSupplier;
+import static com.google.android.agera.net.HttpFunctions.httpFunction;
+import static com.google.android.agera.net.HttpRequests.httpGetRequest;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
+import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
-import com.google.android.agera.Reaction;
+import com.google.android.agera.Function;
+import com.google.android.agera.Merger;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
+import com.google.android.agera.Result;
+import com.google.android.agera.Supplier;
 import com.google.android.agera.Updatable;
+import com.google.android.agera.net.HttpRequest;
+import com.google.android.agera.net.HttpResponse;
 import com.google.android.agera.rvadapter.RepositoryAdapter;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
 
@@ -52,13 +63,16 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 public final class NotesActivity extends Activity implements Updatable {
+  public static final UrlToHttpRequest URL_TO_HTTP_REQUEST = new UrlToHttpRequest();
+  public static final HttpResponseToBitmap HTTP_RESPONSE_TO_BITMAP = new HttpResponseToBitmap();
   private static final String BACKGROUND_URL =
       "http://www.gravatar.com/avatar/4df6f4fe5976df17deeea19443d4429d";
   private RepositoryAdapter adapter;
   private NotesStore notesStore;
-  private Reaction<String> backgroundReaction;
+  private Repository<Result<Bitmap>> backgroundRepository;
   private ExecutorService networkExecutor;
   private ExecutorService calculationExecutor;
+  private Receiver<Bitmap> setBackgroundReceiver;
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
@@ -109,17 +123,42 @@ public final class NotesActivity extends Activity implements Updatable {
     recyclerView.setAdapter(adapter);
     recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-    final Receiver<Bitmap> setBackgroundReceiver = new Receiver<Bitmap>() {
-      @Override
-      public void accept(@NonNull final Bitmap value) {
-        final ImageView viewById = (ImageView) findViewById(R.id.background);
-        viewById.setImageBitmap(value);
-      }
-    };
     networkExecutor = newSingleThreadExecutor();
     calculationExecutor = newSingleThreadExecutor();
-    backgroundReaction = urlToBitmapReactionFactory(networkExecutor, calculationExecutor)
-            .createUrlToBitmapReaction(setBackgroundReceiver);
+
+    setBackgroundReceiver = new ImageViewBitmapReceiver((ImageView) findViewById(R.id.background));
+
+    final Supplier<Integer> sizeSupplier = new Supplier<Integer>() {
+      @NonNull
+      @Override
+      public Integer get() {
+        final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        return Math.max(displayMetrics.heightPixels, displayMetrics.widthPixels);
+      }
+    };
+
+    final Merger<Integer, String, String> sizedUrlMerger = new Merger<Integer, String, String>() {
+      @NonNull
+      @Override
+      public String merge(@NonNull final Integer integer, @NonNull final String s) {
+        return s + "?s=" + integer;
+      }
+    };
+
+    final Supplier<String> backgroundUrlSupplier = staticSupplier(BACKGROUND_URL);
+
+    backgroundRepository = repositoryWithInitialValue(Result.<Bitmap>absent())
+        .observe()
+        .onUpdatesPerLoop()
+        .getFrom(sizeSupplier)
+        .goTo(networkExecutor)
+        .mergeIn(backgroundUrlSupplier, sizedUrlMerger)
+        .transform(URL_TO_HTTP_REQUEST)
+        .attemptTransform(httpFunction()).orSkip()
+        .goTo(calculationExecutor)
+        .thenTransform(HTTP_RESPONSE_TO_BITMAP)
+        .onDeactivation(SEND_INTERRUPT)
+        .compile();
   }
 
   @Override
@@ -127,10 +166,7 @@ public final class NotesActivity extends Activity implements Updatable {
     super.onResume();
     // The adapter is dormant before start observing is called
     adapter.startObserving();
-    backgroundReaction.addUpdatable(this);
-    final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-    final int size = Math.max(displayMetrics.heightPixels, displayMetrics.widthPixels);
-    backgroundReaction.accept(BACKGROUND_URL + "?s=" + size);
+    backgroundRepository.addUpdatable(this);
   }
 
   @Override
@@ -138,7 +174,7 @@ public final class NotesActivity extends Activity implements Updatable {
     super.onPause();
     // Start observing needs to be paired with stop observing
     adapter.stopObserving();
-    backgroundReaction.removeUpdatable(this);
+    backgroundRepository.removeUpdatable(this);
   }
 
   @Override
@@ -151,7 +187,41 @@ public final class NotesActivity extends Activity implements Updatable {
   }
 
   @Override
-  public void update() {}
+  public void update() {
+    backgroundRepository.get().ifSucceededSendTo(setBackgroundReceiver);
+  }
+
+  private static final class UrlToHttpRequest implements Function<String, HttpRequest> {
+    @NonNull
+    @Override
+    public HttpRequest apply(@NonNull final String input) {
+      return httpGetRequest(input).compile();
+    }
+  }
+
+  private static final class HttpResponseToBitmap
+      implements Function<HttpResponse, Result<Bitmap>> {
+    @NonNull
+    @Override
+    public Result<Bitmap> apply(@NonNull final HttpResponse input) {
+      final byte[] body = input.getBody();
+      return absentIfNull(decodeByteArray(body, 0, body.length));
+    }
+  }
+
+  private static class ImageViewBitmapReceiver implements Receiver<Bitmap> {
+    @NonNull
+    private final ImageView imageView;
+
+    public ImageViewBitmapReceiver(@NonNull final ImageView imageView) {
+      this.imageView = imageView;
+    }
+
+    @Override
+    public void accept(@NonNull final Bitmap value) {
+      imageView.setImageBitmap(value);
+    }
+  }
 
   // Presents each note in the repository as a text view in the recycler view
   private final class NotePresenter extends RepositoryPresenter<List<Note>> {
