@@ -14,14 +14,23 @@
  * limitations under the License.
  */
 apply plugin: 'com.android.application'
+apply plugin: 'com.getkeepsafe.dexcount'
 
 android {
     defaultConfig {
         applicationId "com.google.android.agera.testapp"
     }
 }
+dexcount {
+    includeClasses = false
+    includeFieldCount = true
+    includeTotalMethodCount = true
+    printAsTree = true
+    orderByMethodCount = false
+}
 dependencies {
     compile project(':agera')
+    compile project(':extensions:content')
     compile project(':extensions:database')
     compile project(':extensions:net')
     compile project(':extensions:rvadapter')
