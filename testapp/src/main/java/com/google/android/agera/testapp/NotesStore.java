@@ -16,6 +16,7 @@
 package com.google.android.agera.testapp;
 
 import static com.google.android.agera.Functions.staticFunction;
+import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Reactions.reactionTo;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.RexConfig.SEND_INTERRUPT;
@@ -38,9 +39,11 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 import com.google.android.agera.Function;
+import com.google.android.agera.Observable;
 import com.google.android.agera.Reaction;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
+import com.google.android.agera.Updatable;
 import com.google.android.agera.database.SqlDeleteRequest;
 import com.google.android.agera.database.SqlInsertRequest;
 import com.google.android.agera.database.SqlUpdateRequest;
@@ -58,7 +61,7 @@ import java.util.concurrent.ExecutorService;
  * Getting a list of all notes is implemented with a {@link Repository} that can be observed from
  * the Activity.
  */
-final class NotesStore {
+final class NotesStore implements Updatable {
   private static final String MODIFY_NOTE_WHERE = NOTES_NOTE_ID_COLUMN + "=?";
   private static final String GET_NOTES_FROM_TABLE =
       "SELECT " + NOTES_NOTE_ID_COLUMN + ", " + NOTES_NOTE_COLUMN + " FROM " + NOTES_TABLE
@@ -78,19 +81,24 @@ final class NotesStore {
   private final Receiver<SqlDeleteRequest> deleteNoteReceiver;
   @NonNull
   private final Repository<List<Note>> notesRepository;
+  @NonNull
+  private final Observable eventSources;
 
   private NotesStore(@NonNull final NotesSqlDatabaseSupplier databaseSupplier,
       @NonNull final ExecutorService executor,
       @NonNull final Repository<List<Note>> notesRepository,
-      @NonNull final Receiver<SqlInsertRequest> insertNoteFromTextReceiver,
-      @NonNull final Receiver<SqlUpdateRequest> updateNoteReceiver,
-      @NonNull final Receiver<SqlDeleteRequest> deleteNoteReceiver) {
+      @NonNull final Reaction<SqlInsertRequest> insertRequestReaction,
+      @NonNull final Reaction<SqlUpdateRequest> updateRequestReaction,
+      @NonNull final Reaction<SqlDeleteRequest> deleteRequestReaction) {
     this.databaseSupplier = databaseSupplier;
     this.executor = executor;
-    this.insertNoteFromTextReceiver = insertNoteFromTextReceiver;
-    this.deleteNoteReceiver = deleteNoteReceiver;
+    this.insertNoteFromTextReceiver = insertRequestReaction;
+    this.deleteNoteReceiver = deleteRequestReaction;
     this.notesRepository = notesRepository;
-    this.updateNoteReceiver = updateNoteReceiver;
+    this.updateNoteReceiver = updateRequestReaction;
+    this.eventSources =
+        compositeObservable(insertRequestReaction, deleteRequestReaction, updateRequestReaction);
+    this.eventSources.addUpdatable(this);
   }
 
   @NonNull
@@ -190,5 +198,9 @@ final class NotesStore {
   public void close() {
     executor.shutdownNow();
     databaseSupplier.close();
+    eventSources.removeUpdatable(this);
   }
+
+  @Override
+  public void update() {}
 }
