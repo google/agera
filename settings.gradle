@@ -72,18 +72,51 @@ gradle.allprojects {
                         checkAllWarnings true
                         warningsAsErrors true
                     }
-                    dependencies {
-                        compile 'com.android.support:support-annotations:23.1.1'
-                        testCompile "org.hamcrest:hamcrest-library:1.3"
-                        testCompile 'junit:junit:4.12'
-                        testCompile 'org.robolectric:robolectric:3.0'
-                        testCompile "org.mockito:mockito-core:1.9.5"
+                    buildTypes {
+                        debug {
+                            testCoverageEnabled true
+                        }
                     }
+                }
+                dependencies {
+                    compile 'com.android.support:support-annotations:23.1.1'
+                    testCompile "org.hamcrest:hamcrest-library:1.3"
+                    testCompile 'junit:junit:4.12'
+                    testCompile 'org.robolectric:robolectric:3.0'
+                    testCompile "org.mockito:mockito-core:1.9.5"
                 }
 
                 task sourcesJar(type: Jar) {
                     from android.sourceSets.main.java.srcDirs
                     classifier = 'sources'
+                }
+                task jacocoTestReport(type:JacocoReport, dependsOn: "testDebugUnitTest") {
+                    group = "Reporting"
+                    description = "Generate Jacoco coverage reports"
+                    def fileFilter = ['**/R.class', '**/R$*.class',
+                                      '**/BuildConfig.*', '**/Manifest*.*',
+                                      'android/**/*.*']
+                    def debugTree = fileTree(dir:
+                            "${project.buildDir}/intermediates/classes/debug",
+                            excludes: fileFilter)
+                    def mainSrc = "${project.projectDir}/src/main/java"
+
+                    sourceDirectories = files([mainSrc])
+                    classDirectories = files([debugTree])
+                    additionalSourceDirs = files([
+                            "${buildDir}/generated/source/buildConfig/debug",
+                            "${buildDir}/generated/source/r/debug"
+                    ])
+                    executionData = fileTree(dir: project.projectDir, includes:
+                            ['**/*.exec', '**/*.ec'])
+
+                    reports {
+                        xml.enabled = true
+                        xml.destination = "${buildDir}/jacocoTestReport.xml"
+                        csv.enabled = false
+                        html.enabled = true
+                        html.destination = "${buildDir}/reports/jacoco"
+                    }
                 }
 
                 android.libraryVariants.all { variant ->

@@ -15,6 +15,7 @@
  */
 apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'jacoco'
 
 dependencies {
     compile project(':agera')
