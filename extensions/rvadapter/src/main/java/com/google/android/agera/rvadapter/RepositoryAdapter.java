@@ -127,12 +127,14 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
   @NonNull
   private final Repository<Object>[] repositories;
   @NonNull
+  private final Object[] data;
+  @NonNull
   private final RepositoryPresenter<Object>[] presenters;
   @NonNull
   private final Observable observable;
   private final int[] endPositions;
 
-  private boolean endPositionsInvalid;
+  private boolean dataInvalid;
   private int resolvedRepositoryIndex;
   private int resolvedItemIndex;
 
@@ -150,15 +152,15 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     RepositoryPresenter<Object>[] presenters = builder.presenters.toArray(
         (RepositoryPresenter<Object>[]) new RepositoryPresenter[count]);
 
-    Observable[] observables =
+    final Observable[] observables =
         builder.observables.toArray(new Observable[builder.observables.size()]);
-
+    this.data = new Object[count];
     this.repositoryCount = count;
     this.repositories = repositories;
     this.presenters = presenters;
     this.observable = compositeObservable(observables);
     this.endPositions = new int[count];
-    this.endPositionsInvalid = true;
+    this.dataInvalid = true;
   }
 
   /**
@@ -183,19 +185,20 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
    */
   @Override
   public final void update() {
-    endPositionsInvalid = true;
+    dataInvalid = true;
     notifyDataSetChanged();
   }
 
   @Override
   public final int getItemCount() {
-    if (endPositionsInvalid) {
+    if (dataInvalid) {
       int lastEndPosition = 0;
       for (int i = 0; i < repositoryCount; i++) {
-        lastEndPosition += presenters[i].getItemCount(repositories[i]);
+        data[i] = repositories[i].get();
+        lastEndPosition += presenters[i].getItemCount(data[i]);
         endPositions[i] = lastEndPosition;
       }
-      endPositionsInvalid = false;
+      dataInvalid = false;
     }
     return endPositions[repositoryCount - 1];
   }
@@ -206,7 +209,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
     int resolvedItemIndex = this.resolvedItemIndex;
     return presenters[resolvedRepositoryIndex].getLayoutResId(
-        repositories[resolvedRepositoryIndex], resolvedItemIndex);
+        data[resolvedRepositoryIndex], resolvedItemIndex);
   }
 
   @Override
@@ -215,7 +218,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
     int resolvedItemIndex = this.resolvedItemIndex;
     return presenters[resolvedRepositoryIndex].getItemId(
-        repositories[resolvedRepositoryIndex], resolvedItemIndex);
+        data[resolvedRepositoryIndex], resolvedItemIndex);
   }
 
   /**
@@ -236,7 +239,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
     int resolvedItemIndex = this.resolvedItemIndex;
     presenters[resolvedRepositoryIndex].bind(
-        repositories[resolvedRepositoryIndex], resolvedItemIndex, holder);
+        data[resolvedRepositoryIndex], resolvedItemIndex, holder);
   }
 
   /**

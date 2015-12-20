@@ -26,14 +26,14 @@ import android.support.v7.widget.RecyclerView;
  */
 public abstract class RepositoryPresenter<T> {
   /**
-   * Returns the number of adapter items needed to present the {@code repository}'s data. This
-   * method may be called very frequently; implementation should be very lightweight.
+   * Returns the number of adapter items needed to present the data. This method may be called very
+   * frequently; implementation should be very lightweight.
    */
-  public abstract int getItemCount(@NonNull Repository<T> repository);
+  public abstract int getItemCount(@NonNull T data);
 
   /**
-   * Returns the stable ID for the {@code index}-th item to present the {@code repository}'s data.
-   * Called only if stable IDs are enabled with {@link RepositoryAdapter#setHasStableIds
+   * Returns the stable ID for the {@code index}-th item to present the data. Called only if stable
+   * IDs are enabled with {@link RepositoryAdapter#setHasStableIds
    * RepositoryAdapter.setHasStableIds(true)}, and therefore this method is optional with a default
    * implementation of returning {@link RecyclerView#NO_ID}. If stable IDs are enabled, this ID and
    * the item's {@linkplain #getLayoutResId layout resource ID} should together uniquely identify
@@ -41,23 +41,23 @@ public abstract class RepositoryPresenter<T> {
    *
    * @param index The item index between 0 (incl.) and {@link #getItemCount} (excl.).
    */
-  public long getItemId(@NonNull final Repository<T> repository, final int index) {
+  public long getItemId(@NonNull final T data, final int index) {
     return RecyclerView.NO_ID;
   }
 
   /**
    * Returns the layout resource ID to inflate the view for the {@code index}-th item to present the
-   * {@code repository}'s data.
+   * data.
    *
    * @param index The item index between 0 (incl.) and {@link #getItemCount} (excl.).
    */
-  public abstract @LayoutRes int getLayoutResId(@NonNull Repository<T> repository, int index);
+  public abstract @LayoutRes int getLayoutResId(@NonNull T data, int index);
 
   /**
-   * Binds the {@code index}-th item to present the {@code repository}'s data into the item view
-   * held in the given {@code holder}. The view is inflated from the layout resource specified by
-   * {@link #getLayoutResId}, but may have been previously bound to a different index, a different
-   * repository, and/or with a different presenter. Therefore, implementation should take care of
+   * Binds the {@code index}-th item to present the data into the item view held in the given
+   * {@code holder}. The view is inflated from the layout resource specified by
+   * {@link #getLayoutResId}, but may have been previously bound to a different index, different
+   * data, and/or with a different presenter. Therefore, implementation should take care of
    * resetting the view state.
    *
    * @param index The item index between 0 (incl.) and {@link #getItemCount} (excl.).
@@ -65,6 +65,5 @@ public abstract class RepositoryPresenter<T> {
    *     is used, which returns a custom view holder for this item's layout resource ID, then this
    *     object will be of that custom type.
    */
-  public abstract void bind(@NonNull Repository<T> repository, int index,
-      @NonNull RecyclerView.ViewHolder holder);
+  public abstract void bind(@NonNull T data, int index, @NonNull RecyclerView.ViewHolder holder);
 }
