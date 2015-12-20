@@ -386,21 +386,24 @@ final class RexRunner extends Handler
     }
   }
 
-  static void addGoTo(@NonNull final Executor executor,
+  static void addGoTo(@NonNull final Executor executor, @NonNull final Merger runnableDecorator,
       @NonNull final List<Object> directives) {
     directives.add(GO_TO);
     directives.add(executor);
+    directives.add(runnableDecorator);
   }
 
   private int runGoTo(@NonNull final Object[] directives, final int index) {
     Executor executor = (Executor) directives[index + 1];
-    executor.execute(this);
+    Merger<Object, Runnable, Runnable> runnableDecorator =
+        (Merger<Object, Runnable, Runnable>) directives[index + 2];
+    executor.execute(runnableDecorator.merge(intermediateValue, this));
     return -1;
   }
 
   private static int continueFromGoTo(@NonNull final Object[] directives, final int index) {
     checkState(directives[index].equals(GO_TO), "Inconsistent directive state for goTo");
-    return index + 2;
+    return index + 3;
   }
 
   static void addGoLazy(@NonNull final List<Object> directives) {

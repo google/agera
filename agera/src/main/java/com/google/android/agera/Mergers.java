@@ -25,6 +25,7 @@ import android.support.annotation.NonNull;
 public final class Mergers {
 
   private static final ObjectsUnequalMerger OBJECTS_UNEQUAL_MERGER = new ObjectsUnequalMerger();
+  private static final ReturnSecondMerger RETURN_SECOND_MERGER = new ReturnSecondMerger();
 
   /**
    * Returns a {@link Merger} that outputs the given {@code value} regardless of the input values.
@@ -44,11 +45,29 @@ public final class Mergers {
     return OBJECTS_UNEQUAL_MERGER;
   }
 
+  /**
+   * Returns a {@link Merger} that always returns the second argument.
+   */
+  @SuppressWarnings("unchecked")
+  @NonNull
+  public static <TFirst, TSecond> Merger<TFirst, TSecond, TSecond> returnSecond() {
+    return RETURN_SECOND_MERGER;
+  }
+
   private static final class ObjectsUnequalMerger implements Merger<Object, Object, Boolean> {
     @NonNull
     @Override
     public Boolean merge(@NonNull final Object oldValue, @NonNull final Object newValue) {
       return !oldValue.equals(newValue);
+    }
+  }
+
+  private static final class ReturnSecondMerger<TFirst, TSecond>
+      implements Merger<TFirst, TSecond, TSecond> {
+    @NonNull
+    @Override
+    public TSecond merge(@NonNull final TFirst first, @NonNull final TSecond second) {
+      return second;
     }
   }
 
