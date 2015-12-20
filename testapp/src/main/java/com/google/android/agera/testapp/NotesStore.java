@@ -16,7 +16,6 @@
 package com.google.android.agera.testapp;
 
 import static com.google.android.agera.Functions.staticFunction;
-import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Reactions.reactionTo;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.RexConfig.SEND_INTERRUPT;
@@ -39,7 +38,6 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 import com.google.android.agera.Function;
-import com.google.android.agera.Observable;
 import com.google.android.agera.Reaction;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
@@ -61,7 +59,7 @@ import java.util.concurrent.ExecutorService;
  * Getting a list of all notes is implemented with a {@link Repository} that can be observed from
  * the Activity.
  */
-final class NotesStore implements Updatable {
+final class NotesStore {
   private static final String MODIFY_NOTE_WHERE = NOTES_NOTE_ID_COLUMN + "=?";
   private static final String GET_NOTES_FROM_TABLE =
       "SELECT " + NOTES_NOTE_ID_COLUMN + ", " + NOTES_NOTE_COLUMN + " FROM " + NOTES_TABLE
@@ -69,10 +67,9 @@ final class NotesStore implements Updatable {
   private static final int ID_COLUMN_INDEX = 0;
   private static final int NOTE_COLUMN_INDEX = 1;
   private static final List<Note> INITIAL_VALUE = emptyList();
-  @NonNull
-  private final NotesSqlDatabaseSupplier databaseSupplier;
-  @NonNull
-  private final ExecutorService executor;
+
+  private static NotesStore notesStore;
+
   @NonNull
   private final Receiver<SqlInsertRequest> insertNoteFromTextReceiver;
   @NonNull
@@ -81,34 +78,28 @@ final class NotesStore implements Updatable {
   private final Receiver<SqlDeleteRequest> deleteNoteReceiver;
   @NonNull
   private final Repository<List<Note>> notesRepository;
-  @NonNull
-  private final Observable eventSources;
 
-  private NotesStore(@NonNull final NotesSqlDatabaseSupplier databaseSupplier,
-      @NonNull final ExecutorService executor,
-      @NonNull final Repository<List<Note>> notesRepository,
-      @NonNull final Reaction<SqlInsertRequest> insertRequestReaction,
-      @NonNull final Reaction<SqlUpdateRequest> updateRequestReaction,
-      @NonNull final Reaction<SqlDeleteRequest> deleteRequestReaction) {
-    this.databaseSupplier = databaseSupplier;
-    this.executor = executor;
+  private NotesStore(@NonNull final Repository<List<Note>> notesRepository,
+      @NonNull final Receiver<SqlInsertRequest> insertRequestReaction,
+      @NonNull final Receiver<SqlUpdateRequest> updateRequestReaction,
+      @NonNull final Receiver<SqlDeleteRequest> deleteRequestReaction) {
     this.insertNoteFromTextReceiver = insertRequestReaction;
     this.deleteNoteReceiver = deleteRequestReaction;
     this.notesRepository = notesRepository;
     this.updateNoteReceiver = updateRequestReaction;
-    this.eventSources =
-        compositeObservable(insertRequestReaction, deleteRequestReaction, updateRequestReaction);
-    this.eventSources.addUpdatable(this);
   }
 
   @NonNull
-  public static NotesStore notesStore(@NonNull final Context context) {
+  public synchronized static NotesStore notesStore(@NonNull final Context applicationContext) {
+    if (notesStore != null) {
+      return notesStore;
+    }
     // Create a thread executor to execute all database operations on
     final ExecutorService executor = newSingleThreadExecutor();
 
     // Create a database supplier that initializes the database. This is also used to supply the
     // database in all database operations
-    final NotesSqlDatabaseSupplier databaseSupplier = databaseSupplier(context);
+    final NotesSqlDatabaseSupplier databaseSupplier = databaseSupplier(applicationContext);
 
     // Create a receiver that inserts a note on the database thread executor
     final Reaction<SqlInsertRequest> insertReaction = reactionTo(SqlInsertRequest.class)
@@ -153,13 +144,23 @@ final class NotesStore implements Updatable {
         .onDeactivation(SEND_INTERRUPT)
         .compile();
 
+    final Updatable dummyUpdatable = new Updatable() {
+      @Override
+      public void update() {}
+    };
+
+    // Keep the write reactions in this lazy singleton alive for the full app life cycle
+    insertReaction.addUpdatable(dummyUpdatable);
+    updateReaction.addUpdatable(dummyUpdatable);
+    deleteReaction.addUpdatable(dummyUpdatable);
+
     // Create the wired up notes store
-    return new NotesStore(databaseSupplier, executor,
-        notesRepository, insertReaction, updateReaction, deleteReaction);
+    notesStore = new NotesStore(notesRepository, insertReaction, updateReaction, deleteReaction);
+    return notesStore;
   }
 
   @NonNull
-  public Repository<List<Note>> notesRepository() {
+  public Repository<List<Note>> getNotesRepository() {
     return notesRepository;
   }
 
@@ -194,13 +195,4 @@ final class NotesStore implements Updatable {
         .table(NOTES_TABLE)
         .compile());
   }
-
-  public void close() {
-    executor.shutdown();
-    databaseSupplier.close();
-    eventSources.removeUpdatable(this);
-  }
-
-  @Override
-  public void update() {}
 }

@@ -84,7 +84,7 @@ public final class NotesActivity extends Activity implements Updatable {
     setVmPolicy(new VmPolicy.Builder().detectAll().penaltyLog().penaltyDeath().build());
 
     // Create the notes store, containing all async IO
-    notesStore = notesStore(this);
+    notesStore = notesStore(getApplicationContext());
 
     // Find the clear button and wire the click listener to call the clear notes updatable
     findViewById(R.id.clear).setOnClickListener(new View.OnClickListener() {
@@ -115,7 +115,7 @@ public final class NotesActivity extends Activity implements Updatable {
 
     // Create a repository adapter, wiring up the notes repository from the store with a presenter
     adapter = repositoryAdapter()
-        .add(notesStore.notesRepository(), new NotePresenter())
+        .add(notesStore.getNotesRepository(), new NotePresenter())
         .build();
 
     // Setup the recycler view using the repository adapter
@@ -181,7 +181,6 @@ public final class NotesActivity extends Activity implements Updatable {
   protected void onDestroy() {
     super.onDestroy();
     // Close the notes store and the associated database
-    notesStore.close();
     networkExecutor.shutdown();
     calculationExecutor.shutdown();
   }
