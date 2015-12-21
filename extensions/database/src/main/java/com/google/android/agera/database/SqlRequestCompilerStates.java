@@ -97,17 +97,24 @@ public interface SqlRequestCompilerStates {
   }
 
   /**
-   * Compiler state allowing to specify columns or compile.
-   */
-  interface DBColumnCompile<T> extends DBColumn<DBColumnCompile<T>>, DBCompile<T> {}
-
-  /**
    * Compiler state allowing to specify sql arguments or compile.
    */
   interface DBArgumentCompile<T> extends DBArgument<DBCompile<T>>, DBCompile<T> {}
 
   /**
+   * Compiler state allowing to specify columns or compile.
+   */
+  interface DBColumnCompile<T, TSelf extends DBColumnCompile<T, TSelf>>
+      extends DBColumn<TSelf>, DBCompile<T> {}
+
+  /**
    * Compiler state allowing to specify a where clause or compile.
    */
   interface DBWhereCompile<T> extends DBWhere<DBArgumentCompile<T>>, DBCompile<T> {}
+
+  /**
+   * Compiler state allowing to specify a column, where clause or compile.
+   */
+  interface DBColumnWhereCompile<T, TSelf extends DBColumnWhereCompile<T, TSelf>>
+      extends DBColumn<TSelf>, DBWhereCompile<T> {}
 }
