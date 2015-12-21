@@ -74,7 +74,7 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
 
   @NonNull
   @Override
-  public FunctionCompilerStates.FList filter(@NonNull final Predicate filter) {
+  public FunctionCompilerStates.FList filter(@NonNull final Function filter) {
     addFunction(new FilterFunction(filter));
     return this;
   }
@@ -103,7 +103,7 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
 
   @NonNull
   @Override
-  public Function thenFilter(@NonNull final Predicate filter) {
+  public Function thenFilter(@NonNull final Function filter) {
     filter(filter);
     return createFunction();
   }
@@ -177,9 +177,9 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
 
   private static final class FilterFunction<T> implements Function<List<T>, List<T>> {
     @NonNull
-    private final Predicate filter;
+    private final Function<Object, Boolean> filter;
 
-    FilterFunction(@NonNull final Predicate filter) {
+    FilterFunction(@NonNull final Function<Object, Boolean> filter) {
       this.filter = checkNotNull(filter);
     }
 

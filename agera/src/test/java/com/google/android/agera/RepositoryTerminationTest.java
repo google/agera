@@ -59,7 +59,7 @@ public final class RepositoryTerminationTest {
   private MutableRepository<List<Integer>> otherListSource;
   private MockUpdatable updatable;
   @Mock
-  private Predicate<List<Integer>> mockPredicate;
+  private Function<List<Integer>, Boolean> mockPredicate;
   @Mock
   private Receiver<Object> mockReceiver;
   @Mock

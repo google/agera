@@ -95,12 +95,12 @@ public interface FunctionCompilerStates {
     <TTo> Function<TFrom, List<TTo>> thenMap(@NonNull Function<? super TPrev, TTo> function);
 
     /**
-     * Adds a {@link Predicate} to the behavior chain to filter out items.
+     * Adds a predicate {@link Function} to the behavior chain to filter out items.
      *
      * @param filter the predicate to filter by
      */
     @NonNull
-    FList<TPrev, TPrevList, TFrom> filter(@NonNull Predicate<? super TPrev> filter);
+    FList<TPrev, TPrevList, TFrom> filter(@NonNull Function<? super TPrev, Boolean> filter);
 
     /**
      * Adds a max number of item limit to the behavior chain.
@@ -111,12 +111,12 @@ public interface FunctionCompilerStates {
     FList<TPrev, TPrevList, TFrom> limit(int limit);
 
     /**
-     * Adds a {@link Predicate} to the end of the behavior chain to filter out items.
+     * Adds a predicate {@link Function} to the end of the behavior chain to filter out items.
      *
      * @param filter the predicate to filter by
      */
     @NonNull
-    Function<TFrom, TPrevList> thenFilter(@NonNull Predicate<? super TPrev> filter);
+    Function<TFrom, TPrevList> thenFilter(@NonNull Function<? super TPrev, Boolean> filter);
 
     /**
      * Adds a max number of item limit to the end of the behavior chain.

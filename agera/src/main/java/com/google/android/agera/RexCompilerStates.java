@@ -143,7 +143,7 @@ public interface RexCompilerStates {
      * that follows. The termination clause takes the input value as its input.
      */
     @NonNull
-    RTerminationBase<TPre, TSelf> check(@NonNull Predicate<? super TPre> predicate);
+    RTerminationBase<TPre, TSelf> check(@NonNull Function<? super TPre, Boolean> predicate);
 
     /**
      * Use the case-function to compute a case value out of the input value and check it with the
@@ -154,7 +154,7 @@ public interface RexCompilerStates {
     @NonNull
     <TCase> RTerminationBase<TCase, TSelf> check(
         @NonNull Function<? super TPre, TCase> caseFunction,
-        @NonNull Predicate<? super TCase> casePredicate);
+        @NonNull Function<? super TCase, Boolean> casePredicate);
 
     /**
      * Send the input value to the given receiver, and then pass on the input value as the output of

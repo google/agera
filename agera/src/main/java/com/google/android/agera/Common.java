@@ -31,8 +31,8 @@ import java.util.concurrent.RejectedExecutionException;
 
 final class Common {
   static final Function IDENTITY_FUNCTION = new IdentityFunction();
-  static final StaticCondicate TRUE_CONDICATE = new StaticCondicate(true);
-  static final StaticCondicate FALSE_CONDICATE = new StaticCondicate(false);
+  static final Function<Object, Boolean> TRUE_PREDICATE = new StaticProducer<>(true);
+  static final Function<Object, Boolean> FALSE_PREDICATE = new StaticProducer<>(false);
   private static final ThreadLocal<WeakReference<UpdateDispatcherHandler>> handlers =
       new ThreadLocal<>();
 
@@ -52,24 +52,6 @@ final class Common {
     @Override
     public Object apply(@NonNull final Object from) {
       return from;
-    }
-  }
-
-  static final class StaticCondicate implements Condition, Predicate {
-    private final boolean staticValue;
-
-    private StaticCondicate(final boolean staticValue) {
-      this.staticValue = staticValue;
-    }
-
-    @Override
-    public boolean apply(@NonNull final Object value) {
-      return staticValue;
-    }
-
-    @Override
-    public boolean applies() {
-      return staticValue;
     }
   }
 

@@ -15,7 +15,7 @@
  */
 package com.google.android.agera.test.matchers;
 
-import com.google.android.agera.Predicate;
+import com.google.android.agera.Function;
 
 import android.support.annotation.NonNull;
 
@@ -24,7 +24,7 @@ import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-public final class PredicateApply<T> extends TypeSafeMatcher<Predicate<? super T>> {
+public final class PredicateApply<T> extends TypeSafeMatcher<Function<? super T, Boolean>> {
   private final boolean value;
   @NonNull
   private final T data;
@@ -35,7 +35,7 @@ public final class PredicateApply<T> extends TypeSafeMatcher<Predicate<? super T
   }
 
   @Override
-  protected boolean matchesSafely(final Predicate<? super T> predicate) {
+  protected boolean matchesSafely(final Function<? super T, Boolean> predicate) {
     return predicate.apply(data) == value;
   }
 
@@ -45,12 +45,12 @@ public final class PredicateApply<T> extends TypeSafeMatcher<Predicate<? super T
   }
 
   @Factory
-  public static <T> Matcher<Predicate<? super T>> appliesFor(@NonNull final T data) {
+  public static <T> Matcher<Function<? super T, Boolean>> appliesFor(@NonNull final T data) {
     return new PredicateApply<>(true, data);
   }
 
   @Factory
-  public static <T> Matcher<Predicate<? super T>> doesNotApplyFor(@NonNull final T data) {
+  public static <T> Matcher<Function<? super T, Boolean>> doesNotApplyFor(@NonNull final T data) {
     return new PredicateApply<>(false, data);
   }
 }

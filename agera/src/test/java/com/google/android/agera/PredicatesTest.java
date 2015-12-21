@@ -15,11 +15,8 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Conditions.falseCondition;
-import static com.google.android.agera.Conditions.trueCondition;
 import static com.google.android.agera.Predicates.all;
 import static com.google.android.agera.Predicates.any;
-import static com.google.android.agera.Predicates.conditionAsPredicate;
 import static com.google.android.agera.Predicates.emptyString;
 import static com.google.android.agera.Predicates.equalTo;
 import static com.google.android.agera.Predicates.falsePredicate;
@@ -32,7 +29,6 @@ import static com.google.android.agera.test.matchers.PredicateApply.doesNotApply
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
@@ -52,32 +48,15 @@ public final class PredicatesTest {
   private static final String OTHER_ITEM = "otheritem";
 
   @Mock
-  private Predicate<Object> mockPredicateFalse;
+  private Function<Object, Boolean> mockPredicateFalse;
   @Mock
-  private Predicate<Object> mockPredicateTrue;
-  @Mock
-  private Condition mockCondition;
+  private Function<Object, Boolean> mockPredicateTrue;
 
   @Before
   public void setUp() {
     initMocks(this);
     when(mockPredicateTrue.apply(Mockito.any())).thenReturn(true);
-  }
-
-  @Test
-  public void shouldReturnTruePredicateForTrueConditionInConditionAsPredicate() {
-    assertThat(conditionAsPredicate(trueCondition()), sameInstance(truePredicate()));
-  }
-
-  @Test
-  public void shouldReturnFalsePredicateForFalseConditionInConditionAsPredicate() {
-    assertThat(conditionAsPredicate(falseCondition()), sameInstance(falsePredicate()));
-  }
-
-  @Test
-  public void shouldReturnFalseForConditionWithFalseInConditionAsPredicate() {
-    assertThat(conditionAsPredicate(mockCondition), doesNotApplyFor(new Object()));
-    verify(mockCondition).applies();
+    when(mockPredicateFalse.apply(Mockito.any())).thenReturn(false);
   }
 
   @Test

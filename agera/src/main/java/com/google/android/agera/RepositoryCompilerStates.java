@@ -113,8 +113,8 @@ import java.util.concurrent.Executor;
  *       RFlow#attemptMergeIn AttemptMergeIn(s, fm)}.<i>term</i>
  *   <li>({@link RFlow#thenAttemptTransform then}){@link
  *       RFlow#attemptTransform AttemptTransform(ff)}.<i>term</i>
- *   <li>{@link RFlow#check(Predicate) check(p)}.<i>term</i>
- *   <li>{@link RFlow#check(Function, Predicate) check(f, p)}.<i>term</i>
+ *   <li>{@link RFlow#check(Function) check(p)}.<i>term</i>
+ *   <li>{@link RFlow#check(Function, Function) check(f, p)}.<i>term</i>
  *   <li>{@link RFlow#sendTo sendTo(r)}
  *   <li>{@link RFlow#bindWith bindWith(s, b)}
  *   <li>{@link RFlow#goTo goTo(e)}
@@ -281,13 +281,13 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
 
     @NonNull
     @Override
-    RTermination<TVal, TPre, TSelf> check(@NonNull Predicate<? super TPre> predicate);
+    RTermination<TVal, TPre, TSelf> check(@NonNull Function<? super TPre, Boolean> predicate);
 
     @NonNull
     @Override
     <TCase> RTermination<TVal, TCase, TSelf> check(
         @NonNull Function<? super TPre, TCase> caseFunction,
-        @NonNull Predicate<? super TCase> casePredicate);
+        @NonNull Function<? super TCase, Boolean> casePredicate);
 
     // For Repositories only:
 
