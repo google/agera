@@ -16,10 +16,7 @@
 package com.google.android.agera;
 
 import static android.os.Looper.myLooper;
-import static com.google.android.agera.Conditions.falseCondition;
-import static com.google.android.agera.Conditions.trueCondition;
 import static com.google.android.agera.Observables.compositeObservable;
-import static com.google.android.agera.Observables.conditionalObservable;
 import static com.google.android.agera.Observables.perCycleFilterObservable;
 import static com.google.android.agera.Observables.perMillisecondFilterObservable;
 import static com.google.android.agera.Observables.updateDispatcher;
@@ -28,7 +25,6 @@ import static com.google.android.agera.test.matchers.UpdatableUpdated.wasUpdated
 import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -67,8 +63,6 @@ public final class ObservablesTest {
   private UpdateDispatcher firstUpdateDispatcher;
   private UpdateDispatcher secondUpdateDispatcher;
   private UpdateDispatcher thirdUpdateDispatcher;
-  private Observable trueConditionalObservable;
-  private Observable falseConditionalObservable;
   private MockUpdatable updatable;
   private MockUpdatable secondUpdatable;
   private Scheduler scheduler;
@@ -87,8 +81,6 @@ public final class ObservablesTest {
     firstUpdateDispatcher = updateDispatcher();
     secondUpdateDispatcher = updateDispatcher();
     thirdUpdateDispatcher = updateDispatcher();
-    trueConditionalObservable = conditionalObservable(trueCondition(), firstUpdateDispatcher);
-    falseConditionalObservable = conditionalObservable(falseCondition(), firstUpdateDispatcher);
     compositeObservableOfMany = compositeObservable(firstUpdateDispatcher,
         secondUpdateDispatcher);
     chainedCompositeObservableOfOne = compositeObservable(
@@ -148,24 +140,6 @@ public final class ObservablesTest {
     thirdUpdateDispatcher.update();
 
     assertThat(updatable, wasUpdated());
-  }
-
-  @Test
-  public void shouldNotUpdateConditionalObservableForFalseCondition() {
-    updatable.addToObservable(trueConditionalObservable);
-
-    firstUpdateDispatcher.update();
-
-    assertThat(updatable, wasUpdated());
-  }
-
-  @Test
-  public void shouldUpdateConditionalObservableForTrueCondition() {
-    updatable.addToObservable(falseConditionalObservable);
-
-    firstUpdateDispatcher.update();
-
-    assertThat(updatable, not(wasUpdated()));
   }
 
   @Test

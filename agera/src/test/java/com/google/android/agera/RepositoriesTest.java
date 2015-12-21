@@ -41,6 +41,7 @@ import static org.robolectric.annotation.Config.NONE;
 import com.google.android.agera.test.mocks.MockUpdatable;
 
 import android.support.annotation.NonNull;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,7 +79,7 @@ public final class RepositoriesTest {
   @Mock
   private Supplier<List<Integer>> mockIntegerListSupplier;
   @Mock
-  private Predicate<List<Integer>> mockIntegerListPredicate;
+  private Function<List<Integer>, Object> mockIntegerListPredicate;
   @Mock
   private Function<List<Integer>, Integer> mockIntegerListToIntValueFunction;
   @Mock

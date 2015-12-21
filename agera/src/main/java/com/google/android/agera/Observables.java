@@ -80,16 +80,6 @@ public final class Observables {
   }
 
   /**
-   * Returns an {@link Observable} that notifies added {@link Updatable}s that any of the
-   * {@code observables} have changed only if the {@code condition} applies.
-   */
-  @NonNull
-  public static Observable conditionalObservable(
-      @NonNull final Condition condition, @NonNull final Observable... observables) {
-    return new ConditionalObservable(compositeObservable(observables), condition);
-  }
-
-  /**
    * Returns an {@link Observable} that notifies added {@link Updatable}s that the
    * {@code observable} has changed, but never more often than every
    * {@code shortestUpdateWindowMillis}.
@@ -172,50 +162,6 @@ public final class Observables {
     @Override
     public void removeUpdatable(@NonNull final Updatable updatable) {
       updateDispatcher.removeUpdatable(updatable);
-    }
-  }
-
-  private static final class ConditionalObservable
-      implements Observable, Updatable, UpdatablesChanged {
-    @NonNull
-    private final UpdateDispatcher updateDispatcher;
-    @NonNull
-    private final Observable observable;
-    @NonNull
-    private final Condition condition;
-
-    ConditionalObservable(@NonNull final Observable observable,
-        @NonNull final Condition condition) {
-      this.updateDispatcher = updateDispatcher(this);
-      this.observable = checkNotNull(observable);
-      this.condition = checkNotNull(condition);
-    }
-
-    @Override
-    public void firstUpdatableAdded(final UpdateDispatcher updateDispatcher) {
-      observable.addUpdatable(this);
-    }
-
-    @Override
-    public void lastUpdatableRemoved(final UpdateDispatcher updateDispatcher) {
-      observable.removeUpdatable(this);
-    }
-
-    @Override
-    public void addUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.addUpdatable(updatable);
-    }
-
-    @Override
-    public void removeUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.removeUpdatable(updatable);
-    }
-
-    @Override
-    public void update() {
-      if (condition.applies()) {
-        updateDispatcher.update();
-      }
     }
   }
 

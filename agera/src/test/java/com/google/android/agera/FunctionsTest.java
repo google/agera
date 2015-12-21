@@ -230,7 +230,7 @@ public final class FunctionsTest {
     }
   }
 
-  private static final class CharacterFilter implements Predicate<Character> {
+  private static final class CharacterFilter implements Function<Character, Boolean> {
     private final char character;
 
     public CharacterFilter(final char p) {
@@ -238,7 +238,7 @@ public final class FunctionsTest {
     }
 
     @Override
-    public boolean apply(@NonNull final Character value) {
+    public Boolean apply(@NonNull final Character value) {
       return value.equals(character);
     }
   }

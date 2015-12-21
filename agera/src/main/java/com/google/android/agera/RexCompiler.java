@@ -113,7 +113,7 @@ final class RexCompiler implements
   // 2x fields below: store caseExtractor and casePredicate for check(caseExtractor, casePredicate)
   // for use in terminate(); if null then terminate() is terminating an attempt directive.
   private Function caseExtractor;
-  private Predicate casePredicate;
+  private Function casePredicate;
   private boolean goLazyUsed;
   private Merger notifyChecker = objectsUnequal();
   @RexConfig
@@ -222,13 +222,13 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler check(@NonNull final Predicate predicate) {
+  public RexCompiler check(@NonNull final Function predicate) {
     return check(identityFunction(), predicate);
   }
 
   @NonNull
   @Override
-  public RexCompiler check(@NonNull final Function function, @NonNull final Predicate predicate) {
+  public RexCompiler check(@NonNull final Function function, @NonNull final Function predicate) {
     // available to both rexes
     checkExpect(FLOW);
     caseExtractor = checkNotNull(function);

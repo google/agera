@@ -15,86 +15,70 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Common.FALSE_CONDICATE;
-import static com.google.android.agera.Common.TRUE_CONDICATE;
+import static com.google.android.agera.Common.FALSE_PREDICATE;
+import static com.google.android.agera.Common.TRUE_PREDICATE;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 /**
- * Utility methods for obtaining {@link Predicate} instances.
+ * Utility methods for obtaining predicate {@link Function} instances.
  */
 public final class Predicates {
-  private static final Predicate<CharSequence> EMPTY_STRING_PREDICATE = new EmptyStringPredicate();
+  private static final Function<CharSequence, Boolean> EMPTY_STRING_PREDICATE =
+      new EmptyStringPredicate();
 
   /**
-   * Returns a {@link Predicate} from a {@link Condition}.
-   *
-   * <p>When applied the {@link Predicate} input parameter will be ignored and the result of
-   * {@code condition} will be returned.
-   */
-  @NonNull
-  public static <T> Predicate<T> conditionAsPredicate(@NonNull final Condition condition) {
-    if (condition == TRUE_CONDICATE) {
-      return truePredicate();
-    }
-    if (condition == FALSE_CONDICATE) {
-      return falsePredicate();
-    }
-    return new ConditionAsPredicate<>(condition);
-  }
-
-  /**
-   * Returns a {@link Predicate} that always returns {@code true}.
+   * Returns a predicate {@link Function} that always returns {@code true}.
    */
   @NonNull
   @SuppressWarnings("unchecked")
-  public static <T> Predicate<T> truePredicate() {
-    return TRUE_CONDICATE;
+  public static <T> Function<T, Boolean> truePredicate() {
+    return (Function<T, Boolean>) TRUE_PREDICATE;
   }
 
   /**
-   * Returns a {@link Predicate} that always returns {@code false}.
+   * Returns a predicate {@link Function} that always returns {@code false}.
    */
   @NonNull
   @SuppressWarnings("unchecked")
-  public static <T> Predicate<T> falsePredicate() {
-    return FALSE_CONDICATE;
+  public static <T> Function<T, Boolean> falsePredicate() {
+    return (Function<T, Boolean>) FALSE_PREDICATE;
   }
 
   /**
-   * Returns a {@link Predicate} that indicates whether {@code object} is equal to the
-   * {@link Predicate} input.
+   * Returns a predicate {@link Function} that indicates whether {@code object} is equal to the
+   * predicate {@link Function} input.
    */
   @NonNull
-  public static <T> Predicate<T> equalTo(@NonNull final T object) {
+  public static <T> Function<T, Boolean> equalTo(@NonNull final T object) {
     return new EqualToPredicate<>(object);
   }
 
   /**
-   * Returns a {@link Predicate} that indicates whether the {@link Predicate} input is an
-   * instance of {@code type}.
+   * Returns a predicate {@link Function} that indicates whether the predicate {@link Function}
+   * input is an instance of {@code type}.
    */
   @NonNull
-  public static <T> Predicate<T> instanceOf(@NonNull final Class<?> type) {
+  public static <T> Function<T, Boolean> instanceOf(@NonNull final Class<?> type) {
     return new InstanceOfPredicate<>(type);
   }
 
   /**
-   * Returns a {@link Predicate} that indicates whether the {@link Predicate} input is an
-   * empty {@link CharSequence}.
+   * Returns a predicate {@link Function} that indicates whether the predicate {@link Function}
+   * input is an empty {@link CharSequence}.
    */
   @NonNull
-  public static Predicate<CharSequence> emptyString() {
+  public static Function<CharSequence, Boolean> emptyString() {
     return EMPTY_STRING_PREDICATE;
   }
 
   /**
-   * Returns a {@link Predicate} that negates {@code predicate}.
+   * Returns a predicate {@link Function} that negates {@code predicate}.
    */
   @NonNull
-  public static <T> Predicate<T> not(final Predicate<T> predicate) {
+  public static <T> Function<T, Boolean> not(final Function<T, Boolean> predicate) {
     if (predicate instanceof NegatedPredicate) {
       return ((NegatedPredicate<T>) predicate).predicate;
     }
@@ -108,36 +92,38 @@ public final class Predicates {
   }
 
   /**
-   * Returns a {@link Predicate} that evaluates to {@code true} if any of the given
+   * Returns a predicate {@link Function} that evaluates to {@code true} if any of the given
    * {@code predicates} evaluates to {@code true}. If {@code predicates} is empty, the returned
-   * {@link Predicate} will always evaluate to {@code false}.
+   * predicate {@link Function} will always evaluate to {@code false}.
    */
   @SuppressWarnings("unchecked")
   @SafeVarargs
   @NonNull
-  public static <T> Predicate<T> any(@NonNull final Predicate<? super T>... predicates) {
-    return composite(predicates, falsePredicate(), truePredicate(), true);
+  public static <T> Function<T, Boolean> any(
+      @NonNull final Function<? super T, Boolean>... predicates) {
+    return (Function<T, Boolean>) composite(predicates, falsePredicate(), truePredicate(), true);
   }
 
   /**
-   * Returns a {@link Predicate} that evaluates to {@code true} if all of the given
-   * {@code conditions} evaluates to {@code true}. If {@code conditions} is empty, the returned
-   * {@link Condition} will always evaluate to {@code true}.
+   * Returns a predicate {@link Function} that evaluates to {@code true} if all of the given
+   * {@code predicate} evaluates to {@code true}. If {@code predicates} is empty, the returned
+   * predicate {@link Function} will always evaluate to {@code true}.
    */
   @SafeVarargs
   @NonNull
   @SuppressWarnings("unchecked")
-  public static <T> Predicate<T> all(@NonNull final Predicate<? super T>... predicates) {
-    return composite(predicates, truePredicate(), falsePredicate(), false);
+  public static <T> Function<T, Boolean> all(
+      @NonNull final Function<? super T, Boolean>... predicates) {
+    return (Function<T, Boolean>) composite(predicates, truePredicate(), falsePredicate(), false);
   }
 
   @SuppressWarnings("unchecked")
-  private static Predicate composite(@NonNull final Predicate[] predicates,
-      @NonNull final Predicate defaultPredicate, @NonNull final Predicate definingPredicate,
+  private static Function<Object, Boolean> composite(@NonNull final Function[] predicates,
+      @NonNull final Function defaultPredicate, @NonNull final Function definingPredicate,
       final boolean definingResult) {
     int nonDefaultCount = 0;
-    Predicate lastNonDefaultPredicate = null;
-    for (final Predicate predicate : predicates) {
+    Function lastNonDefaultPredicate = null;
+    for (final Function predicate : predicates) {
       if (predicate == definingPredicate) {
         return definingPredicate;
       } else if (predicate != defaultPredicate) {
@@ -153,19 +139,20 @@ public final class Predicates {
     return new CompositePredicate<>(predicates.clone(), definingResult);
   }
 
-  private static final class CompositePredicate<T> implements Predicate<T> {
+  private static final class CompositePredicate<T> implements Function<T, Boolean> {
     @NonNull
-    private final Predicate<T>[] predicates;
+    private final Function<T, Boolean>[] predicates;
     private final boolean definingResult;
 
-    CompositePredicate(@NonNull final Predicate<T>[] predicates, final boolean definingResult) {
+    CompositePredicate(@NonNull final Function<T, Boolean>[] predicates,
+        final boolean definingResult) {
       this.definingResult = definingResult;
       this.predicates = checkNotNull(predicates);
     }
 
     @Override
-    public boolean apply(@NonNull final T value) {
-      for (final Predicate<T> predicate : predicates) {
+    public Boolean apply(@NonNull final T value) {
+      for (final Function<T, Boolean> predicate : predicates) {
         if (predicate.apply(value) == definingResult) {
           return definingResult;
         }
@@ -174,43 +161,29 @@ public final class Predicates {
     }
   }
 
-  private static final class EmptyStringPredicate implements Predicate<CharSequence> {
+  private static final class EmptyStringPredicate implements Function<CharSequence, Boolean> {
 
     @Override
-    public boolean apply(@NonNull final CharSequence input) {
+    public Boolean apply(@NonNull final CharSequence input) {
       return TextUtils.isEmpty(input);
     }
   }
 
-  private static final class NegatedPredicate<T> implements Predicate<T> {
+  private static final class NegatedPredicate<T> implements Function<T, Boolean> {
     @NonNull
-    private final Predicate<T> predicate;
+    private final Function<T, Boolean> predicate;
 
-    NegatedPredicate(@NonNull final Predicate<T> predicate) {
+    NegatedPredicate(@NonNull final Function<T, Boolean> predicate) {
       this.predicate = checkNotNull(predicate);
     }
 
     @Override
-    public boolean apply(@NonNull final T t) {
+    public Boolean apply(@NonNull final T t) {
       return !predicate.apply(t);
     }
   }
 
-  private static final class ConditionAsPredicate<T> implements Predicate<T> {
-    @NonNull
-    private final Condition condition;
-
-    ConditionAsPredicate(@NonNull final Condition condition) {
-      this.condition = checkNotNull(condition);
-    }
-
-    @Override
-    public boolean apply(@NonNull T input) {
-      return condition.applies();
-    }
-  }
-
-  private static final class InstanceOfPredicate<T> implements Predicate<T> {
+  private static final class InstanceOfPredicate<T> implements Function<T, Boolean> {
     @NonNull
     private final Class<?> type;
 
@@ -219,12 +192,12 @@ public final class Predicates {
     }
 
     @Override
-    public boolean apply(@NonNull final T input) {
+    public Boolean apply(@NonNull final T input) {
       return type.isAssignableFrom(input.getClass());
     }
   }
 
-  private static final class EqualToPredicate<T> implements Predicate<T> {
+  private static final class EqualToPredicate<T> implements Function<T, Boolean> {
     @NonNull
     private final T object;
 
@@ -233,7 +206,7 @@ public final class Predicates {
     }
 
     @Override
-    public boolean apply(@NonNull final T input) {
+    public Boolean apply(@NonNull final T input) {
       return input.equals(object);
     }
   }

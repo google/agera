@@ -363,7 +363,7 @@ final class RexRunner extends Handler
   }
 
   static void addCheck(@NonNull final Function caseFunction,
-      @NonNull final Predicate casePredicate,
+      @NonNull final Function casePredicate,
       @Nullable final Function terminatingValueFunction,
       @NonNull final List<Object> directives) {
     directives.add(CHECK);
@@ -374,7 +374,7 @@ final class RexRunner extends Handler
 
   private int runCheck(@NonNull final Object[] directives, final int index) {
     Function caseFunction = (Function) directives[index + 1];
-    Predicate casePredicate = (Predicate) directives[index + 2];
+    Function<Object, Boolean> casePredicate = (Function) directives[index + 2];
     Function terminatingValueFunction = (Function) directives[index + 3];
 
     Object caseValue = caseFunction.apply(intermediateValue);
