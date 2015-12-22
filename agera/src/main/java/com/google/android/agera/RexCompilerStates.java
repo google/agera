@@ -18,7 +18,6 @@ package com.google.android.agera;
 import android.support.annotation.NonNull;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Base compiler states for {@link RepositoryCompilerStates} and {@link ReactionCompilerStates}. For
@@ -41,33 +40,31 @@ public interface RexCompilerStates {
    */
   interface RFlowBase<TPre, TCfg, TSelf extends RFlowBase<TPre, TCfg, TSelf>>
       extends RSyncFlowBase<TPre, TCfg, TSelf> {
-
     /**
-     * Go to the given {@code executor} to continue the data processing flow. The executor is
-     * assumed to never throw {@link RejectedExecutionException}. Synchronous executors are
-     * supported but the risk of stack overflow will be higher. Note that when the executor resumes
-     * the flow, the directives that follow are run sequentially within the same
-     * {@link Runnable#run()} call, until the flow completes or the next {@code goTo()} or, if
-     * applicable, {@code goLazy()} directive is reached. Depending on the directives and operators
-     * used, this may starve the executor. If necessary, use additional {@code goTo()} directives
-     * with the same executor to achieve fairness.
+     * Invoke the given {@code async} operation to transform the input value asynchronously, and
+     * when the operation completes, use its output value as the output value of this directive.
+     *
+     * <p>The asynchronous operation can end from any thread of its choice, but must end eventually,
+     * or the data processing flow will be permanently blocked.
+     *
+     * <p>The directives that follow will be run sequentially within the call of the output
+     * receiver's {@link Receiver#accept} method, until the flow completes, the next {@code async()}
+     * directive leaves the current thread, or, if applicable, the {@code goLazy()} directive runs.
+     * Depending on the asynchronous operation, this may starve a resource (such as an
+     * {@link Executor} with limited threads). Use multiple, strategically placed {@code async()}
+     * directives to achieve fairness.
+     *
+     * <p>It is possible to end an asynchronous operation synchronously by calling the output
+     * receiver before {@link Async#async} returns. This is supported, but the risk of stack
+     * overflow will be higher.
+     *
+     * <p>If the data processing flow is to be cancelled during the asynchronous operation, any
+     * thread interrupt signal cannot be delivered after {@link Async#async} returns, but the
+     * asynchronous operation can poll the cancellation {@link Condition} that will be provided to
+     * {@link Async#async}.
      */
     @NonNull
-    TSelf goTo(@NonNull Executor executor);
-
-    /**
-     * Like {@link #goTo(Executor)}, but decorate the {@link Runnable} to be submitted to the
-     * {@code executor} using the given {@code runnableDecorator}. The latter is a {@link Merger}
-     * that will receive the input value to this directive as its first argument, and the
-     * runnable-to-submit as the second. This allows client code to add any additional information
-     * necessary for the optimal use of the specific executor, for example by wrapping the runnable
-     * in a {@link Comparable} implementation for priority scheduling. It is still assumed that the
-     * {@link RejectedExecutionException} will never be thrown, and that the runnable given to the
-     * decorator will eventually be called to resume the flow.
-     */
-    @NonNull
-    TSelf goTo(@NonNull Executor executor,
-        @NonNull Merger<TPre, Runnable, Runnable> runnableDecorator);
+    <TCur> RFlowBase<TCur, TCfg, ?> async(@NonNull Async<TPre, TCur> async);
   }
 
   /**

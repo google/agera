@@ -49,7 +49,7 @@ import android.support.annotation.NonNull;
  * <h3>List of directives</h3>
  *
  * <b>Variables:</b> s: supplier; fs: fallible supplier; m: merger; fm: fallible merger;
- * f: function; ff: fallible function; p: predicate; r: receiver; b: binder; e: executor.
+ * f: function; ff: fallible function; p: predicate; r: receiver; b: binder; a: async.
  * <ul>
  *   <li>{@link RFlow#getFrom getFrom(s)}
  *   <li>{@link RFlow#mergeIn mergeIn(s, m)}
@@ -61,7 +61,7 @@ import android.support.annotation.NonNull;
  *   <li>{@link RFlow#check(Function, Predicate) check(f, p)}.<i>term</i>
  *   <li>{@link RFlow#sendTo sendTo(r)}
  *   <li>{@link RFlow#bindWith bindWith(s, b)}
- *   <li>{@link RFlow#goTo goTo(e)}
+ *   <li>{@link RFlow#async async(a)}
  *   <li>{@link RFlow#thenSkip thenSkip()}
  *   <li>{@link RFlow#thenEnd thenEnd()}
  * </ul>
@@ -124,6 +124,10 @@ public interface ReactionCompilerStates extends RexCompilerStates {
     <TCase> RTermination<TCase, TSelf> check(
         @NonNull Function<? super TPre, TCase> caseFunction,
         @NonNull Predicate<? super TCase> casePredicate);
+
+    @NonNull
+    @Override
+    <TCur> RFlow<TVal, TCur, TCfg, ?> async(@NonNull Async<TPre, TCur> async);
 
     // For Reactions only:
 

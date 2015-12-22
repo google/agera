@@ -20,6 +20,7 @@ import static android.os.StrictMode.ThreadPolicy;
 import static android.os.StrictMode.VmPolicy;
 import static android.os.StrictMode.setThreadPolicy;
 import static android.os.StrictMode.setVmPolicy;
+import static com.google.android.agera.Asyncs.goTo;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.RexConfig.SEND_INTERRUPT;
@@ -30,6 +31,7 @@ import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAda
 import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
+import com.google.android.agera.Async;
 import com.google.android.agera.Function;
 import com.google.android.agera.Merger;
 import com.google.android.agera.Receiver;
@@ -147,15 +149,17 @@ public final class NotesActivity extends Activity implements Updatable {
 
     final Supplier<String> backgroundUrlSupplier = staticSupplier(BACKGROUND_URL);
 
+    Async<Integer, Integer> goToNetworkExecutor = goTo(networkExecutor);
+    Async<HttpResponse, HttpResponse> goToCalculationExecutor = goTo(calculationExecutor);
     backgroundRepository = repositoryWithInitialValue(Result.<Bitmap>absent())
         .observe()
         .onUpdatesPerLoop()
         .getFrom(sizeSupplier)
-        .goTo(networkExecutor)
+        .async(goToNetworkExecutor)
         .mergeIn(backgroundUrlSupplier, sizedUrlMerger)
         .transform(URL_TO_HTTP_REQUEST)
         .attemptTransform(httpFunction()).orSkip()
-        .goTo(calculationExecutor)
+        .async(goToCalculationExecutor)
         .thenTransform(HTTP_RESPONSE_TO_BITMAP)
         .onDeactivation(SEND_INTERRUPT)
         .compile();
