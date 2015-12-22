@@ -15,12 +15,15 @@
  */
 package com.google.android.agera;
 
+import static com.google.android.agera.Asyncs.goTo;
 import static com.google.android.agera.Mergers.staticMerger;
 import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.RexConfig.CANCEL_FLOW;
 import static com.google.android.agera.RexConfig.RESET_TO_INITIAL_VALUE;
 import static com.google.android.agera.RexConfig.SEND_INTERRUPT;
+import static com.google.android.agera.test.MockAsync.mockAsync;
+import static com.google.android.agera.test.matchers.ConditionApplies.applies;
 import static com.google.android.agera.test.matchers.SupplierGives.has;
 import static com.google.android.agera.test.matchers.UpdatableUpdated.wasNotUpdated;
 import static com.google.android.agera.test.matchers.UpdatableUpdated.wasUpdated;
@@ -36,7 +39,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 import static org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks;
 
-import com.google.android.agera.test.SingleSlotDelayedExecutor;
+import com.google.android.agera.test.MockAsync;
 import com.google.android.agera.test.mocks.MockUpdatable;
 
 import android.support.annotation.NonNull;
@@ -60,7 +63,7 @@ public final class RepositoryConfigTest {
 
   private MockUpdatable updatable;
   private UpdateDispatcher updateDispatcher;
-  private SingleSlotDelayedExecutor delayedExecutor;
+  private MockAsync<Object, Object> async;
   private InterruptibleMonitoredSupplier monitoredSupplier;
   @Mock
   private Supplier<Object> mockSupplier;
@@ -70,7 +73,7 @@ public final class RepositoryConfigTest {
     initMocks(this);
     updatable = mockUpdatable();
     updateDispatcher = updateDispatcher();
-    delayedExecutor = new SingleSlotDelayedExecutor();
+    async = mockAsync();
     monitoredSupplier = new InterruptibleMonitoredSupplier();
     when(mockSupplier.get()).thenReturn(UPDATED_VALUE);
   }
@@ -119,14 +122,14 @@ public final class RepositoryConfigTest {
     final Repository<Object> repository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe(updateDispatcher)
         .onUpdatesPerLoop()
-        .goTo(delayedExecutor)
+        .async(async)
         .thenGetFrom(mockSupplier)
         .compile();
 
     updatable.addToObservable(repository);
-    assertThat(delayedExecutor.hasRunnable(), is(true));
+    assertThat(async.wasCalled(), is(true));
     updatable.removeFromObservables();
-    delayedExecutor.resumeOrThrow();
+    async.expectAndOutput(INITIAL_VALUE, INITIAL_VALUE);
     assertThat(repository, has(UPDATED_VALUE));
   }
 
@@ -136,19 +139,20 @@ public final class RepositoryConfigTest {
     final Repository<Object> repository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe(updateDispatcher)
         .onUpdatesPerLoop()
-        .goTo(delayedExecutor)
+        .async(async)
         .thenGetFrom(mockSupplier)
         .compile();
 
     updatable.addToObservable(repository);
-    assertThat(delayedExecutor.hasRunnable(), is(true));
+    assertThat(async.wasCalled(), is(true));
     retriggerUpdate();
-    delayedExecutor.resumeOrThrow();
+    async.expectAndOutput(INITIAL_VALUE, INITIAL_VALUE);
     assertThat(updatable, wasUpdated());
     assertThat(repository, has(UPDATED_VALUE));
 
     updatable.resetUpdated();
-    delayedExecutor.resumeOrThrow(); // this asserts second run started for the triggered update
+    // this asserts second run started for the triggered update
+    async.expectAndOutput(UPDATED_VALUE, UPDATED_VALUE);
     assertThat(updatable, wasUpdated());
     assertThat(repository, has(ANOTHER_VALUE));
   }
@@ -158,15 +162,16 @@ public final class RepositoryConfigTest {
     final Repository<Object> repository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe(updateDispatcher)
         .onUpdatesPerLoop()
-        .goTo(delayedExecutor)
+        .async(async)
         .thenGetFrom(mockSupplier)
         .onDeactivation(CANCEL_FLOW)
         .compile();
 
     updatable.addToObservable(repository);
-    assertThat(delayedExecutor.hasRunnable(), is(true));
+    assertThat(async.wasCalled(), is(true));
     updatable.removeFromObservables();
-    delayedExecutor.resumeOrThrow();
+    assertThat(async.cancelled(), applies());
+    async.expectAndOutput(INITIAL_VALUE, INITIAL_VALUE);
     assertThat(repository, has(INITIAL_VALUE));
     verifyZeroInteractions(mockSupplier);
   }
@@ -176,19 +181,21 @@ public final class RepositoryConfigTest {
     final Repository<Object> repository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe(updateDispatcher)
         .onUpdatesPerLoop()
-        .goTo(delayedExecutor)
+        .async(async)
         .thenGetFrom(mockSupplier)
         .onConcurrentUpdate(CANCEL_FLOW)
         .compile();
 
     updatable.addToObservable(repository);
-    assertThat(delayedExecutor.hasRunnable(), is(true));
+    assertThat(async.wasCalled(), is(true));
     retriggerUpdate();
-    delayedExecutor.resumeOrThrow();
+    assertThat(async.cancelled(), applies());
+    async.expectAndOutput(INITIAL_VALUE, INITIAL_VALUE);
     assertThat(updatable, wasNotUpdated());
     assertThat(repository, has(INITIAL_VALUE));
 
-    delayedExecutor.resumeOrThrow(); // this asserts second run started for the triggered update
+    // this asserts second run started for the triggered update
+    async.expectAndOutput(INITIAL_VALUE, INITIAL_VALUE);
     assertThat(updatable, wasUpdated());
     assertThat(repository, has(UPDATED_VALUE));
   }
@@ -207,14 +214,14 @@ public final class RepositoryConfigTest {
     final Repository<Object> repository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe(updateDispatcher)
         .onUpdatesPerLoop()
-        .goTo(delayedExecutor)
+        .async(async)
         .transform(cancellingFunction)
         .thenGetFrom(mockSupplier)
         .onDeactivation(CANCEL_FLOW)
         .compile();
 
     updatable.addToObservable(repository);
-    delayedExecutor.resumeOrThrow();
+    async.expectAndOutput(INITIAL_VALUE, INITIAL_VALUE);
     assertThat(repository, has(INITIAL_VALUE));
     verifyZeroInteractions(mockSupplier);
   }
@@ -239,7 +246,7 @@ public final class RepositoryConfigTest {
     final Repository<Object> repository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe(updateDispatcher)
         .onUpdatesPerLoop()
-        .goTo(newSingleThreadExecutor()) // need background thread to test interrupt
+        .async(goTo(newSingleThreadExecutor())) // need background thread to test interrupt
         .thenGetFrom(monitoredSupplier)
         .onDeactivation(SEND_INTERRUPT)
         .compile();
@@ -257,7 +264,7 @@ public final class RepositoryConfigTest {
     final Repository<Object> repository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe(updateDispatcher)
         .onUpdatesPerLoop()
-        .goTo(newSingleThreadExecutor()) // need background thread to test interrupt
+        .async(goTo(newSingleThreadExecutor())) // need background thread to test interrupt
         .thenGetFrom(monitoredSupplier)
         .onConcurrentUpdate(SEND_INTERRUPT)
         .compile();

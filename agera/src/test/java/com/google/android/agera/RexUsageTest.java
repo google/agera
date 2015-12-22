@@ -22,13 +22,14 @@ import static com.google.android.agera.RexConfig.CANCEL_FLOW;
 import static com.google.android.agera.RexConfig.CONTINUE_FLOW;
 import static com.google.android.agera.RexConfig.RESET_TO_INITIAL_VALUE;
 import static com.google.android.agera.RexConfig.SEND_INTERRUPT;
+import static com.google.android.agera.test.MockAsync.mockAsync;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
-import com.google.android.agera.test.SingleSlotDelayedExecutor;
+import com.google.android.agera.test.MockAsync;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -70,9 +71,9 @@ public final class RexUsageTest {
   @Mock
   private Merger<Object, Object, Boolean> mockChecker;
 
-  private SingleSlotDelayedExecutor delayedExecutor1;
-  private SingleSlotDelayedExecutor delayedExecutor2;
-  private SingleSlotDelayedExecutor delayedExecutor3;
+  private MockAsync<String, String> async1;
+  private MockAsync<String, String> async2;
+  private MockAsync<String, String> async3;
 
   private MutableRepository<String> stringVariable;
   private MutableRepository<Integer> integerVariable;
@@ -81,9 +82,9 @@ public final class RexUsageTest {
   @Before
   public void setUp() {
     initMocks(this);
-    delayedExecutor1 = new SingleSlotDelayedExecutor();
-    delayedExecutor2 = new SingleSlotDelayedExecutor();
-    delayedExecutor3 = new SingleSlotDelayedExecutor();
+    async1 = mockAsync();
+    async2 = mockAsync();
+    async3 = mockAsync();
 
     stringVariable = mutableRepository(STRING_A);
     integerVariable = mutableRepository(INTEGER_1);
@@ -98,14 +99,14 @@ public final class RexUsageTest {
         .getFrom(mockStringSupplier)
         .transform(mockStringToInteger)
         .mergeIn(mockDoubleSupplier, mockNumbersToString)
-        .goTo(delayedExecutor1)
+        .async(async1)
         .transform(mockStringToIntegerAttempt)
         .transform(mockRecoverIntegerToString)
-        .goTo(delayedExecutor2)
+        .async(async2)
         .attemptTransform(mockStringToIntegerAttempt).orSkip()
         .attemptGetFrom(mockIntegerAttemptSupplier).orSkip()
         .attemptMergeIn(mockDoubleSupplier, mockNumbersToStringAttempt).orSkip()
-        .goTo(delayedExecutor3)
+        .async(async3)
         .thenGetFrom(mockStringSupplier)
         .notifyIf(mockChecker)
         .onDeactivation(SEND_INTERRUPT | RESET_TO_INITIAL_VALUE)
@@ -127,14 +128,14 @@ public final class RexUsageTest {
     assertThat(reactionTo(String.class)
         .transform(mockStringToInteger)
         .mergeIn(mockDoubleSupplier, mockNumbersToString)
-        .goTo(delayedExecutor1)
+        .async(async1)
         .transform(mockStringToIntegerAttempt)
         .transform(mockRecoverIntegerToString)
-        .goTo(delayedExecutor2)
+        .async(async2)
         .attemptTransform(mockStringToIntegerAttempt).orSkip()
         .attemptGetFrom(mockIntegerAttemptSupplier).orSkip()
         .attemptMergeIn(mockDoubleSupplier, mockNumbersToStringAttempt).orSkip()
-        .goTo(delayedExecutor3)
+        .async(async3)
         .thenEnd()
         .onDeactivation(SEND_INTERRUPT | RESET_TO_INITIAL_VALUE)
         .onConcurrentUpdate(SEND_INTERRUPT | RESET_TO_INITIAL_VALUE)

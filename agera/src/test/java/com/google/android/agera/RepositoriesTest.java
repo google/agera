@@ -20,6 +20,7 @@ import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Repositories.mutableRepository;
 import static com.google.android.agera.Repositories.repository;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
+import static com.google.android.agera.test.MockAsync.mockAsync;
 import static com.google.android.agera.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static com.google.android.agera.test.matchers.SupplierGives.has;
 import static com.google.android.agera.test.matchers.UpdatableUpdated.wasNotUpdated;
@@ -30,7 +31,6 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -38,6 +38,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
+import com.google.android.agera.test.MockAsync;
 import com.google.android.agera.test.mocks.MockUpdatable;
 
 import android.support.annotation.NonNull;
@@ -45,16 +46,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)
@@ -71,6 +68,7 @@ public final class RepositoriesTest {
   private MutableRepository<List<Integer>> otherListSource;
   private MockUpdatable updatable;
   private UpdateDispatcher updateDispatcher;
+  private MockAsync<List<Integer>, Integer> async;
   @Mock
   private Receiver<Integer> mockIntegerReceiver;
   @Mock
@@ -82,22 +80,19 @@ public final class RepositoriesTest {
   @Mock
   private Function<List<Integer>, Integer> mockIntegerListToIntValueFunction;
   @Mock
-  private Merger<List<Integer>, Runnable, Runnable> mockRunnableDecorator;
-  @Mock
-  private Runnable mockRunnable;
-  @Captor
-  private ArgumentCaptor<Runnable> runnableCaptor;
+  private Function<Integer, List<Integer>> mockIntValueToIntegerListFunction;
 
   @Before
   public void setUp() {
     initMocks(this);
     when(mockIntegerListSupplier.get()).thenReturn(LIST);
-    when(mockIntegerListToIntValueFunction.apply(Matchers.<List<Integer>>any()))
-        .thenReturn(INT_VALUE);
+    when(mockIntegerListToIntValueFunction.apply(anyListOf(Integer.class))).thenReturn(INT_VALUE);
+    when(mockIntValueToIntegerListFunction.apply(any(Integer.class))).thenReturn(LIST);
     updateDispatcher = updateDispatcher();
     listSource = mutableRepository(LIST);
     otherListSource = mutableRepository(OTHER_LIST);
     updatable = mockUpdatable();
+    async = mockAsync();
   }
 
   @After
@@ -205,53 +200,44 @@ public final class RepositoriesTest {
   }
 
   @Test
-  public void shouldContainCorrectValueForTransformInExecutor() {
+  public void shouldContainCorrectValueForAsync() {
     final Repository<List<Integer>> repository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe()
         .onUpdatesPerLoop()
-        .goTo(new SyncExecutor())
-        .getFrom(listSource)
-        .thenTransform(new AddTwoForEachFunction())
+        .async(async)
+        .thenTransform(mockIntValueToIntegerListFunction)
         .compile();
 
     updatable.addToObservable(repository);
 
-    assertThat(repository, has(LIST_PLUS_TWO));
+    verifyZeroInteractions(mockIntValueToIntegerListFunction);
+    assertThat(repository, has(INITIAL_VALUE));
+
+    async.expectAndOutput(INITIAL_VALUE, INT_VALUE);
+
+    verify(mockIntValueToIntegerListFunction).apply(INT_VALUE);
+    assertThat(repository, has(LIST));
   }
 
   @Test
-  public void shouldContainCorrectValueForTransformInExecutorMidFlow() {
+  public void shouldContainCorrectValueForAsyncMidFlow() {
     final Repository<List<Integer>> repository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe()
         .onUpdatesPerLoop()
         .getFrom(listSource)
-        .goTo(new SyncExecutor())
-        .thenTransform(new AddTwoForEachFunction())
+        .async(async)
+        .thenTransform(mockIntValueToIntegerListFunction)
         .compile();
 
     updatable.addToObservable(repository);
 
-    assertThat(repository, has(LIST_PLUS_TWO));
-  }
+    verifyZeroInteractions(mockIntValueToIntegerListFunction);
+    assertThat(repository, has(INITIAL_VALUE));
 
-  @Test
-  public void shouldUseRunnableDecorator() {
-    when(mockRunnableDecorator.merge(anyListOf(Integer.class), any(Runnable.class)))
-        .thenReturn(mockRunnable);
-    final Repository<List<Integer>> repository = repositoryWithInitialValue(INITIAL_VALUE)
-        .observe()
-        .onUpdatesPerLoop()
-        .getFrom(listSource)
-        .goTo(new SyncExecutor(), mockRunnableDecorator)
-        .thenTransform(new AddTwoForEachFunction())
-        .compile();
+    async.expectAndOutput(LIST, INT_VALUE);
 
-    updatable.addToObservable(repository);
-
-    verify(mockRunnableDecorator).merge(eq(LIST), runnableCaptor.capture());
-    verify(mockRunnable).run();
-    runnableCaptor.getValue().run();
-    assertThat(repository, has(LIST_PLUS_TWO));
+    verify(mockIntValueToIntegerListFunction).apply(INT_VALUE);
+    assertThat(repository, has(LIST));
   }
 
   @Test
@@ -385,13 +371,6 @@ public final class RepositoriesTest {
         result.add(integer + 2);
       }
       return result;
-    }
-  }
-
-  private static class SyncExecutor implements Executor {
-    @Override
-    public void execute(@NonNull final Runnable command) {
-      command.run();
     }
   }
 }

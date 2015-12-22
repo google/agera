@@ -18,18 +18,17 @@ package com.google.android.agera;
 import static com.google.android.agera.Functions.identityFunction;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Mergers.objectsUnequal;
-import static com.google.android.agera.Mergers.returnSecond;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
 import static com.google.android.agera.Rex.compiledReaction;
 import static com.google.android.agera.Rex.compiledRepository;
+import static com.google.android.agera.RexRunner.addAsync;
 import static com.google.android.agera.RexRunner.addBindWith;
 import static com.google.android.agera.RexRunner.addCheck;
 import static com.google.android.agera.RexRunner.addEnd;
 import static com.google.android.agera.RexRunner.addFilterSuccess;
 import static com.google.android.agera.RexRunner.addGetFrom;
 import static com.google.android.agera.RexRunner.addGoLazy;
-import static com.google.android.agera.RexRunner.addGoTo;
 import static com.google.android.agera.RexRunner.addMergeIn;
 import static com.google.android.agera.RexRunner.addSendTo;
 import static com.google.android.agera.RexRunner.addTransform;
@@ -42,7 +41,6 @@ import android.support.annotation.Nullable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
-import java.util.concurrent.Executor;
 
 @SuppressWarnings({"unchecked, rawtypes"})
 final class RexCompiler implements
@@ -367,18 +365,11 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler goTo(@NonNull final Executor executor) {
-    return goTo(executor, returnSecond());
-  }
-
-  @NonNull
-  @Override
-  public RexCompiler goTo(@NonNull final Executor executor,
-      @NonNull final Merger runnableDecorator) {
+  public RexCompiler async(@NonNull final Async async) {
     // available to both rexes
     checkExpect(FLOW);
     checkGoLazyUnused();
-    addGoTo(checkNotNull(executor), checkNotNull(runnableDecorator), directives);
+    addAsync(checkNotNull(async), directives);
     return this;
   }
 

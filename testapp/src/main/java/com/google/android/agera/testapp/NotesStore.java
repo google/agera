@@ -15,6 +15,7 @@
  */
 package com.google.android.agera.testapp;
 
+import static com.google.android.agera.Asyncs.goTo;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Reactions.reactionTo;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
@@ -103,21 +104,21 @@ final class NotesStore {
 
     // Create a receiver that inserts a note on the database thread executor
     final Reaction<SqlInsertRequest> insertReaction = reactionTo(SqlInsertRequest.class)
-        .goTo(executor)
+        .async(goTo(executor, SqlInsertRequest.class))
         .attemptTransform(databaseInsertFunction(databaseSupplier)).orSkip()
         .thenEnd()
         .compile();
 
     // Create a reaction that updates a note on the database thread executor
     final Reaction<SqlUpdateRequest> updateReaction = reactionTo(SqlUpdateRequest.class)
-        .goTo(executor)
+        .async(goTo(executor, SqlUpdateRequest.class))
         .attemptTransform(databaseUpdateFunction(databaseSupplier)).orSkip()
         .thenEnd()
         .compile();
 
     // Create a receiver that deletes a note on the database thread executor
     final Reaction<SqlDeleteRequest> deleteReaction = reactionTo(SqlDeleteRequest.class)
-        .goTo(executor)
+        .async(goTo(executor, SqlDeleteRequest.class))
         .attemptTransform(databaseDeleteFunction(databaseSupplier)).orSkip()
         .thenEnd()
         .compile();
@@ -136,7 +137,7 @@ final class NotesStore {
     final Repository<List<Note>> notesRepository = repositoryWithInitialValue(INITIAL_VALUE)
         .observe(insertReaction, updateReaction, deleteReaction)
         .onUpdatesPerLoop()
-        .goTo(executor)
+        .async(goTo(executor, (Class<List<Note>>) null))
         .getFrom(staticSupplier(sqlRequest().sql(GET_NOTES_FROM_TABLE).compile()))
         .thenAttemptTransform(databaseQueryFunction(databaseSupplier, cursorToNote))
         .orEnd(staticFunction(INITIAL_VALUE))

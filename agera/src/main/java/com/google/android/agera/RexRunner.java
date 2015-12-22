@@ -32,17 +32,16 @@ import android.support.annotation.Nullable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-final class RexRunner extends Handler
-    implements Updatable, UpdatablesChanged, Runnable {
+final class RexRunner extends Handler implements Updatable, UpdatablesChanged,
+    Receiver /* async output receiver */, Condition /* async cancelled condition */ {
   private static final int END = 0;
   private static final int GET_FROM = 1;
   private static final int MERGE_IN = 2;
   private static final int TRANSFORM = 3;
   private static final int CHECK = 4;
-  private static final int GO_TO = 5;
+  private static final int ASYNC = 5;
   private static final int GO_LAZY = 6;
   private static final int SEND_TO = 7;
   private static final int BIND = 8;
@@ -97,13 +96,13 @@ final class RexRunner extends Handler
   //region Data processing flow states
 
   @Retention(RetentionPolicy.SOURCE)
-  @IntDef({IDLE, RUNNING, CANCEL_REQUESTED, PAUSED_AT_GO_TO, PAUSED_AT_GO_LAZY, RUNNING_LAZILY})
+  @IntDef({IDLE, RUNNING, CANCEL_REQUESTED, PAUSED_AT_ASYNC, PAUSED_AT_GO_LAZY, RUNNING_LAZILY})
   private @interface RunState {}
 
   private static final int IDLE = 0;
   private static final int RUNNING = 1;
   private static final int CANCEL_REQUESTED = 2;
-  private static final int PAUSED_AT_GO_TO = 3;
+  private static final int PAUSED_AT_ASYNC = 3;
   private static final int PAUSED_AT_GO_LAZY = 4;
   private static final int RUNNING_LAZILY = 5;
 
@@ -173,7 +172,7 @@ final class RexRunner extends Handler
    */
   private void maybeCancelFlow(@RexConfig final int config, final boolean scheduleRestart) {
     synchronized (this) {
-      if (runState == RUNNING || runState == PAUSED_AT_GO_TO) {
+      if (runState == RUNNING || runState == PAUSED_AT_ASYNC) {
         restartNeeded = scheduleRestart;
 
         // If config forbids cancellation, exit now after scheduling the restart, to skip the
@@ -270,7 +269,7 @@ final class RexRunner extends Handler
     int i = index;
     while (0 <= i && i < length) {
       int directiveType = (Integer) directives[i];
-      if (asynchronously || directiveType == GO_TO || directiveType == GO_LAZY) {
+      if (asynchronously || directiveType == ASYNC || directiveType == GO_LAZY) {
         // Check cancellation before running the next directive. This needs to be done while locked.
         // For goTo and goLazy, because they need to change the states and suspend the flow, they
         // need the lock and are therefore treated specially here.
@@ -278,10 +277,10 @@ final class RexRunner extends Handler
           if (checkCancellationLocked()) {
             break;
           }
-          if (directiveType == GO_TO) {
-            setPausedAtGoToLocked(i);
-            // the actual executor delivery is done below, outside the lock, to eliminate any
-            // deadlock possibility.
+          if (directiveType == ASYNC) {
+            setPausedAtAsyncLocked(i);
+            // the actual async call is done below, outside the lock, to eliminate any deadlock
+            // possibility.
           } else if (directiveType == GO_LAZY) {
             setLazyAndEndFlowLocked(i);
             return;
@@ -304,8 +303,8 @@ final class RexRunner extends Handler
         case CHECK:
           i = runCheck(directives, i);
           break;
-        case GO_TO:
-          i = runGoTo(directives, i);
+        case ASYNC:
+          i = runAsync(directives, i);
           break;
         case SEND_TO:
           i = runSendTo(directives, i);
@@ -386,24 +385,20 @@ final class RexRunner extends Handler
     }
   }
 
-  static void addGoTo(@NonNull final Executor executor, @NonNull final Merger runnableDecorator,
-      @NonNull final List<Object> directives) {
-    directives.add(GO_TO);
-    directives.add(executor);
-    directives.add(runnableDecorator);
+  static void addAsync(@NonNull final Async async, @NonNull final List<Object> directives) {
+    directives.add(ASYNC);
+    directives.add(async);
   }
 
-  private int runGoTo(@NonNull final Object[] directives, final int index) {
-    Executor executor = (Executor) directives[index + 1];
-    Merger<Object, Runnable, Runnable> runnableDecorator =
-        (Merger<Object, Runnable, Runnable>) directives[index + 2];
-    executor.execute(runnableDecorator.merge(intermediateValue, this));
+  private int runAsync(@NonNull final Object[] directives, final int index) {
+    Async async = (Async) directives[index + 1];
+    async.async(intermediateValue, this, this);
     return -1;
   }
 
-  private static int continueFromGoTo(@NonNull final Object[] directives, final int index) {
-    checkState(directives[index].equals(GO_TO), "Inconsistent directive state for goTo");
-    return index + 3;
+  private static int continueFromAsync(@NonNull final Object[] directives, final int index) {
+    checkState(directives[index].equals(ASYNC), "Inconsistent directive state for async");
+    return index + 2;
   }
 
   static void addGoLazy(@NonNull final List<Object> directives) {
@@ -513,20 +508,21 @@ final class RexRunner extends Handler
     }
   }
 
-  private void setPausedAtGoToLocked(final int resumeIndex) {
+  private void setPausedAtAsyncLocked(final int resumeIndex) {
     lastDirectiveIndex = resumeIndex;
-    runState = PAUSED_AT_GO_TO;
+    runState = PAUSED_AT_ASYNC;
   }
 
-  /** Called from the executor of a goTo instruction to continue processing. */
+  /** Receiver implementation to receive async operation output. */
   @Override
-  public void run() {
+  public void accept(@NonNull final Object value) {
+    checkNotNull(value);
     Thread myThread = currentThread();
     int index;
     synchronized (this) {
       index = lastDirectiveIndex;
-      checkState(runState == PAUSED_AT_GO_TO || runState == CANCEL_REQUESTED,
-          "Illegal call of Runnable.run()");
+      checkState(runState == PAUSED_AT_ASYNC || runState == CANCEL_REQUESTED,
+          "Illegal call of Receiver.accept()");
       lastDirectiveIndex = -1;
 
       if (checkCancellationLocked()) {
@@ -537,7 +533,8 @@ final class RexRunner extends Handler
       currentThread = myThread;
     }
     // leave the synchronization lock to run the rest of the flow
-    runFlowFrom(continueFromGoTo(directives, index), true);
+    intermediateValue = value;
+    runFlowFrom(continueFromAsync(directives, index), true);
     // consume any unconsumed interrupted flag
     Thread.interrupted();
     // disallow interrupting the current thread, but chances are the next directive has started
@@ -549,6 +546,14 @@ final class RexRunner extends Handler
       if (currentThread == myThread) {
         currentThread = null;
       }
+    }
+  }
+
+  /** Condition implementation to allow checking if cancellation has been requested. */
+  @Override
+  public boolean applies() {
+    synchronized (this) {
+      return runState == CANCEL_REQUESTED;
     }
   }
 

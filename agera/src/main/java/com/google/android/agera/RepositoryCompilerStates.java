@@ -102,7 +102,7 @@ import java.util.concurrent.Executor;
  * <h3>List of directives</h3>
  *
  * <b>Variables:</b> s: supplier; fs: fallible supplier; m: merger; fm: fallible merger;
- * f: function; ff: fallible function; p: predicate; r: receiver; b: binder; e: executor; v: value.
+ * f: function; ff: fallible function; p: predicate; r: receiver; b: binder; a: async; v: value.
  * <ul>
  *   <li>({@link RFlow#thenGetFrom then}){@link RFlow#getFrom GetFrom(s)}
  *   <li>({@link RFlow#thenMergeIn then}){@link RFlow#mergeIn MergeIn(s, m)}
@@ -117,7 +117,7 @@ import java.util.concurrent.Executor;
  *   <li>{@link RFlow#check(Function, Predicate) check(f, p)}.<i>term</i>
  *   <li>{@link RFlow#sendTo sendTo(r)}
  *   <li>{@link RFlow#bindWith bindWith(s, b)}
- *   <li>{@link RFlow#goTo goTo(e)}
+ *   <li>{@link RFlow#async async(a)}
  *   <li>{@link RFlow#goLazy goLazy()}
  *   <li>{@link RFlow#thenSkip thenSkip()}
  * </ul>
@@ -223,14 +223,18 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
     <TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, TCfg, ?>> attemptTransform(
         @NonNull Function<? super TPre, Result<TCur>> attemptFunction);
 
+    @NonNull
+    @Override
+    <TCur> RFlow<TVal, TCur, TCfg, ?> async(@NonNull Async<TPre, TCur> async);
+
     // For Repositories only:
 
     /**
      * Suspend the data processing flow and notify the registered {@link Updatable}s of updates.
      * The remaining of the flow will be run synchronously <i>and uninterruptibly</i> the first time
      * {@link Repository#get()} is called, to produce the new repository value lazily. After this
-     * directive, {@link #goTo(Executor)} is no longer available, and all further operators should
-     * be fairly lightweight in order not to block the callers of {@code get()} for too long.
+     * directive, {@link #async} is no longer available, and all further operators should be fairly
+     * lightweight in order not to block the callers of {@code get()} for too long.
      */
     @NonNull
     RSyncFlow<TVal, TPre, TCfg, ?> goLazy();
