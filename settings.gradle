@@ -18,6 +18,8 @@ include ':extensions:content'
 include ':extensions:rvadapter'
 include ':extensions:database'
 include ':extensions:net'
+include ':extensions:requester'
+include ':extensions:transfer'
 include ':testapp'
 
 gradle.ext.versionCode = 10000
