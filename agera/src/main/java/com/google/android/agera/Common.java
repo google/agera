@@ -26,8 +26,6 @@ import android.support.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.concurrent.Executor;
-import java.util.concurrent.RejectedExecutionException;
 
 final class Common {
   static final Function IDENTITY_FUNCTION = new IdentityFunction();
@@ -206,7 +204,7 @@ final class Common {
     }
   }
 
-  private static final class UpdateDispatcherHandler extends Handler implements Executor {
+  private static final class UpdateDispatcherHandler extends Handler {
     public static final int MSG_FIRST_ADDED = 0;
     public static final int MSG_LAST_REMOVED = 1;
     public static final int MSG_UPDATE = 2;
@@ -248,13 +246,6 @@ final class Common {
           ((Updatable) message.obj).update();
           break;
         default:
-      }
-    }
-
-    @Override
-    public void execute(@NonNull final Runnable command) {
-      if (!post(command)) {
-        throw new RejectedExecutionException();
       }
     }
   }

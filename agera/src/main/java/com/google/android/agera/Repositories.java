@@ -45,7 +45,7 @@ public final class Repositories {
    */
   @NonNull
   public static <T> REventSource<T, T> repositoryWithInitialValue(@NonNull final T initialValue) {
-    return RexCompiler.repositoryWithInitialValue(initialValue);
+    return RepositoryCompiler.repositoryWithInitialValue(initialValue);
   }
 
   /**

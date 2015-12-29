@@ -21,16 +21,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Constants controlling some behaviors of compiled {@link Repository}s and {@link Reaction}s.
+ * Constants controlling some behaviors of the compiled {@link Repository}s.
  */
 @Retention(RetentionPolicy.SOURCE)
 @IntDef(flag = true, value = {
-    RexConfig.CONTINUE_FLOW,
-    RexConfig.CANCEL_FLOW,
-    RexConfig.RESET_TO_INITIAL_VALUE,
-    RexConfig.SEND_INTERRUPT,
+    RepositoryConfig.CONTINUE_FLOW,
+    RepositoryConfig.CANCEL_FLOW,
+    RepositoryConfig.RESET_TO_INITIAL_VALUE,
+    RepositoryConfig.SEND_INTERRUPT,
 })
-public @interface RexConfig {
+public @interface RepositoryConfig {
 
   /**
    * If a data processing flow is ongoing, allow it to finish. If this is the configuration for the
@@ -57,19 +57,18 @@ public @interface RexConfig {
    * The repository value should reset to the initial value on deactivation. The reset is immediate
    * while the data processing flow, if ongoing, may terminate only after the currently running
    * directive. If this is the configuration for the concurrent update, the repository value will
-   * not be reset, and if this is the configuration for a reaction, there is no initial value to
-   * reset to, although for these cases, the ongoing flow will still be cancelled due to the
-   * included {@link #CANCEL_FLOW} value.
+   * <i>not</i> be reset, but due to the included {@link #CANCEL_FLOW} value, the ongoing flow will
+   * still be cancelled.
    */
   int RESET_TO_INITIAL_VALUE = 2 | CANCEL_FLOW;
 
   /**
-   * If a data processing flow is ongoing, {@linkplain Thread#interrupt() interrupt} the thread
-   * currently running the flow, to signal the current operator (function, supplier, merger etc.) to
-   * stop early. However, to minimize unwanted effects on the worker looper thread and the thread
-   * from which the client calls {@link Repository#get()}, the interrupt signal will not be sent if
-   * the flow is currently before the first {@code goTo} (it is still on the worker looper thread)
-   * or after {@code goLazy} (it is now on a client thread).
+   * If a data processing flow is ongoing and in the asynchronous stage (after the first
+   * {@code goTo} directive and before the {@code goLazy} directive), {@linkplain Thread#interrupt()
+   * interrupt} the thread currently running the flow, to signal the current operator (function,
+   * supplier, merger etc.) to stop early. The interrupt signal will not be sent if the flow is in
+   * a synchronous stage, to minimize unwanted effects on the worker looper thread and the thread
+   * from which the client calls {@link Repository#get()}.
    */
   int SEND_INTERRUPT = 4 | CANCEL_FLOW;
 }

@@ -15,24 +15,21 @@
  */
 package com.google.android.agera;
 
+import static com.google.android.agera.CompiledRepository.compiledRepository;
+import static com.google.android.agera.CompiledRepositoryRunner.addBindWith;
+import static com.google.android.agera.CompiledRepositoryRunner.addCheck;
+import static com.google.android.agera.CompiledRepositoryRunner.addEnd;
+import static com.google.android.agera.CompiledRepositoryRunner.addFilterSuccess;
+import static com.google.android.agera.CompiledRepositoryRunner.addGetFrom;
+import static com.google.android.agera.CompiledRepositoryRunner.addGoLazy;
+import static com.google.android.agera.CompiledRepositoryRunner.addGoTo;
+import static com.google.android.agera.CompiledRepositoryRunner.addMergeIn;
+import static com.google.android.agera.CompiledRepositoryRunner.addSendTo;
+import static com.google.android.agera.CompiledRepositoryRunner.addTransform;
 import static com.google.android.agera.Functions.identityFunction;
-import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Mergers.objectsUnequal;
-import static com.google.android.agera.Mergers.returnSecond;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
-import static com.google.android.agera.Rex.compiledReaction;
-import static com.google.android.agera.Rex.compiledRepository;
-import static com.google.android.agera.RexRunner.addBindWith;
-import static com.google.android.agera.RexRunner.addCheck;
-import static com.google.android.agera.RexRunner.addEnd;
-import static com.google.android.agera.RexRunner.addFilterSuccess;
-import static com.google.android.agera.RexRunner.addGetFrom;
-import static com.google.android.agera.RexRunner.addGoLazy;
-import static com.google.android.agera.RexRunner.addGoTo;
-import static com.google.android.agera.RexRunner.addMergeIn;
-import static com.google.android.agera.RexRunner.addSendTo;
-import static com.google.android.agera.RexRunner.addTransform;
 
 import android.os.Looper;
 import android.support.annotation.IntDef;
@@ -45,24 +42,21 @@ import java.util.ArrayList;
 import java.util.concurrent.Executor;
 
 @SuppressWarnings({"unchecked, rawtypes"})
-final class RexCompiler implements
-    ReactionCompilerStates.RFlow,
-    ReactionCompilerStates.RTermination,
+final class RepositoryCompiler implements
     RepositoryCompilerStates.RFrequency,
     RepositoryCompilerStates.RFlow,
     RepositoryCompilerStates.RTermination,
-    RepositoryCompilerStates.RConfig,
-    RexCompilerStates.RConfig {
+    RepositoryCompilerStates.RConfig {
 
-  private static final ThreadLocal<RexCompiler> compilers = new ThreadLocal<>();
+  private static final ThreadLocal<RepositoryCompiler> compilers = new ThreadLocal<>();
 
   @NonNull
   static <TVal> RepositoryCompilerStates.REventSource<TVal, TVal> repositoryWithInitialValue(
       @NonNull final TVal initialValue) {
     checkNotNull(Looper.myLooper());
-    RexCompiler compiler = compilers.get();
+    RepositoryCompiler compiler = compilers.get();
     if (compiler == null) {
-      compiler = new RexCompiler();
+      compiler = new RepositoryCompiler();
     } else {
       // Remove compiler from the ThreadLocal to prevent reuse in the middle of a compilation.
       // recycle(), called by compile(), will return the compiler here. ThreadLocal.set(null) keeps
@@ -73,20 +67,7 @@ final class RexCompiler implements
     return compiler.start(initialValue);
   }
 
-  @NonNull
-  static <TVal> ReactionCompilerStates.RFlow<TVal, TVal,
-      RexCompilerStates.RConfig<TVal, Reaction<TVal>, ?>, ?> reactionFor(
-      @NonNull Reservoir<? extends TVal> reservoir) {
-    checkNotNull(reservoir);
-    RexCompiler compiler = (RexCompiler) repositoryWithInitialValue(REACTION_TRIGGER)
-        .observe(reservoir)
-        .onUpdatesPerLoop()
-        .attemptGetFrom(reservoir).orSkip();
-    compiler.reservoirForReaction = reservoir;
-    return compiler;
-  }
-
-  private static void recycle(@NonNull final RexCompiler compiler) {
+  private static void recycle(@NonNull final RepositoryCompiler compiler) {
     compilers.set(compiler);
   }
 
@@ -103,9 +84,6 @@ final class RexCompiler implements
   private static final int TERMINATE_THEN_END = 5;
   private static final int CONFIG = 6;
 
-  private static final Object REACTION_TRIGGER = new Object();
-  private static final Function REACTION_TRIGGER_STATIC_FUNCTION = staticFunction(REACTION_TRIGGER);
-
   private Object initialValue;
   private final ArrayList<Observable> eventSources = new ArrayList<>();
   private int frequency;
@@ -116,19 +94,17 @@ final class RexCompiler implements
   private Predicate casePredicate;
   private boolean goLazyUsed;
   private Merger notifyChecker = objectsUnequal();
-  @RexConfig
+  @RepositoryConfig
   private int deactivationConfig;
-  @RexConfig
+  @RepositoryConfig
   private int concurrentUpdateConfig;
 
   @Expect
   private int expect;
-  @Nullable
-  private Reservoir reservoirForReaction;
 
-  private RexCompiler() {}
+  private RepositoryCompiler() {}
 
-  private RexCompiler start(@NonNull final Object initialValue) {
+  private RepositoryCompiler start(@NonNull final Object initialValue) {
     checkExpect(NOTHING);
     expect = FIRST_EVENT_SOURCE;
     this.initialValue = initialValue;
@@ -143,14 +119,6 @@ final class RexCompiler implements
     checkState(expect == accept1 || expect == accept2, "Unexpected compiler state");
   }
 
-  private void checkCompilingRepository() {
-    checkState(reservoirForReaction == null, "Unexpected use of repository-only methods");
-  }
-
-  private void checkCompilingReaction() {
-    checkState(reservoirForReaction != null, "Unexpected use of reaction-only methods");
-  }
-
   private void checkGoLazyUnused() {
     checkState(!goLazyUsed, "Unexpected occurrence of async directive after goLazy()");
   }
@@ -159,8 +127,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler observe(@NonNull final Observable... observables) {
-    checkCompilingRepository();
+  public RepositoryCompiler observe(@NonNull final Observable... observables) {
     checkExpect(FIRST_EVENT_SOURCE, FREQUENCY_OR_MORE_EVENT_SOURCE);
     for (Observable observable : observables) {
       eventSources.add(checkNotNull(observable));
@@ -175,8 +142,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler onUpdatesPer(int millis) {
-    checkCompilingRepository();
+  public RepositoryCompiler onUpdatesPer(int millis) {
     checkExpect(FREQUENCY_OR_MORE_EVENT_SOURCE);
     frequency = Math.max(0, millis);
     expect = FLOW;
@@ -185,7 +151,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler onUpdatesPerLoop() {
+  public RepositoryCompiler onUpdatesPerLoop() {
     return onUpdatesPer(0);
   }
 
@@ -195,8 +161,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler getFrom(@NonNull final Supplier supplier) {
-    // available to both rexes
+  public RepositoryCompiler getFrom(@NonNull final Supplier supplier) {
     checkExpect(FLOW);
     addGetFrom(supplier, directives);
     return this;
@@ -204,8 +169,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler mergeIn(@NonNull final Supplier supplier, @NonNull final Merger merger) {
-    // available to both rexes
+  public RepositoryCompiler mergeIn(@NonNull final Supplier supplier, @NonNull final Merger merger) {
     checkExpect(FLOW);
     addMergeIn(supplier, merger, directives);
     return this;
@@ -213,8 +177,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler transform(@NonNull final Function function) {
-    // available to both rexes
+  public RepositoryCompiler transform(@NonNull final Function function) {
     checkExpect(FLOW);
     addTransform(function, directives);
     return this;
@@ -222,14 +185,14 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler check(@NonNull final Predicate predicate) {
+  public RepositoryCompiler check(@NonNull final Predicate predicate) {
     return check(identityFunction(), predicate);
   }
 
   @NonNull
   @Override
-  public RexCompiler check(@NonNull final Function function, @NonNull final Predicate predicate) {
-    // available to both rexes
+  public RepositoryCompiler check(
+      @NonNull final Function function, @NonNull final Predicate predicate) {
     checkExpect(FLOW);
     caseExtractor = checkNotNull(function);
     casePredicate = checkNotNull(predicate);
@@ -239,8 +202,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler sendTo(@NonNull final Receiver receiver) {
-    // available to both rexes
+  public RepositoryCompiler sendTo(@NonNull final Receiver receiver) {
     checkExpect(FLOW);
     addSendTo(checkNotNull(receiver), directives);
     return this;
@@ -248,9 +210,8 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler bindWith(@NonNull final Supplier secondValueSupplier,
+  public RepositoryCompiler bindWith(@NonNull final Supplier secondValueSupplier,
       @NonNull final Binder binder) {
-    // available to both rexes
     checkExpect(FLOW);
     addBindWith(secondValueSupplier, binder, directives);
     return this;
@@ -258,25 +219,14 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler thenSkip() {
-    // available to both rexes
+  public RepositoryCompiler thenSkip() {
     endFlow(true);
     return this;
   }
 
   @NonNull
   @Override
-  public RexCompiler thenEnd() {
-    checkCompilingReaction();
-    transform(REACTION_TRIGGER_STATIC_FUNCTION);
-    endFlow(false);
-    return this;
-  }
-
-  @NonNull
-  @Override
-  public RexCompiler thenGetFrom(@NonNull final Supplier supplier) {
-    checkCompilingRepository();
+  public RepositoryCompiler thenGetFrom(@NonNull final Supplier supplier) {
     getFrom(supplier);
     endFlow(false);
     return this;
@@ -284,8 +234,8 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler thenMergeIn(@NonNull final Supplier supplier, @NonNull final Merger merger) {
-    checkCompilingRepository();
+  public RepositoryCompiler thenMergeIn(
+      @NonNull final Supplier supplier, @NonNull final Merger merger) {
     mergeIn(supplier, merger);
     endFlow(false);
     return this;
@@ -293,8 +243,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler thenTransform(@NonNull final Function function) {
-    checkCompilingRepository();
+  public RepositoryCompiler thenTransform(@NonNull final Function function) {
     transform(function);
     endFlow(false);
     return this;
@@ -307,8 +256,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler attemptGetFrom(@NonNull final Supplier attemptSupplier) {
-    // available to both rexes
+  public RepositoryCompiler attemptGetFrom(@NonNull final Supplier attemptSupplier) {
     getFrom(attemptSupplier);
     expect = TERMINATE_THEN_FLOW;
     return this;
@@ -316,9 +264,8 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler attemptMergeIn(
+  public RepositoryCompiler attemptMergeIn(
       @NonNull final Supplier supplier, @NonNull final Merger attemptMerger) {
-    // available to both rexes
     mergeIn(supplier, attemptMerger);
     expect = TERMINATE_THEN_FLOW;
     return this;
@@ -326,8 +273,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler attemptTransform(@NonNull final Function attemptFunction) {
-    // available to both rexes
+  public RepositoryCompiler attemptTransform(@NonNull final Function attemptFunction) {
     transform(attemptFunction);
     expect = TERMINATE_THEN_FLOW;
     return this;
@@ -335,8 +281,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler thenAttemptGetFrom(@NonNull final Supplier attemptSupplier) {
-    checkCompilingRepository();
+  public RepositoryCompiler thenAttemptGetFrom(@NonNull final Supplier attemptSupplier) {
     getFrom(attemptSupplier);
     expect = TERMINATE_THEN_END;
     return this;
@@ -344,9 +289,8 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler thenAttemptMergeIn(
+  public RepositoryCompiler thenAttemptMergeIn(
       @NonNull final Supplier supplier, @NonNull final Merger attemptMerger) {
-    checkCompilingRepository();
     mergeIn(supplier, attemptMerger);
     expect = TERMINATE_THEN_END;
     return this;
@@ -354,8 +298,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler thenAttemptTransform(@NonNull final Function attemptFunction) {
-    checkCompilingRepository();
+  public RepositoryCompiler thenAttemptTransform(@NonNull final Function attemptFunction) {
     transform(attemptFunction);
     expect = TERMINATE_THEN_END;
     return this;
@@ -367,25 +310,16 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler goTo(@NonNull final Executor executor) {
-    return goTo(executor, returnSecond());
-  }
-
-  @NonNull
-  @Override
-  public RexCompiler goTo(@NonNull final Executor executor,
-      @NonNull final Merger runnableDecorator) {
-    // available to both rexes
+  public RepositoryCompiler goTo(@NonNull final Executor executor) {
     checkExpect(FLOW);
     checkGoLazyUnused();
-    addGoTo(checkNotNull(executor), checkNotNull(runnableDecorator), directives);
+    addGoTo(executor, directives);
     return this;
   }
 
   @NonNull
   @Override
-  public RexCompiler goLazy() {
-    checkCompilingRepository();
+  public RepositoryCompiler goLazy() {
     checkExpect(FLOW);
     checkGoLazyUnused();
     addGoLazy(directives);
@@ -399,24 +333,14 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler orSkip() {
-    // available to both rexes
+  public RepositoryCompiler orSkip() {
     terminate(null);
     return this;
   }
 
   @NonNull
   @Override
-  public RexCompiler orEnd() {
-    checkCompilingReaction();
-    terminate(REACTION_TRIGGER_STATIC_FUNCTION);
-    return this;
-  }
-
-  @NonNull
-  @Override
-  public RexCompiler orEnd(@NonNull final Function valueFunction) {
-    checkCompilingRepository();
+  public RepositoryCompiler orEnd(@NonNull final Function valueFunction) {
     terminate(valueFunction);
     return this;
   }
@@ -443,8 +367,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler notifyIf(@NonNull final Merger notifyChecker) {
-    checkCompilingRepository();
+  public RepositoryCompiler notifyIf(@NonNull final Merger notifyChecker) {
     checkExpect(CONFIG);
     this.notifyChecker = checkNotNull(notifyChecker);
     return this;
@@ -452,8 +375,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler onDeactivation(@RexConfig final int deactivationConfig) {
-    // available to both rexes
+  public RepositoryCompiler onDeactivation(@RepositoryConfig final int deactivationConfig) {
     checkExpect(CONFIG);
     this.deactivationConfig = deactivationConfig;
     return this;
@@ -461,8 +383,7 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public RexCompiler onConcurrentUpdate(@RexConfig final int concurrentUpdateConfig) {
-    // available to both rexes
+  public RepositoryCompiler onConcurrentUpdate(@RepositoryConfig final int concurrentUpdateConfig) {
     checkExpect(CONFIG);
     this.concurrentUpdateConfig = concurrentUpdateConfig;
     return this;
@@ -470,37 +391,26 @@ final class RexCompiler implements
 
   @NonNull
   @Override
-  public Object compile() {
-    // available to both rexes
-    Object rex = compileRexAndReset();
+  public Repository compile() {
+    Repository repository = compileRepositoryAndReset();
     recycle(this);
-    return rex;
+    return repository;
   }
 
   @NonNull
   @Override
-  public RexCompiler compileIntoRepositoryWithInitialValue(@NonNull final Object value) {
-    checkCompilingRepository();
-    Repository repository = (Repository) compileRexAndReset();
+  public RepositoryCompiler compileIntoRepositoryWithInitialValue(@NonNull final Object value) {
+    Repository repository = compileRepositoryAndReset();
     // Don't recycle, instead sneak in the first directive and start the second repository
     addGetFrom(repository, directives);
     return start(value).observe(repository);
   }
 
   @NonNull
-  private Object compileRexAndReset() {
+  private Repository compileRepositoryAndReset() {
     checkExpect(CONFIG);
-    Object rex;
-    if (reservoirForReaction == null) {
-      rex = compiledRepository(initialValue, eventSources, frequency, directives, notifyChecker,
-          concurrentUpdateConfig, deactivationConfig);
-    } else {
-      // No need to remove RESET_TO_INITIAL_VALUE bit from the config flags. It is ineligible for a
-      // Reaction, but resetting will never happen on concurrent update, and when it happens on
-      // deactivation no one will be listening.
-      rex = compiledReaction(initialValue, reservoirForReaction, directives,
-          concurrentUpdateConfig, deactivationConfig);
-    }
+    Repository repository = compiledRepository(initialValue, eventSources, frequency, directives,
+        notifyChecker, concurrentUpdateConfig, deactivationConfig);
     expect = NOTHING;
     initialValue = null;
     eventSources.clear();
@@ -508,10 +418,9 @@ final class RexCompiler implements
     directives.clear();
     goLazyUsed = false;
     notifyChecker = objectsUnequal();
-    deactivationConfig = RexConfig.CONTINUE_FLOW;
-    concurrentUpdateConfig = RexConfig.CONTINUE_FLOW;
-    reservoirForReaction = null;
-    return rex;
+    deactivationConfig = RepositoryConfig.CONTINUE_FLOW;
+    concurrentUpdateConfig = RepositoryConfig.CONTINUE_FLOW;
+    return repository;
   }
 
   //endregion RConfig
