@@ -23,6 +23,7 @@ import static com.google.android.agera.database.SqlRequestCompiler.SQL_UPDATE_RE
 import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBColumn;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnWhereCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBSql;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBTable;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBWhereCompile;
@@ -56,7 +57,7 @@ public final class SqlRequests {
    */
   @SuppressWarnings("unchecked")
   @NonNull
-  public static DBTable<DBColumn<DBColumnCompile<SqlInsertRequest>>> sqlInsertRequest() {
+  public static DBTable<DBColumn<DBColumnCompile<SqlInsertRequest, ?>>> sqlInsertRequest() {
     return new SqlRequestCompiler(SQL_INSERT_REQUEST);
   }
 
@@ -65,7 +66,7 @@ public final class SqlRequests {
    */
   @SuppressWarnings("unchecked")
   @NonNull
-  public static DBTable<DBColumn<DBWhereCompile<SqlUpdateRequest>>> sqlUpdateRequest() {
+  public static DBTable<DBColumn<DBColumnWhereCompile<SqlUpdateRequest, ?>>> sqlUpdateRequest() {
     return new SqlRequestCompiler(SQL_UPDATE_REQUEST);
   }
 

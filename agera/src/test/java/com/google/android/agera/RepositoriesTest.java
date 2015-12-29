@@ -28,6 +28,9 @@ import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -38,11 +41,12 @@ import static org.robolectric.annotation.Config.NONE;
 import com.google.android.agera.test.mocks.MockUpdatable;
 
 import android.support.annotation.NonNull;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
@@ -77,6 +81,12 @@ public final class RepositoriesTest {
   private Predicate<List<Integer>> mockIntegerListPredicate;
   @Mock
   private Function<List<Integer>, Integer> mockIntegerListToIntValueFunction;
+  @Mock
+  private Merger<List<Integer>, Runnable, Runnable> mockRunnableDecorator;
+  @Mock
+  private Runnable mockRunnable;
+  @Captor
+  private ArgumentCaptor<Runnable> runnableCaptor;
 
   @Before
   public void setUp() {
@@ -221,6 +231,26 @@ public final class RepositoriesTest {
 
     updatable.addToObservable(repository);
 
+    assertThat(repository, has(LIST_PLUS_TWO));
+  }
+
+  @Test
+  public void shouldUseRunnableDecorator() {
+    when(mockRunnableDecorator.merge(anyListOf(Integer.class), any(Runnable.class)))
+        .thenReturn(mockRunnable);
+    final Repository<List<Integer>> repository = repositoryWithInitialValue(INITIAL_VALUE)
+        .observe()
+        .onUpdatesPerLoop()
+        .getFrom(listSource)
+        .goTo(new SyncExecutor(), mockRunnableDecorator)
+        .thenTransform(new AddTwoForEachFunction())
+        .compile();
+
+    updatable.addToObservable(repository);
+
+    verify(mockRunnableDecorator).merge(eq(LIST), runnableCaptor.capture());
+    verify(mockRunnable).run();
+    runnableCaptor.getValue().run();
     assertThat(repository, has(LIST_PLUS_TWO));
   }
 

@@ -225,19 +225,19 @@ public final class NotesActivity extends Activity implements Updatable {
   // Presents each note in the repository as a text view in the recycler view
   private final class NotePresenter extends RepositoryPresenter<List<Note>> {
     @Override
-    public int getItemCount(@NonNull final Repository<List<Note>> repository) {
-      return repository.get().size();
+    public int getItemCount(@NonNull final List<Note> notes) {
+      return notes.size();
     }
 
     @Override
-    public int getLayoutResId(@NonNull final Repository<List<Note>> repository, final int index) {
+    public int getLayoutResId(@NonNull final List<Note> notes, final int index) {
       return R.layout.text_layout;
     }
 
     @Override
-    public void bind(@NonNull final Repository<List<Note>> repository, final int index,
+    public void bind(@NonNull final List<Note> notes, final int index,
         @NonNull final RecyclerView.ViewHolder holder) {
-      final Note note = repository.get().get(index);
+      final Note note = notes.get(index);
       TextView view = (TextView) holder.itemView;
       view.setText(note.getNote());
       view.setOnClickListener(new View.OnClickListener() {

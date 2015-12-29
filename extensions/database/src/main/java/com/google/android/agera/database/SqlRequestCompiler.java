@@ -20,15 +20,15 @@ import static com.google.android.agera.Preconditions.checkState;
 
 import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnWhereCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBSql;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBTable;
-import com.google.android.agera.database.SqlRequestCompilerStates.DBWhereCompile;
 
 import android.content.ContentValues;
 import android.support.annotation.NonNull;
 
 final class SqlRequestCompiler
-    implements DBTable, DBSql, DBArgumentCompile, DBWhereCompile, DBColumnCompile {
+    implements DBTable, DBSql, DBArgumentCompile, DBColumnCompile, DBColumnWhereCompile {
   static final int SQL_REQUEST = 0;
   static final int SQL_DELETE_REQUEST = 1;
   static final int SQL_UPDATE_REQUEST = 2;
