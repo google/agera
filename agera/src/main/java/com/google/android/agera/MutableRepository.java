@@ -22,4 +22,4 @@ package com.google.android.agera;
  * {@link Updatable}s will be notified. {@link MutableRepository#accept(Object)} can be called on
  * any thread.
  */
-public interface MutableRepository<T> extends Repository<T>, Reaction<T> {}
+public interface MutableRepository<T> extends Repository<T>, Receiver<T> {}

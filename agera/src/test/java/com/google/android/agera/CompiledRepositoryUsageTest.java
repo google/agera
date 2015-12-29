@@ -15,13 +15,12 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Reactions.reactionTo;
 import static com.google.android.agera.Repositories.mutableRepository;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
-import static com.google.android.agera.RexConfig.CANCEL_FLOW;
-import static com.google.android.agera.RexConfig.CONTINUE_FLOW;
-import static com.google.android.agera.RexConfig.RESET_TO_INITIAL_VALUE;
-import static com.google.android.agera.RexConfig.SEND_INTERRUPT;
+import static com.google.android.agera.RepositoryConfig.CANCEL_FLOW;
+import static com.google.android.agera.RepositoryConfig.CONTINUE_FLOW;
+import static com.google.android.agera.RepositoryConfig.RESET_TO_INITIAL_VALUE;
+import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -39,7 +38,7 @@ import org.robolectric.annotation.Config;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)
-public final class RexUsageTest {
+public final class CompiledRepositoryUsageTest {
   private static final String STRING_A = "STRING_A";
   private static final String STRING_B = "STRING_B";
   private static final int INTEGER_1 = 1;
@@ -119,25 +118,6 @@ public final class RexUsageTest {
         .notifyIf(mockChecker)
         .onDeactivation(CONTINUE_FLOW)
         .onConcurrentUpdate(CANCEL_FLOW)
-        .compile(), not(nullValue()));
-  }
-
-  @Test
-  public void shouldCompileComplexReaction() {
-    assertThat(reactionTo(String.class)
-        .transform(mockStringToInteger)
-        .mergeIn(mockDoubleSupplier, mockNumbersToString)
-        .goTo(delayedExecutor1)
-        .transform(mockStringToIntegerAttempt)
-        .transform(mockRecoverIntegerToString)
-        .goTo(delayedExecutor2)
-        .attemptTransform(mockStringToIntegerAttempt).orSkip()
-        .attemptGetFrom(mockIntegerAttemptSupplier).orSkip()
-        .attemptMergeIn(mockDoubleSupplier, mockNumbersToStringAttempt).orSkip()
-        .goTo(delayedExecutor3)
-        .thenEnd()
-        .onDeactivation(SEND_INTERRUPT | RESET_TO_INITIAL_VALUE)
-        .onConcurrentUpdate(SEND_INTERRUPT | RESET_TO_INITIAL_VALUE)
         .compile(), not(nullValue()));
   }
 }

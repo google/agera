@@ -17,9 +17,9 @@ package com.google.android.agera;
 
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
-import static com.google.android.agera.RexConfig.CANCEL_FLOW;
-import static com.google.android.agera.RexConfig.RESET_TO_INITIAL_VALUE;
-import static com.google.android.agera.RexConfig.SEND_INTERRUPT;
+import static com.google.android.agera.RepositoryConfig.CANCEL_FLOW;
+import static com.google.android.agera.RepositoryConfig.RESET_TO_INITIAL_VALUE;
+import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
 import static java.lang.Thread.currentThread;
 
 import android.os.Handler;
@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-final class RexRunner extends Handler
+final class CompiledRepositoryRunner extends Handler
     implements Updatable, UpdatablesChanged, Runnable {
   private static final int END = 0;
   private static final int GET_FROM = 1;
@@ -58,9 +58,9 @@ final class RexRunner extends Handler
   private final Object[] directives;
   @NonNull
   private final Merger<Object, Object, Boolean> notifyChecker;
-  @RexConfig
+  @RepositoryConfig
   private final int deactivationConfig;
-  @RexConfig
+  @RepositoryConfig
   private final int concurrentUpdateConfig;
 
   /**
@@ -70,16 +70,16 @@ final class RexRunner extends Handler
    */
   private volatile Updatable updateDispatcher;
 
-  RexRunner(
+  CompiledRepositoryRunner(
       @NonNull final Object initialValue,
       @NonNull final Observable eventSource,
       @NonNull final Object[] directives,
       @NonNull final Merger<Object, Object, Boolean> notifyChecker,
-      @RexConfig final int deactivationConfig,
-      @RexConfig final int concurrentUpdateConfig) {
+      @RepositoryConfig final int deactivationConfig,
+      @RepositoryConfig final int concurrentUpdateConfig) {
     super(Looper.myLooper());
     this.initialValue = initialValue;
-    this.currentValue = initialValue;      // non-final field but with @NonNull requirement
+    this.currentValue = initialValue;
     this.intermediateValue = initialValue; // non-final field but with @NonNull requirement
     this.eventSource = eventSource;
     this.directives = directives;
@@ -171,7 +171,7 @@ final class RexRunner extends Handler
    *
    * @param scheduleRestart Whether to schedule a restart if a current flow is canceled.
    */
-  private void maybeCancelFlow(@RexConfig final int config, final boolean scheduleRestart) {
+  private void maybeCancelFlow(@RepositoryConfig final int config, final boolean scheduleRestart) {
     synchronized (this) {
       if (runState == RUNNING || runState == PAUSED_AT_GO_TO) {
         restartNeeded = scheduleRestart;

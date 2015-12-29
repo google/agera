@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Container of the compiler state interfaces supporting the declaration of {@link Repository}s
@@ -55,8 +56,8 @@ import java.util.concurrent.Executor;
  * <p>When the data processing flow is run, the current repository value exposed through
  * {@link Repository#get()} is used as the input value to the first directive. This may be the
  * repository's initial value if the flow has not updated the value before, or the repository was
- * {@linkplain RexConfig#RESET_TO_INITIAL_VALUE reset}. The directives are run sequentially to
- * transform this input value. The data processing flow <i>ends</i> normally after a {@code then}
+ * {@linkplain RepositoryConfig#RESET_TO_INITIAL_VALUE reset}. The directives are run sequentially
+ * to transform this input value. The data processing flow <i>ends</i> normally after a {@code then}
  * directive that produces a final value is run, or when a <i>termination clause</i> is run which
  * {@code end}s the flow early with a value, in which case the repository value is updated and the
  * registered {@link Updatable}s are notified. The flow can also be terminated abruptly if a
@@ -139,7 +140,12 @@ import java.util.concurrent.Executor;
  * model object, or in general, an object that is detached from any intermediate values, therefore
  * safe to be used as the exposed value of the repository.
  */
-public interface RepositoryCompilerStates extends RexCompilerStates {
+public interface RepositoryCompilerStates {
+
+  // Note on documentation grammar: most method summaries for flow directives use an infinitive verb
+  // phrase ("do something") instead of the usual 3rd-person grammar ("does something"). This is
+  // because the full sentence for these method summaries are "this method specifies that the next
+  // step of the flow should do something", rather than "this method does something".
 
   /**
    * Compiler state allowing to specify the event source of the repository.
@@ -173,14 +179,14 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
      * timeout is sufficiently small.
      */
     @NonNull
-    RFlow<TVal, TStart, RConfig<TVal, Repository<TVal>, ?>, ?> onUpdatesPer(int millis);
+    RFlow<TVal, TStart, ?> onUpdatesPer(int millis);
 
     /**
      * Specifies that multiple updates from the event sources per worker looper loop should start
      * only one data processing flow.
      */
     @NonNull
-    RFlow<TVal, TStart, RConfig<TVal, Repository<TVal>, ?>, ?> onUpdatesPerLoop();
+    RFlow<TVal, TStart, ?> onUpdatesPerLoop();
   }
 
   /**
@@ -189,41 +195,53 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
    * @param <TVal> Value type of the repository.
    * @param <TPre> The output value type of the previous directive.
    */
-  interface RFlow<TVal, TPre, TCfg extends RConfig<TVal, Repository<TVal>, ?>,
-          TSelf extends RFlow<TVal, TPre, TCfg, TSelf>>
-      extends RSyncFlow<TVal, TPre, TCfg, TSelf>, RFlowBase<TPre, TCfg, TSelf> {
+  interface RFlow<TVal, TPre, TSelf extends RFlow<TVal, TPre, TSelf>>
+      extends RSyncFlow<TVal, TPre, TSelf> {
     // Methods whose return types need subtyping (due to no "generic type of generic type" in Java):
 
     @NonNull
     @Override
-    <TCur> RFlow<TVal, TCur, TCfg, ?> getFrom(@NonNull Supplier<TCur> supplier);
+    <TCur> RFlow<TVal, TCur, ?> getFrom(@NonNull Supplier<TCur> supplier);
 
     @NonNull
     @Override
-    <TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, TCfg, ?>> attemptGetFrom(
+    <TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, ?>> attemptGetFrom(
         @NonNull Supplier<Result<TCur>> attemptSupplier);
 
     @NonNull
     @Override
-    <TAdd, TCur> RFlow<TVal, TCur, TCfg, ?> mergeIn(@NonNull Supplier<TAdd> supplier,
+    <TAdd, TCur> RFlow<TVal, TCur, ?> mergeIn(@NonNull Supplier<TAdd> supplier,
         @NonNull Merger<? super TPre, ? super TAdd, TCur> merger);
 
     @NonNull
     @Override
-    <TAdd, TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, TCfg, ?>> attemptMergeIn(
+    <TAdd, TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, ?>> attemptMergeIn(
         @NonNull Supplier<TAdd> supplier,
         @NonNull Merger<? super TPre, ? super TAdd, Result<TCur>> attemptMerger);
 
     @NonNull
     @Override
-    <TCur> RFlow<TVal, TCur, TCfg, ?> transform(@NonNull Function<? super TPre, TCur> function);
+    <TCur> RFlow<TVal, TCur, ?> transform(@NonNull Function<? super TPre, TCur> function);
 
     @NonNull
     @Override
-    <TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, TCfg, ?>> attemptTransform(
+    <TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, ?>> attemptTransform(
         @NonNull Function<? super TPre, Result<TCur>> attemptFunction);
 
-    // For Repositories only:
+    // Asynchronous directives:
+
+    /**
+     * Go to the given {@code executor} to continue the data processing flow. The executor is
+     * assumed to never throw {@link RejectedExecutionException}. Synchronous executors are
+     * supported but the risk of stack overflow will be higher. Note that when the executor resumes
+     * the flow, the directives that follow are run sequentially within the same
+     * {@link Runnable#run()} call, until the flow completes or the next {@code goTo()} or, if
+     * applicable, {@code goLazy()} directive is reached. Depending on the directives and operators
+     * used, this may starve the executor. If necessary, use additional {@code goTo()} directives
+     * with the same executor to achieve fairness.
+     */
+    @NonNull
+    TSelf goTo(@NonNull Executor executor);
 
     /**
      * Suspend the data processing flow and notify the registered {@link Updatable}s of updates.
@@ -233,7 +251,7 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
      * be fairly lightweight in order not to block the callers of {@code get()} for too long.
      */
     @NonNull
-    RSyncFlow<TVal, TPre, TCfg, ?> goLazy();
+    RSyncFlow<TVal, TPre, ?> goLazy();
   }
 
   /**
@@ -241,69 +259,143 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
    *
    * @param <TVal> Value type of the repository.
    * @param <TPre> The output value type of the previous directive.
-   * @param <TCfg> RConfig compiler state type; for Java compiler type inference only.
    * @param <TSelf> Self-type; for Java compiler type inference only.
    */
-  interface RSyncFlow<TVal, TPre, TCfg extends RConfig<TVal, Repository<TVal>, ?>,
-      TSelf extends RSyncFlow<TVal, TPre, TCfg, TSelf>> extends RSyncFlowBase<TPre, TCfg, TSelf> {
-    // Methods whose return types need subtyping (due to no "generic type of generic type" in Java):
+  interface RSyncFlow<TVal, TPre, TSelf extends RSyncFlow<TVal, TPre, TSelf>> {
 
+    /**
+     * Ignore the input value, and use the value newly obtained from the given supplier as the
+     * output value.
+     */
     @NonNull
-    @Override
-    <TCur> RSyncFlow<TVal, TCur, TCfg, ?> getFrom(@NonNull Supplier<TCur> supplier);
+    <TCur> RSyncFlow<TVal, TCur, ?> getFrom(@NonNull Supplier<TCur> supplier);
 
+    /**
+     * Like {@link #getFrom}, ignore the input value and attempt to get the new value from the given
+     * supplier. If the attempt fails, terminate the data processing flow by sending the failure to
+     * the termination clause that follows; otherwise take the successful value as the output of
+     * this directive.
+     */
     @NonNull
-    @Override
     <TCur>
-    RTermination<TVal, Throwable, ? extends RSyncFlow<TVal, TCur, TCfg, ?>> attemptGetFrom(
+    RTermination<TVal, Throwable, ? extends RSyncFlow<TVal, TCur, ?>> attemptGetFrom(
         @NonNull Supplier<Result<TCur>> attemptSupplier);
 
+    /**
+     * Take the input value and the value newly obtained from the given supplier, merge them using
+     * the given merger, and use the resulting value as the output value.
+     */
     @NonNull
-    @Override
-    <TAdd, TCur> RSyncFlow<TVal, TCur, TCfg, ?> mergeIn(@NonNull Supplier<TAdd> supplier,
+    <TAdd, TCur> RSyncFlow<TVal, TCur, ?> mergeIn(@NonNull Supplier<TAdd> supplier,
         @NonNull Merger<? super TPre, ? super TAdd, TCur> merger);
 
+    /**
+     * Like {@link #mergeIn}, take the input value and the value newly obtained from the given
+     * supplier, and attempt to merge them using the given merger. If the attempt fails, terminate
+     * the data processing flow by sending the failure to the termination clause that follows;
+     * otherwise take the successful value as the output of this directive.
+     *
+     * <p>This method is agnostic of the return type of the {@code supplier}. If it itself is
+     * fallible, the {@code merger} is held responsible for processing the failure, which may choose
+     * to pass the failure on as the result of the merge.
+     */
     @NonNull
-    @Override
     <TAdd, TCur>
-    RTermination<TVal, Throwable, ? extends RSyncFlow<TVal, TCur, TCfg, ?>> attemptMergeIn(
+    RTermination<TVal, Throwable, ? extends RSyncFlow<TVal, TCur, ?>> attemptMergeIn(
         @NonNull Supplier<TAdd> supplier,
         @NonNull Merger<? super TPre, ? super TAdd, Result<TCur>> attemptMerger);
 
+    /**
+     * Transform the input value using the given function into the output value.
+     */
     @NonNull
-    @Override
-    <TCur> RSyncFlow<TVal, TCur, TCfg, ?> transform(@NonNull Function<? super TPre, TCur> function);
+    <TCur> RSyncFlow<TVal, TCur, ?> transform(@NonNull Function<? super TPre, TCur> function);
 
+    /**
+     * Like {@link #transform}, attempt to transform the input value using the given function. If
+     * the attempt fails, terminate the data processing flow by sending the failure to the
+     * termination clause that follows; otherwise take the successful value as the output of this
+     * directive.
+     */
     @NonNull
-    @Override
-    <TCur> RTermination<TVal, Throwable, ? extends RSyncFlow<TVal, TCur, TCfg, ?>> attemptTransform(
+    <TCur> RTermination<TVal, Throwable, ? extends RSyncFlow<TVal, TCur, ?>> attemptTransform(
         @NonNull Function<? super TPre, Result<TCur>> attemptFunction);
 
+    /**
+     * Check the input value with the given predicate. If the predicate applies, continue the data
+     * processing flow with the same value, otherwise terminate the flow with the termination clause
+     * that follows. The termination clause takes the input value as its input.
+     */
     @NonNull
-    @Override
     RTermination<TVal, TPre, TSelf> check(@NonNull Predicate<? super TPre> predicate);
 
+    /**
+     * Use the case-function to compute a case value out of the input value and check it with the
+     * given predicate. If the predicate applies to the case value, continue the data processing
+     * flow with the <i>input value</i>, otherwise terminate the flow with the termination clause
+     * that follows. The termination clause takes the <i>case value</i> as its input.
+     */
     @NonNull
-    @Override
     <TCase> RTermination<TVal, TCase, TSelf> check(
         @NonNull Function<? super TPre, TCase> caseFunction,
         @NonNull Predicate<? super TCase> casePredicate);
 
-    // For Repositories only:
+    /**
+     * Send the input value to the given receiver, and then pass on the input value as the output of
+     * this directive, not modifying it.
+     *
+     * <p>Typical uses of this directive include reporting progress and/or errors in the UI,
+     * starting a side process, logging, profiling and debugging, etc. The {@link Receiver#accept}
+     * method is called synchronously, which means its execution blocks the rest of the data
+     * processing flow. If the flow is to cancel with {@linkplain RepositoryConfig#SEND_INTERRUPT
+     * the interrupt signal}, the receiver may also see the signal.
+     *
+     * <p>The receiver does not have to use the input value, but if it does and it moves onto a
+     * different thread for processing the input value, note that the data processing flow does not
+     * guarantee value immutability or concurrent access for this receiver. For this reason, for a
+     * UI-calling receiver invoked from a background thread, implementation should extract any
+     * necessary data from the input value, and post the immutable form of it to the main thread for
+     * the UI calls, so the UI modifications are main-thread-safe while the data processing flow can
+     * continue concurrently.
+     *
+     * <p>Note that the blocking semantics of this directive should not be taken as the permission
+     * to mutate the input in a way that affects the rest of the flow -- the appropriate directive
+     * for that purpose is {@code transform}, with a function that returns the same input instance
+     * after mutation.
+     */
+    @NonNull
+    TSelf sendTo(@NonNull Receiver<? super TPre> receiver);
+
+    /**
+     * Send the input value and the value from the given supplier to the given binder, and then pass
+     * on the input value as the output of this directive, not modifying it.
+     *
+     * <p>The same usage notes for {@link #sendTo} apply to this directive.
+     */
+    @NonNull
+    <TAdd> TSelf bindWith(@NonNull Supplier<TAdd> secondValueSupplier,
+        @NonNull Binder<? super TPre, ? super TAdd> binder);
+
+    /**
+     * End the data processing flow but without using the output value and without notifying the
+     * registered {@link Updatable}s.
+     */
+    @NonNull
+    RConfig<TVal> thenSkip();
 
     /**
      * Perform the {@link #getFrom} directive and use the output value as the new value of the
      * compiled repository, with notification if necessary.
      */
     @NonNull
-    RConfig<TVal, Repository<TVal>, ?> thenGetFrom(@NonNull Supplier<? extends TVal> supplier);
+    RConfig<TVal> thenGetFrom(@NonNull Supplier<? extends TVal> supplier);
 
     /**
      * Perform the {@link #attemptGetFrom} directive and use the successful output value as the new
      * value of the compiled repository, with notification if necessary.
      */
     @NonNull
-    RTermination<TVal, Throwable, RConfig<TVal, Repository<TVal>, ?>> thenAttemptGetFrom(
+    RTermination<TVal, Throwable, RConfig<TVal>> thenAttemptGetFrom(
             @NonNull Supplier<? extends Result<? extends TVal>> attemptSupplier);
 
     /**
@@ -311,7 +403,7 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
      * compiled repository, with notification if necessary.
      */
     @NonNull
-    <TAdd> RConfig<TVal, Repository<TVal>, ?> thenMergeIn(@NonNull Supplier<TAdd> supplier,
+    <TAdd> RConfig<TVal> thenMergeIn(@NonNull Supplier<TAdd> supplier,
         @NonNull Merger<? super TPre, ? super TAdd, ? extends TVal> merger);
 
     /**
@@ -319,7 +411,7 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
      * value of the compiled repository, with notification if necessary.
      */
     @NonNull
-    <TAdd> RTermination<TVal, Throwable, RConfig<TVal, Repository<TVal>, ?>> thenAttemptMergeIn(
+    <TAdd> RTermination<TVal, Throwable, RConfig<TVal>> thenAttemptMergeIn(
             @NonNull Supplier<TAdd> supplier,
             @NonNull Merger<? super TPre, ? super TAdd,
                 ? extends Result<? extends TVal>> attemptMerger);
@@ -329,7 +421,7 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
      * compiled repository, with notification if necessary.
      */
     @NonNull
-    RConfig<TVal, Repository<TVal>, ?> thenTransform(
+    RConfig<TVal> thenTransform(
         @NonNull Function<? super TPre, ? extends TVal> function);
 
     /**
@@ -337,7 +429,7 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
      * new value of the compiled repository, with notification if necessary.
      */
     @NonNull
-    RTermination<TVal, Throwable, RConfig<TVal, Repository<TVal>, ?>> thenAttemptTransform(
+    RTermination<TVal, Throwable, RConfig<TVal>> thenAttemptTransform(
             @NonNull Function<? super TPre, ? extends Result<? extends TVal>> attemptFunction);
   }
 
@@ -348,8 +440,14 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
    * @param <TTerm> Value type from which to terminate the flow.
    * @param <TRet> Compiler state to return to.
    */
-  interface RTermination<TVal, TTerm, TRet> extends RTerminationBase<TTerm, TRet> {
-    // For Repositories only:
+  interface RTermination<TVal, TTerm, TRet> {
+
+    /**
+     * If the previous check failed, skip the rest of the data processing flow, and do not notify
+     * any registered {@link Updatable}s.
+     */
+    @NonNull
+    TRet orSkip();
 
     /**
      * If the previous check failed, terminate the data processing flow and update the compiled
@@ -364,12 +462,8 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
    * Compiler state allowing to configure and end the declaration of the repository.
    *
    * @param <TVal> Repository value type.
-   * @param <TRex> Repository type; for Java compiler type inference only.
-   * @param <TSelf> Self-type; for Java compiler type inference only.
    */
-  interface RConfig<TVal, TRex extends Repository<TVal>, TSelf extends RConfig<TVal, TRex, TSelf>>
-      extends RexCompilerStates.RConfig<TVal, TRex, TSelf> {
-    // For Repositories only:
+  interface RConfig<TVal> {
 
     /**
      * Specifies that this repository should notify the registered {@link Updatable}s if and only if
@@ -381,13 +475,39 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
      *
      * <p>Note that the {@code goLazy()} directive will always generate a notification, as a
      * preventative measure to handle a potentially different value which is unknown at the time of
-     * {@code goLazy()}. Also, technically the {@link RexConfig#RESET_TO_INITIAL_VALUE} deactivation
-     * configuration would also update the repository value, and therefore the {@code checker} will
-     * be consulted, but because the reset happens only when the repository is deactivated, even if
-     * the checker returns true, there is no receiving {@link Updatable} of the notification.
+     * {@code goLazy()}. Also, technically the {@link RepositoryConfig#RESET_TO_INITIAL_VALUE}
+     * deactivation configuration would also update the repository value, and therefore the
+     * {@code checker} will be consulted, but because the reset happens only when the repository is
+     * deactivated, even if the checker returns true, there is no {@link Updatable} to receive the
+     * notification.
      */
     @NonNull
-    TSelf notifyIf(@NonNull Merger<? super TVal, ? super TVal, Boolean> checker);
+    RConfig<TVal> notifyIf(@NonNull Merger<? super TVal, ? super TVal, Boolean> checker);
+
+    /**
+     * Specifies the behaviors when this repository is deactivated, i.e. from being observed to not
+     * being observed. The default behavior is {@link RepositoryConfig#CONTINUE_FLOW}.
+     *
+     * @param deactivationConfig A bitwise combination of the constants in {@link RepositoryConfig}.
+     */
+    @NonNull
+    RConfig<TVal> onDeactivation(@RepositoryConfig int deactivationConfig);
+
+    /**
+     * Specifies the behaviors when an update is observed from an event source while a data
+     * processing flow is ongoing. The default behavior is {@link RepositoryConfig#CONTINUE_FLOW}.
+     *
+     * @param concurrentUpdateConfig A bitwise combination of the constants in
+     *     {@link RepositoryConfig}.
+     */
+    @NonNull
+    RConfig<TVal> onConcurrentUpdate(@RepositoryConfig int concurrentUpdateConfig);
+
+    /**
+     * Compiles a {@link Repository} that exhibits the previously defined behaviors.
+     */
+    @NonNull
+    Repository<TVal> compile();
 
     /**
      * Compiles a repository that exhibits the previously defined behaviors, and starts compiling
@@ -396,25 +516,26 @@ public interface RepositoryCompilerStates extends RexCompilerStates {
      *
      * <p>This method provides a shortcut for the following code:
      *
-     * <pre>{@literal
-     * Repository<TVal> subRepository = ….compile();
-     * Repository<TVal2> mainRepository = repositoryWithInitialValue(value)
+     * <pre>
+     * {@literal Repository<TVal>} subRepository = ….compile();
+     * {@literal Repository<TVal2>} mainRepository = repositoryWithInitialValue(value)
      *     .observe(subRepository)
      *     .… // additional event sources and frequency which can be defined after this method
      *     .getFrom(subRepository) // first directive
      *     .… // rest of data processing flow, configuration, compile()
      * }</pre>
      *
-     * The compiled repository ({@code subRepository}) therefore acts as a buffer, with its own
-     * event sources and data processing flow, which simplifies or shortens the flow of the new
-     * repository ({@code mainRepository}). This is typically useful if different parts of the
-     * overall data processing flow depend on different event sources and data sources, and it is
-     * beneficial to cache the intermediate values between parts.
+     * The repository compiled by this method (the {@code subRepository}) therefore acts as a
+     * buffer for the next repository to compile (the {@code mainRepository}), with its own event
+     * sources and data processing flow. This simplifies or shortens the flow of the new repository,
+     * and is typically useful if different parts of the overall data processing flow depend on
+     * different event sources and data sources, and it is beneficial to cache the intermediate
+     * values between parts.
      *
      * <p>However, due to the {@code getFrom} directive at the start of this new data processing
-     * flow, it has no access to the previous value of this new repository. Additionally, the former
-     * repository is not exposed anywhere else. If this is undesirable, consider using the full
-     * form, where the former repository is explicitly compiled.
+     * flow, the next repository to compile has no access to its previous value. Additionally, the
+     * former repository is not exposed anywhere else. If this is undesirable, consider using the
+     * full form, where the former repository is explicitly compiled.
      */
     @NonNull
     <TVal2> RFrequency<TVal2, TVal> compileIntoRepositoryWithInitialValue(@NonNull TVal2 value);

@@ -27,15 +27,15 @@ package com.google.android.agera;
  * <p>The {@link Updatable}s observing this reservoir will be updated when a value is enqueued
  * while the reservoir is empty, or when a value is dequeued so the next enqueued value is exposed,
  * but <i>not when the last value is dequeued so the reservoir becomes empty</i>. In other words, an
- * update from this reservoir means the availability of the next value to be dequeued.
+ * update from this reservoir means the availability of the next value to be dequeued. Additionally,
+ * when an updatable <i>activates</i> the reservoir, i.e. turns it from unobserved to observed, if
+ * it is already non-empty, the updatable will receive an out-of-band update immediately (subject to
+ * {@code Looper} processing delay). Subsequently added updatables will not receive this special
+ * call: it is assumed that the availability of the currently exposed value will have been notified
+ * to existing updatables, and that a consumer will dequeue the value soon.
  *
- * <p>This interface does not forbid multiple {@link Updatable}s observing the same reservoir, but
- * because calling {@link #get} changes the reservoir state, it is not logical to have multiple
- * consumers of {@link #get}. To promote sensible programming, when an updatable <i>activates</i> a
- * reservoir, i.e. turns it from unobserved to observed, if it is already non-empty, the updatable
- * will receive an out-of-band update within the next one or two {@code Looper} loops. Subsequently
- * added updatables will not receive this special call: it is assumed that the availability of the
- * currently exposed value will have been notified to existing updatables, and that a consumer will
- * dequeue the value soon.
+ * <p>Multiple {@linkplain RepositoryCompilerStates compiled repositories} using the same reservoir
+ * as their shared event source and data source can be a simple way to achieve parallelism with load
+ * balancing.
  */
-public interface Reservoir<T> extends Reaction<T>, Repository<Result<T>> {}
+public interface Reservoir<T> extends Receiver<T>, Repository<Result<T>> {}

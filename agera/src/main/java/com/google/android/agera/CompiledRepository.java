@@ -15,30 +15,22 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Mergers.staticMerger;
 import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Observables.perMillisecondFilterObservable;
 import static com.google.android.agera.Observables.updateDispatcher;
-import static com.google.android.agera.Preconditions.checkState;
-import static java.lang.Boolean.TRUE;
 
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-final class Rex implements Repository, Reaction {
-  private static final Merger<Object, Object, Boolean> ALWAYS_NOTIFY = staticMerger(TRUE);
-  @Nullable
-  private final Receiver reservoir;
+final class CompiledRepository implements Repository {
   @NonNull
-  protected final RexRunner runner;
+  protected final CompiledRepositoryRunner runner;
   @NonNull
   private final UpdateDispatcher updateDispatcher;
 
-  private Rex(@NonNull final RexRunner runner, @Nullable final Receiver reservoir) {
-    this.reservoir = reservoir;
+  private CompiledRepository(@NonNull final CompiledRepositoryRunner runner) {
     this.runner = runner;
     this.updateDispatcher = updateDispatcher(runner);
     runner.setUpdateDispatcher(updateDispatcher);
@@ -51,27 +43,14 @@ final class Rex implements Repository, Reaction {
       final int frequency,
       @NonNull final List<Object> directives,
       @NonNull final Merger<Object, Object, Boolean> notifyChecker,
-      @RexConfig final int concurrentUpdateConfig,
-      @RexConfig final int deactivationConfig) {
+      @RepositoryConfig final int concurrentUpdateConfig,
+      @RepositoryConfig final int deactivationConfig) {
     Observable eventSource = perMillisecondFilterObservable(frequency,
         compositeObservable(eventSources.toArray(new Observable[eventSources.size()])));
     Object[] directiveArray = directives.toArray();
-    RexRunner runner = new RexRunner(initialValue, eventSource, directiveArray,
-        notifyChecker, deactivationConfig, concurrentUpdateConfig);
-    return new Rex(runner, null);
-  }
-
-  @NonNull
-  static Reaction compiledReaction(
-      @NonNull final Object triggerValue,
-      @NonNull final Reservoir reservoir,
-      @NonNull final List<Object> directives,
-      @RexConfig final int concurrentUpdateConfig,
-      @RexConfig final int deactivationConfig) {
-    Object[] directiveArray = directives.toArray();
-    RexRunner runner = new RexRunner(triggerValue, reservoir, directiveArray,
-        ALWAYS_NOTIFY, deactivationConfig, concurrentUpdateConfig);
-    return new Rex(runner, reservoir);
+    CompiledRepositoryRunner runner = new CompiledRepositoryRunner(initialValue, eventSource,
+        directiveArray, notifyChecker, deactivationConfig, concurrentUpdateConfig);
+    return new CompiledRepository(runner);
   }
 
   @Override
@@ -88,11 +67,5 @@ final class Rex implements Repository, Reaction {
   @Override
   public Object get() {
     return runner.getValue();
-  }
-
-  @Override
-  public void accept(@NonNull Object value) {
-    checkState(reservoir != null, "Invalid use of repository as reaction");
-    reservoir.accept(value);
   }
 }
