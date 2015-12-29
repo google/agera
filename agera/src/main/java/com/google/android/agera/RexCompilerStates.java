@@ -54,20 +54,6 @@ public interface RexCompilerStates {
      */
     @NonNull
     TSelf goTo(@NonNull Executor executor);
-
-    /**
-     * Like {@link #goTo(Executor)}, but decorate the {@link Runnable} to be submitted to the
-     * {@code executor} using the given {@code runnableDecorator}. The latter is a {@link Merger}
-     * that will receive the input value to this directive as its first argument, and the
-     * runnable-to-submit as the second. This allows client code to add any additional information
-     * necessary for the optimal use of the specific executor, for example by wrapping the runnable
-     * in a {@link Comparable} implementation for priority scheduling. It is still assumed that the
-     * {@link RejectedExecutionException} will never be thrown, and that the runnable given to the
-     * decorator will eventually be called to resume the flow.
-     */
-    @NonNull
-    TSelf goTo(@NonNull Executor executor,
-        @NonNull Merger<TPre, Runnable, Runnable> runnableDecorator);
   }
 
   /**

@@ -18,7 +18,6 @@ package com.google.android.agera;
 import static com.google.android.agera.Functions.identityFunction;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Mergers.objectsUnequal;
-import static com.google.android.agera.Mergers.returnSecond;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
 import static com.google.android.agera.Rex.compiledReaction;
@@ -368,17 +367,10 @@ final class RexCompiler implements
   @NonNull
   @Override
   public RexCompiler goTo(@NonNull final Executor executor) {
-    return goTo(executor, returnSecond());
-  }
-
-  @NonNull
-  @Override
-  public RexCompiler goTo(@NonNull final Executor executor,
-      @NonNull final Merger runnableDecorator) {
     // available to both rexes
     checkExpect(FLOW);
     checkGoLazyUnused();
-    addGoTo(checkNotNull(executor), checkNotNull(runnableDecorator), directives);
+    addGoTo(executor, directives);
     return this;
   }
 
