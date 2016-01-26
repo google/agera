@@ -100,6 +100,7 @@ public final class NotesActivity extends Activity implements Updatable {
       @Override
       public void onClick(@NonNull final View view) {
         final EditText editText = new EditText(view.getContext());
+        editText.setId(R.id.edit);
         new AlertDialog.Builder(view.getContext())
             .setTitle(R.string.add_note)
             .setView(editText)
@@ -244,6 +245,7 @@ public final class NotesActivity extends Activity implements Updatable {
         @Override
         public void onClick(final View view) {
           final EditText editText = new EditText(view.getContext());
+          editText.setId(R.id.edit);
           editText.setText(note.getNote());
           new Builder(view.getContext())
               .setTitle(R.string.edit_note)
