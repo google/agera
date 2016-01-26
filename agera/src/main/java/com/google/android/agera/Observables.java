@@ -15,15 +15,15 @@
  */
 package com.google.android.agera;
 
+import static com.google.android.agera.Common.workerHandler;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
-import com.google.android.agera.Common.AsyncUpdateDispatcher;
+import com.google.android.agera.Common.WorkerHandler;
 
-import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -140,45 +140,35 @@ public final class Observables {
     return new AsyncUpdateDispatcher(updatablesChanged);
   }
 
-  private static final class CompositeObservable implements Observable, UpdatablesChanged {
+  private static final class CompositeObservable extends BaseObservable implements Updatable {
     @NonNull
     private final Observable[] observables;
-    private final UpdateDispatcher updateDispatcher;
 
     CompositeObservable(@NonNull final Observable... observables) {
       this.observables = observables;
-      this.updateDispatcher = updateDispatcher(this);
     }
 
     @Override
-    public void firstUpdatableAdded(@NonNull final UpdateDispatcher updateDispatcher) {
+    protected void firstUpdatableAdded() {
       for (final Observable observable : observables) {
-        observable.addUpdatable(updateDispatcher);
+        observable.addUpdatable(this);
       }
     }
 
     @Override
-    public void lastUpdatableRemoved(@NonNull final UpdateDispatcher updateDispatcher) {
+    protected void lastUpdatableRemoved() {
       for (final Observable observable : observables) {
-        observable.removeUpdatable(updateDispatcher);
+        observable.removeUpdatable(this);
       }
     }
 
     @Override
-    public void addUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.addUpdatable(updatable);
-    }
-
-    @Override
-    public void removeUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.removeUpdatable(updatable);
+    public void update() {
+      dispatchUpdate();
     }
   }
 
-  private static final class ConditionalObservable
-      implements Observable, Updatable, UpdatablesChanged {
-    @NonNull
-    private final UpdateDispatcher updateDispatcher;
+  private static final class ConditionalObservable extends BaseObservable implements Updatable {
     @NonNull
     private final Observable observable;
     @NonNull
@@ -186,47 +176,33 @@ public final class Observables {
 
     ConditionalObservable(@NonNull final Observable observable,
         @NonNull final Condition condition) {
-      this.updateDispatcher = updateDispatcher(this);
       this.observable = checkNotNull(observable);
       this.condition = checkNotNull(condition);
     }
 
     @Override
-    public void firstUpdatableAdded(final UpdateDispatcher updateDispatcher) {
+    protected void firstUpdatableAdded() {
       observable.addUpdatable(this);
     }
 
     @Override
-    public void lastUpdatableRemoved(final UpdateDispatcher updateDispatcher) {
+    protected void lastUpdatableRemoved() {
       observable.removeUpdatable(this);
-    }
-
-    @Override
-    public void addUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.addUpdatable(updatable);
-    }
-
-    @Override
-    public void removeUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.removeUpdatable(updatable);
     }
 
     @Override
     public void update() {
       if (condition.applies()) {
-        updateDispatcher.update();
+        dispatchUpdate();
       }
     }
   }
 
-  private static final class LowPassFilterObservable extends Handler implements Updatable,
-      Observable, UpdatablesChanged {
-    private static final int MSG_UPDATE = 0;
-
-    @NonNull
-    private final UpdateDispatcher updateDispatcher;
+  static final class LowPassFilterObservable extends BaseObservable implements Updatable {
     @NonNull
     private final Observable observable;
+    @NonNull
+    private final WorkerHandler workerHandler;
     private final int shortestUpdateWindowMillis;
 
     private long lastUpdateTimestamp;
@@ -235,48 +211,68 @@ public final class Observables {
         @NonNull final Observable observable) {
       this.shortestUpdateWindowMillis = shortestUpdateWindowMillis;
       this.observable = checkNotNull(observable);
-      this.updateDispatcher = updateDispatcher(this);
+      this.workerHandler = workerHandler();
     }
 
     @Override
-    public void firstUpdatableAdded(final UpdateDispatcher updateDispatcher) {
+    protected void firstUpdatableAdded() {
       observable.addUpdatable(this);
     }
 
     @Override
-    public void lastUpdatableRemoved(final UpdateDispatcher updateDispatcher) {
+    protected void lastUpdatableRemoved() {
       observable.removeUpdatable(this);
-      removeMessages(MSG_UPDATE);
+      workerHandler.removeMessages(WorkerHandler.MSG_CALL_LOW_PASS_UPDATE, this);
     }
 
     @Override
-    public void handleMessage(@NonNull final Message message) {
-      if (message.what == MSG_UPDATE) {
-        removeMessages(MSG_UPDATE);
-        final long elapsedRealtimeMillis = SystemClock.elapsedRealtime();
-        final long timeFromLastUpdate = elapsedRealtimeMillis - lastUpdateTimestamp;
-        if (timeFromLastUpdate >= shortestUpdateWindowMillis) {
-          lastUpdateTimestamp = elapsedRealtimeMillis;
-          updateDispatcher.update();
-        } else {
-          sendEmptyMessageDelayed(MSG_UPDATE, shortestUpdateWindowMillis - timeFromLastUpdate);
-        }
+    public void update() {
+      workerHandler.sendMessageDelayed(
+          workerHandler.obtainMessage(WorkerHandler.MSG_CALL_LOW_PASS_UPDATE, this), (long) 0);
+    }
+
+    void lowPassUpdate() {
+      workerHandler.removeMessages(WorkerHandler.MSG_CALL_LOW_PASS_UPDATE, this);
+      final long elapsedRealtimeMillis = SystemClock.elapsedRealtime();
+      final long timeFromLastUpdate = elapsedRealtimeMillis - lastUpdateTimestamp;
+      if (timeFromLastUpdate >= shortestUpdateWindowMillis) {
+        lastUpdateTimestamp = elapsedRealtimeMillis;
+        dispatchUpdate();
+      } else {
+        workerHandler.sendMessageDelayed(
+            workerHandler.obtainMessage(WorkerHandler.MSG_CALL_LOW_PASS_UPDATE, this),
+            shortestUpdateWindowMillis - timeFromLastUpdate);
+      }
+    }
+  }
+
+  private static final class AsyncUpdateDispatcher extends BaseObservable
+      implements UpdateDispatcher {
+
+    @Nullable
+    private final UpdatablesChanged updatablesChanged;
+
+    private AsyncUpdateDispatcher(@Nullable UpdatablesChanged updatablesChanged) {
+      this.updatablesChanged = updatablesChanged;
+    }
+
+    @Override
+    protected void firstUpdatableAdded() {
+      if (updatablesChanged != null) {
+        updatablesChanged.firstUpdatableAdded(this);
+      }
+    }
+
+    @Override
+    protected void lastUpdatableRemoved() {
+      if (updatablesChanged != null) {
+        updatablesChanged.lastUpdatableRemoved(this);
       }
     }
 
     @Override
     public void update() {
-      sendEmptyMessage(MSG_UPDATE);
-    }
-
-    @Override
-    public void addUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.addUpdatable(updatable);
-    }
-
-    @Override
-    public void removeUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.removeUpdatable(updatable);
+      dispatchUpdate();
     }
   }
 

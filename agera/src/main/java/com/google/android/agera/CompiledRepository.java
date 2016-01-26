@@ -15,9 +15,11 @@
  */
 package com.google.android.agera;
 
+import static com.google.android.agera.Common.WorkerHandler.MSG_CALL_ACKNOWLEDGE_CANCEL;
+import static com.google.android.agera.Common.WorkerHandler.MSG_CALL_MAYBE_START_FLOW;
+import static com.google.android.agera.Common.workerHandler;
 import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Observables.perMillisecondFilterObservable;
-import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
 import static com.google.android.agera.RepositoryConfig.CANCEL_FLOW;
@@ -25,9 +27,8 @@ import static com.google.android.agera.RepositoryConfig.RESET_TO_INITIAL_VALUE;
 import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
 import static java.lang.Thread.currentThread;
 
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
+import com.google.android.agera.Common.WorkerHandler;
+
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -38,8 +39,8 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-final class CompiledRepository extends Handler
-    implements Repository, Updatable, UpdatablesChanged, Runnable {
+final class CompiledRepository extends BaseObservable
+    implements Repository, Updatable, Runnable {
 
   @NonNull
   static Repository compiledRepository(
@@ -72,7 +73,7 @@ final class CompiledRepository extends Handler
   @RepositoryConfig
   private final int concurrentUpdateConfig;
   @NonNull
-  private final UpdateDispatcher updateDispatcher;
+  private final WorkerHandler workerHandler;
 
   CompiledRepository(
       @NonNull final Object initialValue,
@@ -81,7 +82,6 @@ final class CompiledRepository extends Handler
       @NonNull final Merger<Object, Object, Boolean> notifyChecker,
       @RepositoryConfig final int deactivationConfig,
       @RepositoryConfig final int concurrentUpdateConfig) {
-    super(Looper.myLooper());
     this.initialValue = initialValue;
     this.currentValue = initialValue;
     this.intermediateValue = initialValue; // non-final field but with @NonNull requirement
@@ -90,17 +90,7 @@ final class CompiledRepository extends Handler
     this.notifyChecker = notifyChecker;
     this.deactivationConfig = deactivationConfig;
     this.concurrentUpdateConfig = concurrentUpdateConfig;
-    this.updateDispatcher = updateDispatcher(this);
-  }
-
-  @Override
-  public void addUpdatable(@NonNull final Updatable updatable) {
-    updateDispatcher.addUpdatable(updatable);
-  }
-
-  @Override
-  public void removeUpdatable(@NonNull final Updatable updatable) {
-    updateDispatcher.removeUpdatable(updatable);
+    this.workerHandler = workerHandler();
   }
 
   //endregion Invariants
@@ -140,13 +130,13 @@ final class CompiledRepository extends Handler
   //   states that might be accessed from a different thread are still synchronized.
 
   @Override
-  public void firstUpdatableAdded(@NonNull final UpdateDispatcher updateDispatcher) {
+  protected void firstUpdatableAdded() {
     eventSource.addUpdatable(this);
     maybeStartFlow();
   }
 
   @Override
-  public void lastUpdatableRemoved(@NonNull final UpdateDispatcher updateDispatcher) {
+  protected void lastUpdatableRemoved() {
     eventSource.removeUpdatable(this);
     maybeCancelFlow(deactivationConfig, false);
   }
@@ -161,7 +151,7 @@ final class CompiledRepository extends Handler
    * Called on the worker looper thread. Starts the data processing flow if it's not running. This
    * also cancels the lazily-executed part of the flow if the run state is "paused at lazy".
    */
-  private void maybeStartFlow() {
+  void maybeStartFlow() {
     synchronized (this) {
       if (runState == IDLE || runState == PAUSED_AT_GO_LAZY) {
         runState = RUNNING;
@@ -213,9 +203,6 @@ final class CompiledRepository extends Handler
   // - Apart from handleMessage(), other methods in this region can be called from a thread that is
   //   not the Worker Looper thread.
 
-  private static final int MSG_START_IF_NOT_RUNNING = 0;
-  private static final int MSG_ACKNOWLEDGE_CANCEL = 1;
-
   /**
    * Checks if the current data processing flow has been requested cancellation. Acknowledges the
    * request if so. This must be called while locked in a synchronized context.
@@ -224,10 +211,27 @@ final class CompiledRepository extends Handler
    */
   private boolean checkCancellationLocked() {
     if (runState == CANCEL_REQUESTED) {
-      sendEmptyMessage(MSG_ACKNOWLEDGE_CANCEL);
+      workerHandler.obtainMessage(MSG_CALL_ACKNOWLEDGE_CANCEL, this).sendToTarget();
       return true;
     }
     return false;
+  }
+
+  /**
+   * Called by the worker handler.
+   */
+  void acknowledgeCancel() {
+    boolean shouldStartFlow = false;
+    synchronized (this) {
+      if (runState == CANCEL_REQUESTED) {
+        runState = IDLE;
+        intermediateValue = initialValue; // GC the intermediate value but keep field non-null.
+        shouldStartFlow = restartNeeded;
+      }
+    }
+    if (shouldStartFlow) {
+      maybeStartFlow();
+    }
   }
 
   /**
@@ -237,30 +241,7 @@ final class CompiledRepository extends Handler
    */
   private void checkRestartLocked() {
     if (restartNeeded) {
-      sendEmptyMessage(MSG_START_IF_NOT_RUNNING);
-    }
-  }
-
-  @Override
-  public void handleMessage(@NonNull final Message msg) {
-    switch (msg.what) {
-      case MSG_START_IF_NOT_RUNNING:
-        maybeStartFlow();
-        break;
-
-      case MSG_ACKNOWLEDGE_CANCEL:
-        boolean shouldStartFlow = false;
-        synchronized (this) {
-          if (runState == CANCEL_REQUESTED) {
-            runState = IDLE;
-            intermediateValue = initialValue; // GC the intermediate value but keep field non-null.
-            shouldStartFlow = restartNeeded;
-          }
-        }
-        if (shouldStartFlow) {
-          maybeStartFlow();
-        }
-        break;
+      workerHandler.obtainMessage(MSG_CALL_MAYBE_START_FLOW, this).sendToTarget();
     }
   }
 
@@ -528,7 +509,7 @@ final class CompiledRepository extends Handler
     boolean shouldNotify = notifyChecker.merge(currentValue, newValue);
     currentValue = newValue;
     if (shouldNotify) {
-      updateDispatcher.update();
+      dispatchUpdate();
     }
   }
 
@@ -574,7 +555,7 @@ final class CompiledRepository extends Handler
   private void setLazyAndEndFlowLocked(final int resumeIndex) {
     lastDirectiveIndex = resumeIndex;
     runState = PAUSED_AT_GO_LAZY;
-    updateDispatcher.update();
+    dispatchUpdate();
     checkRestartLocked();
   }
 

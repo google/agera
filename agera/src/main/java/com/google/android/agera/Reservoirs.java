@@ -15,7 +15,6 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Result.absentIfNull;
 
@@ -84,15 +83,13 @@ public final class Reservoirs {
     return new SynchronizedReservoir<>(checkNotNull(queue));
   }
 
-  private static final class SynchronizedReservoir<T> implements Reservoir<T>, UpdatablesChanged {
+  private static final class SynchronizedReservoir<T> extends BaseObservable
+      implements Reservoir<T> {
     @NonNull
     private final Queue<T> queue;
-    @NonNull
-    private final UpdateDispatcher updateDispatcher;
 
     private SynchronizedReservoir(@NonNull final Queue<T> queue) {
-      this.queue = queue;
-      this.updateDispatcher = updateDispatcher(this);
+      this.queue = checkNotNull(queue);
     }
 
     @Override
@@ -104,7 +101,7 @@ public final class Reservoirs {
         shouldDispatchUpdate = wasEmpty && added;
       }
       if (shouldDispatchUpdate) {
-        updateDispatcher.update();
+        dispatchUpdate();
       }
     }
 
@@ -118,32 +115,19 @@ public final class Reservoirs {
         shouldDispatchUpdate = !queue.isEmpty();
       }
       if (shouldDispatchUpdate) {
-        updateDispatcher.update();
+        dispatchUpdate();
       }
       return absentIfNull(nullableValue);
     }
 
     @Override
-    public void addUpdatable(@NonNull Updatable updatable) {
-      updateDispatcher.addUpdatable(updatable);
-    }
-
-    @Override
-    public void firstUpdatableAdded(UpdateDispatcher updateDispatcher) {
+    protected void firstUpdatableAdded() {
       synchronized (queue) {
         if (queue.isEmpty()) {
           return;
         }
       }
-      updateDispatcher.update();
-    }
-
-    @Override
-    public void lastUpdatableRemoved(UpdateDispatcher updateDispatcher) {}
-
-    @Override
-    public void removeUpdatable(@NonNull Updatable updatable) {
-      updateDispatcher.removeUpdatable(updatable);
+      dispatchUpdate();
     }
   }
 
