@@ -30,7 +30,7 @@ package com.google.android.agera;
  * <p>A {@code Repository} thus have two primary states (in addition to the different state of the
  * data it contains)
  * <ul>
- *   <li><i>Suspended</i> - There are no added {@link Updatable}s and the {@link Repository} is
+ *   <li><i>Inactive</i> - There are no added {@link Updatable}s and the {@link Repository} is
  *   <i>deferred</i>. The {@link Repository} may choose to free up data to save memory and the
  *   data it returns calling {@link Repository#get()} will not be fresh.
  *   <li><i>Active</i> - There are added {@link Updatable}s or the {@link Repository} is
@@ -38,8 +38,8 @@ package com.google.android.agera;
  * </ul>
  *
  * <p>A <i>direct</i> {@code Repository} is always <i>active</i>.
- * A <i>deferred</i> {@code Repository} is <i>suspended</i> until an {@link Updatable} is added. As
- * the {@code Repository} becomes <i>awake</i>, the added {@link Updatable}s will be notified and
+ * A <i>deferred</i> {@code Repository} is <i>inactive</i> until an {@link Updatable} is added. As
+ * the {@code Repository} becomes <i>active</i>, the added {@link Updatable}s will be notified and
  * the fresh data can be fetched using {@link Supplier#get()}.
  *
  * <p>When using the {@code Repository} interface it is not possible to know if the implementation

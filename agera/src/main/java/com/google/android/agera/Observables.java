@@ -131,8 +131,8 @@ public final class Observables {
    * was created from when the first {@link Updatable} was added / last {@link Updatable} was
    * removed.
    *
-   * <p>This {@link UpdateDispatcher} is useful when implementing {@link Observable} services with a
-   * <i>suspended</i>/<i>active</i> life cycle.
+   * <p>This {@link UpdateDispatcher} is useful when implementing {@link Observable} services with
+   * an <i>active</i>/<i>inactive</i> lifecycle.
    */
   @NonNull
   public static UpdateDispatcher updateDispatcher(

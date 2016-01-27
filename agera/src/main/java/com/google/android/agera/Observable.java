@@ -26,8 +26,8 @@ import android.support.annotation.NonNull;
  * Forgetting to remove an {@link Updatable} may result in memory/resource leaks.
  *
  * <p>Without any {@link Updatable}s added an {@code Observable} may temporarily be
- * <i>suspended</i>. {@code Observable} implementations that provide values, perhaps through a
- * {@link Supplier}, do not guarantee an up to date value when <i>suspended</i>. In order to ensure
+ * <i>inactive</i>. {@code Observable} implementations that provide values, perhaps through a
+ * {@link Supplier}, do not guarantee an up to date value when <i>inactive</i>. In order to ensure
  * that the {@code Observable} is <i>active</i>, add an {@link Updatable}.
  *
  * <p>Added {@link Updatable}s shall be called back on the same thread they were added from.
