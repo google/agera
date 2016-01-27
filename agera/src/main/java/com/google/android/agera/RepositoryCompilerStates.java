@@ -15,7 +15,6 @@
  */
 package com.google.android.agera;
 
-import android.os.Looper;
 import android.support.annotation.NonNull;
 
 import java.util.concurrent.Executor;
@@ -24,81 +23,6 @@ import java.util.concurrent.RejectedExecutionException;
 /**
  * Container of the compiler state interfaces supporting the declaration of {@link Repository}s
  * using the type-safe declarative language.
- *
- * <h3>Overview</h3>
- *
- * The declaration of a compiled repository starts with specifying the <i>initial value</i> with
- * {@link Repositories#repositoryWithInitialValue}, ends with calling {@link RConfig#compile()}, and
- * consists of the following sections in between:
- * <ul>
- * <li>Event sources - {@code observe()};
- * <li>Frequency of reaction - {@code onUpdatesPer()}, {@code onUpdatesPerLoop()};
- * <li>Data processing flow - {@code getFrom()}, {@code mergeIn()}, {@code transform()} etc.;
- * <li>Miscellaneous configurations - {@code onDeactivation()}, {@code onConcurrentUpdate()} etc.
- * </ul>
- *
- * The repository observes the given event sources at the given frequency, and updates its value in
- * response to the event source updates using the data processing flow. The flow is run when the
- * repository is activated (transitions from not observed to observed), and when any event source
- * notifies of updates while the repository is active. When the flow updates the repository value,
- * the client {@link Updatable}s are notified.
- *
- * <h3>Data processing flow</h3>
- *
- * The data processing flow consists of <i>directive</i>s. Each directive accepts an input value and
- * produces an output value for the next directive. The input value type to the first directive is
- * the repository value type, and so is the output value type of the last directive, one that starts
- * with {@code then}. The compiler state interfaces help guarantee type safety using generic type
- * parameters, with input type contravariance (the next directive can accept a supertype of what the
- * previous directive produces) and output type covariance (the last directive can produce a subtype
- * of the repository value type) whenever possible.
- *
- * <p>When the data processing flow is run, the current repository value exposed through
- * {@link Repository#get()} is used as the input value to the first directive. This may be the
- * repository's initial value if the flow has not updated the value before, or the repository was
- * {@linkplain RepositoryConfig#RESET_TO_INITIAL_VALUE reset}. The directives are run sequentially
- * to transform this input value. The data processing flow <i>ends</i> normally after a {@code then}
- * directive that produces a final value is run, or when a <i>termination clause</i> is run which
- * {@code end}s the flow early with a value, in which case the repository value is updated and the
- * registered {@link Updatable}s are notified. The flow can also be terminated abruptly if a
- * {@code thenSkip()} directive is run or a termination clause is run which {@code skip}s the rest
- * of the flow, in which case the repository <i>skips</i> updating its value and notifying of such
- * update.
- *
- * <h3>Asynchronous programming</h3>
- *
- * The repository must be compiled on a {@link Looper} thread (typically the main thread). The
- * looper becomes the <i>worker looper</i> of this repository, and all these processes are run from
- * that looper thread: client {@link Updatable} registration and de-registration; processing and
- * low-pass filtering (if using {@link RFrequency#onUpdatesPer onUpdatesPer(millis)}) the event
- * source updates, and starting the data processing flow.
- *
- * <p>The data processing flow is not required to complete synchronously on the looper thread.
- * Special directives {@code goTo()} and {@code goLazy()} enable asynchronous programming. They do
- * not change the input value; they control the continuation of the flow at runtime:
- * {@code goTo(executor)} sends the remainder of the execution onto the {@link Executor}, and
- * {@code goLazy()} pauses the execution until {@link Repository#get()} is called.
- *
- * <p>After a {@code goTo()} directive frees up the worker looper thread to process other events,
- * the repository may be concurrently deactivated (becoming unobserved) or notified of updates from
- * its event sources. In the latter case, a data processing flow re-run is scheduled but not started
- * in parallel with the ongoing flow, to reduce race conditions. The repository can be configured to
- * cancel the ongoing flow on deactivation and on concurrent update. This helps preserve resources
- * (in case of deactivation) and start the re-run sooner (in case of concurrent updates). A
- * cancelled flow is suppressed from changing the repository value or notifying of any updates.
- * Cancellation behaviors are configurable with {@link RConfig#onDeactivation} and
- * {@link RConfig#onConcurrentUpdate}.
- *
- * <p>At the {@code goLazy()} directive, the registered {@link Updatable}s are notified in case of
- * any update, but it is up to the remaining directives whether to actually update the repository
- * value. The flow resumes synchronously on the thread from which {@link Repository#get()} is called
- * and, because {@code get()} must produce a value, any cancellation signal is ignored from this
- * point on. On the other hand, if the repository receives an update from its event sources before
- * {@code get()} resumes the paused flow, the paused state and the saved intermediate value is
- * discarded, the remaining directives are never run, and the flow restarts immediately. Calling
- * {@code get()} after the flow restarts and before it arrives at {@code goLazy()} again returns the
- * previous repository value. Because of the last point, using {@code goLazy()} strategically can
- * improve program performance.
  *
  * <h3>List of directives</h3>
  *
@@ -128,17 +52,6 @@ import java.util.concurrent.RejectedExecutionException;
  *   <li>{@link RTermination#orEnd orEnd(f)}
  * </ul>
  *
- * <h3>Tips</h3>
- *
- * <b>Efficiency.</b> No two directives will be run at the same time and all thread synchronization
- * regarding the intermediate values are handled by the data processing flow runner. For performance
- * and memory efficiency reasons, it is encouraged that the intermediary {@link Function}s and
- * {@link Merger}s reuse the input objects whenever appropriate (for example, instead of returning
- * a new {@code List} in response to an input {@code List}, try taking in a mutable
- * {@code ArrayList}, mutating it, and outputting the same object; in other words, the operators are
- * explicitly allowed to be un-pure), and let the final directive(s) produce a preferably immutable
- * model object, or in general, an object that is detached from any intermediate values, therefore
- * safe to be used as the exposed value of the repository.
  */
 public interface RepositoryCompilerStates {
 
