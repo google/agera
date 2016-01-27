@@ -19,7 +19,7 @@ import static com.google.android.agera.Common.WorkerHandler.MSG_CALL_ACKNOWLEDGE
 import static com.google.android.agera.Common.WorkerHandler.MSG_CALL_MAYBE_START_FLOW;
 import static com.google.android.agera.Common.workerHandler;
 import static com.google.android.agera.Observables.compositeObservable;
-import static com.google.android.agera.Observables.perMillisecondFilterObservable;
+import static com.google.android.agera.Observables.perMillisecondObservable;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
 import static com.google.android.agera.RepositoryConfig.CANCEL_FLOW;
@@ -51,7 +51,7 @@ final class CompiledRepository extends BaseObservable
       @NonNull final Merger<Object, Object, Boolean> notifyChecker,
       @RepositoryConfig final int concurrentUpdateConfig,
       @RepositoryConfig final int deactivationConfig) {
-    Observable eventSource = perMillisecondFilterObservable(frequency,
+    Observable eventSource = perMillisecondObservable(frequency,
         compositeObservable(eventSources.toArray(new Observable[eventSources.size()])));
     Object[] directiveArray = directives.toArray();
     return new CompiledRepository(initialValue, eventSource,
@@ -130,13 +130,13 @@ final class CompiledRepository extends BaseObservable
   //   states that might be accessed from a different thread are still synchronized.
 
   @Override
-  protected void firstUpdatableAdded() {
+  protected void observableActivated() {
     eventSource.addUpdatable(this);
     maybeStartFlow();
   }
 
   @Override
-  protected void lastUpdatableRemoved() {
+  protected void observableDeactivated() {
     eventSource.removeUpdatable(this);
     maybeCancelFlow(deactivationConfig, false);
   }

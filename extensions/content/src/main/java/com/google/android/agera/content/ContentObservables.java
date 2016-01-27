@@ -21,7 +21,7 @@ import static com.google.android.agera.Preconditions.checkNotNull;
 
 import com.google.android.agera.Observable;
 import com.google.android.agera.Updatable;
-import com.google.android.agera.UpdatablesChanged;
+import com.google.android.agera.ActivationHandler;
 import com.google.android.agera.UpdateDispatcher;
 
 import android.content.BroadcastReceiver;
@@ -48,7 +48,7 @@ public final class ContentObservables {
    * Returns an {@link Observable} that notifies added {@link Updatable}s that the input
    * {@code actions} have been received through the Android broadcast mechanism.
    *
-   * <p>Since {@link UpdatablesChanged#lastUpdatableRemoved(UpdateDispatcher)} is called
+   * <p>Since {@link ActivationHandler#observableDeactivated(UpdateDispatcher)} is called
    * asynchronously, using an activity context here will cause {@link android.os.StrictMode} to
    * report leaked registration objects. This can be avoided using the application context instead.
    *
@@ -71,7 +71,7 @@ public final class ContentObservables {
   }
 
   private static final class BroadcastObservable extends BroadcastReceiver
-      implements UpdatablesChanged, Observable {
+      implements ActivationHandler, Observable {
     @NonNull
     private final UpdateDispatcher updateDispatcher;
     @NonNull
@@ -90,12 +90,12 @@ public final class ContentObservables {
     }
 
     @Override
-    public void firstUpdatableAdded(final UpdateDispatcher updateDispatcher) {
+    public void observableActivated(final UpdateDispatcher caller) {
       context.registerReceiver(this, filter);
     }
 
     @Override
-    public void lastUpdatableRemoved(final UpdateDispatcher updateDispatcher) {
+    public void observableDeactivated(final UpdateDispatcher caller) {
       context.unregisterReceiver(this);
     }
 
@@ -116,7 +116,7 @@ public final class ContentObservables {
   }
 
   private static final class SharedPreferencesObservable implements
-      OnSharedPreferenceChangeListener, Observable, UpdatablesChanged {
+      OnSharedPreferenceChangeListener, Observable, ActivationHandler {
     @NonNull
     private final UpdateDispatcher updateDispatcher;
     @NonNull
@@ -132,12 +132,12 @@ public final class ContentObservables {
     }
 
     @Override
-    public void firstUpdatableAdded(final UpdateDispatcher updateDispatcher) {
+    public void observableActivated(final UpdateDispatcher caller) {
       preferences.registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
-    public void lastUpdatableRemoved(final UpdateDispatcher updateDispatcher) {
+    public void observableDeactivated(final UpdateDispatcher caller) {
       preferences.unregisterOnSharedPreferenceChangeListener(this);
     }
 

@@ -17,26 +17,26 @@ package com.google.android.agera;
 
 /**
  * Receives events of the {@link UpdateDispatcher} created with
- * {@link Observables#updateDispatcher(UpdatablesChanged)} when the first {@link Updatable} is added
+ * {@link Observables#updateDispatcher(ActivationHandler)} when the first {@link Updatable} is added
  * and the last {@link Updatable} is removed.
  *
  * <p>Typically an {@link Observable} service implemented using a {@link UpdateDispatcher} only
  * needs to be updated if it has clients of its own. By starting to listen to updates from its
- * clients on {@link #firstUpdatableAdded} and stopping on {@link #firstUpdatableAdded}, the service
- * of the service can implement a <i>suspended</i>/<i>active</i> life cycle,
+ * clients on {@link #observableActivated} and stopping on {@link #observableDeactivated}, the
+ * service of the service can implement a <i>suspended</i>/<i>active</i> life cycle,
  * saving memory and execution time when not needed.
  */
-public interface UpdatablesChanged {
+public interface ActivationHandler {
 
   /**
-   * Called when the the {@code updateDispatcher} changes state from having no {@link Updatable}s to
+   * Called when the the {@code caller} changes state from having no {@link Updatable}s to
    * having at least one {@link Updatable}.
    */
-  void firstUpdatableAdded(UpdateDispatcher updateDispatcher);
+  void observableActivated(UpdateDispatcher caller);
 
   /**
-   * Called when the the {@code updateDispatcher} changes state from having {@link Updatable}s to
+   * Called when the the {@code caller} changes state from having {@link Updatable}s to
    * no longer having {@link Updatable}s.
    */
-  void lastUpdatableRemoved(UpdateDispatcher updateDispatcher);
+  void observableDeactivated(UpdateDispatcher caller);
 }

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
-import com.google.android.agera.UpdatablesChanged;
+import com.google.android.agera.ActivationHandler;
 import com.google.android.agera.content.test.matchers.UpdatableUpdated;
 import com.google.android.agera.content.test.mocks.MockUpdatable;
 
@@ -56,7 +56,7 @@ public final class ContentObservablesTest {
   private MockUpdatable secondUpdatable;
   private ArgumentCaptor<OnSharedPreferenceChangeListener> sharedPreferenceListenerCaptor;
   @Mock
-  private UpdatablesChanged mockUpdatablesChanged;
+  private ActivationHandler mockActivationHandler;
   @Mock
   private SharedPreferences sharedPreferences;
 

@@ -30,8 +30,8 @@ import java.util.Arrays;
 
 /**
  * A partial implementation of {@link Observable} that adheres to the threading contract between
- * {@link Observable}s and {@link Updatable}s. Subclasses can use {@link #firstUpdatableAdded()} and
- * {@link #lastUpdatableRemoved()} to control the activation and deactivation of this observable,
+ * {@link Observable}s and {@link Updatable}s. Subclasses can use {@link #observableActivated()} and
+ * {@link #observableDeactivated()} to control the activation and deactivation of this observable,
  * and to send out notifications to client updatables with {@link #dispatchUpdate()}.
  *
  * <p>For cases where subclassing {@link BaseObservable} is impossible, for example when the
@@ -70,14 +70,14 @@ public abstract class BaseObservable implements Observable {
    * Called from the worker looper thread when this {@link Observable} is activated by transitioning
    * from having no client {@link Updatable}s to having at least one client {@link Updatable}.
    */
-  protected void firstUpdatableAdded() {}
+  protected void observableActivated() {}
 
   /**
    * Called from the worker looper thread when this {@link Observable} is deactivated by
    * transitioning from having at least one client {@link Updatable} to having no client
    * {@link Updatable}s.
    */
-  protected void lastUpdatableRemoved() {}
+  protected void observableDeactivated() {}
 
   /**
    * Worker and synchronization lock behind a {@link BaseObservable}.
@@ -171,11 +171,11 @@ public abstract class BaseObservable implements Observable {
     }
 
     void callFirstUpdatableAdded() {
-      baseObservable.firstUpdatableAdded();
+      baseObservable.observableActivated();
     }
 
     void callLastUpdatableRemoved() {
-      baseObservable.lastUpdatableRemoved();
+      baseObservable.observableDeactivated();
     }
   }
 }

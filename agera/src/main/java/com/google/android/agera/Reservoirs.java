@@ -121,7 +121,7 @@ public final class Reservoirs {
     }
 
     @Override
-    protected void firstUpdatableAdded() {
+    protected void observableActivated() {
       synchronized (queue) {
         if (queue.isEmpty()) {
           return;

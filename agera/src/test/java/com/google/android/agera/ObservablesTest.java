@@ -20,8 +20,8 @@ import static com.google.android.agera.Conditions.falseCondition;
 import static com.google.android.agera.Conditions.trueCondition;
 import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Observables.conditionalObservable;
-import static com.google.android.agera.Observables.perCycleFilterObservable;
-import static com.google.android.agera.Observables.perMillisecondFilterObservable;
+import static com.google.android.agera.Observables.perLoopObservable;
+import static com.google.android.agera.Observables.perMillisecondObservable;
 import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static com.google.android.agera.test.matchers.UpdatableUpdated.wasUpdated;
@@ -74,7 +74,7 @@ public final class ObservablesTest {
   private Scheduler scheduler;
   private UpdateDispatcher updateDispatcher;
   @Mock
-  private UpdatablesChanged mockUpdatablesChanged;
+  private ActivationHandler mockActivationHandler;
   private UpdateDispatcher updateDispatcherWithUpdatablesChanged;
 
   @Before
@@ -82,7 +82,7 @@ public final class ObservablesTest {
     initMocks(this);
     //noinspection ConstantConditions
     scheduler = ((ShadowLooper) extract(myLooper())).getScheduler();
-    updateDispatcherWithUpdatablesChanged = updateDispatcher(mockUpdatablesChanged);
+    updateDispatcherWithUpdatablesChanged = updateDispatcher(mockActivationHandler);
     updateDispatcher = updateDispatcher();
     firstUpdateDispatcher = updateDispatcher();
     secondUpdateDispatcher = updateDispatcher();
@@ -177,7 +177,7 @@ public final class ObservablesTest {
   public void shouldCallFirstAddedForUpdateDispatcher() {
     updatable.addToObservable(updateDispatcherWithUpdatablesChanged);
 
-    verify(mockUpdatablesChanged).firstUpdatableAdded(updateDispatcherWithUpdatablesChanged);
+    verify(mockActivationHandler).observableActivated(updateDispatcherWithUpdatablesChanged);
   }
 
   @Test
@@ -185,14 +185,14 @@ public final class ObservablesTest {
     updatable.addToObservable(updateDispatcherWithUpdatablesChanged);
     mockUpdatable().addToObservable(updateDispatcherWithUpdatablesChanged);
 
-    verify(mockUpdatablesChanged).firstUpdatableAdded(updateDispatcherWithUpdatablesChanged);
+    verify(mockActivationHandler).observableActivated(updateDispatcherWithUpdatablesChanged);
   }
 
   @Test
   public void shouldCallLastRemovedForUpdateDispatcher() {
     updatable.addToObservable(updateDispatcherWithUpdatablesChanged);
 
-    verify(mockUpdatablesChanged).firstUpdatableAdded(updateDispatcherWithUpdatablesChanged);
+    verify(mockActivationHandler).observableActivated(updateDispatcherWithUpdatablesChanged);
   }
 
   @Test
@@ -203,7 +203,7 @@ public final class ObservablesTest {
     updatable.removeFromObservables();
     secondUpdatable.removeFromObservables();
 
-    verify(mockUpdatablesChanged).lastUpdatableRemoved(updateDispatcherWithUpdatablesChanged);
+    verify(mockActivationHandler).observableActivated(updateDispatcherWithUpdatablesChanged);
   }
 
 
@@ -231,7 +231,7 @@ public final class ObservablesTest {
 
   @Test
   public void shouldUpdatePerCycleObservable() {
-    updatable.addToObservable(perCycleFilterObservable(updateDispatcher));
+    updatable.addToObservable(perLoopObservable(updateDispatcher));
 
     updateDispatcher.update();
 
@@ -241,7 +241,7 @@ public final class ObservablesTest {
   @Test
   public void shouldUpdatePerMillisecondObservable() {
     final long expectedDelayedTime = scheduler.getCurrentTime() + FILTER_TIME;
-    updatable.addToObservable(perMillisecondFilterObservable(FILTER_TIME, updateDispatcher));
+    updatable.addToObservable(perMillisecondObservable(FILTER_TIME, updateDispatcher));
 
     updateDispatcher.update();
     idleMainLooper(FILTER_TIME);

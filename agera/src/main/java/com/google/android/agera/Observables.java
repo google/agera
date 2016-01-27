@@ -35,8 +35,8 @@ import java.util.List;
  * or they will throw an {@link IllegalStateException}
  *
  * <p>{@link UpdateDispatcher}s created by this class will for any injected
- * {@link UpdatablesChanged} call {@link UpdatablesChanged#firstUpdatableAdded(UpdateDispatcher)}
- * and {@link UpdatablesChanged#lastUpdatableRemoved(UpdateDispatcher)} on the thread the
+ * {@link ActivationHandler} call {@link ActivationHandler#observableActivated(UpdateDispatcher)}
+ * and {@link ActivationHandler#observableDeactivated(UpdateDispatcher)} on the thread the
  * {@link UpdateDispatcher} was created on.
  */
 public final class Observables {
@@ -95,7 +95,7 @@ public final class Observables {
    * {@code shortestUpdateWindowMillis}.
    */
   @NonNull
-  public static Observable perMillisecondFilterObservable(
+  public static Observable perMillisecondObservable(
       final int shortestUpdateWindowMillis, @NonNull final Observable observable) {
     return new LowPassFilterObservable(shortestUpdateWindowMillis, observable);
   }
@@ -105,8 +105,8 @@ public final class Observables {
    * {@code observable} has changed, but never more often than once per {@link Looper} cycle.
    */
   @NonNull
-  public static Observable perCycleFilterObservable(@NonNull final Observable observable) {
-    return perMillisecondFilterObservable(0, observable);
+  public static Observable perLoopObservable(@NonNull final Observable observable) {
+    return perMillisecondObservable(0, observable);
   }
 
   /**
@@ -136,8 +136,8 @@ public final class Observables {
    */
   @NonNull
   public static UpdateDispatcher updateDispatcher(
-      @NonNull final UpdatablesChanged updatablesChanged) {
-    return new AsyncUpdateDispatcher(updatablesChanged);
+      @NonNull final ActivationHandler activationHandler) {
+    return new AsyncUpdateDispatcher(activationHandler);
   }
 
   private static final class CompositeObservable extends BaseObservable implements Updatable {
@@ -149,14 +149,14 @@ public final class Observables {
     }
 
     @Override
-    protected void firstUpdatableAdded() {
+    protected void observableActivated() {
       for (final Observable observable : observables) {
         observable.addUpdatable(this);
       }
     }
 
     @Override
-    protected void lastUpdatableRemoved() {
+    protected void observableDeactivated() {
       for (final Observable observable : observables) {
         observable.removeUpdatable(this);
       }
@@ -181,12 +181,12 @@ public final class Observables {
     }
 
     @Override
-    protected void firstUpdatableAdded() {
+    protected void observableActivated() {
       observable.addUpdatable(this);
     }
 
     @Override
-    protected void lastUpdatableRemoved() {
+    protected void observableDeactivated() {
       observable.removeUpdatable(this);
     }
 
@@ -215,12 +215,12 @@ public final class Observables {
     }
 
     @Override
-    protected void firstUpdatableAdded() {
+    protected void observableActivated() {
       observable.addUpdatable(this);
     }
 
     @Override
-    protected void lastUpdatableRemoved() {
+    protected void observableDeactivated() {
       observable.removeUpdatable(this);
       workerHandler.removeMessages(WorkerHandler.MSG_CALL_LOW_PASS_UPDATE, this);
     }
@@ -250,23 +250,23 @@ public final class Observables {
       implements UpdateDispatcher {
 
     @Nullable
-    private final UpdatablesChanged updatablesChanged;
+    private final ActivationHandler activationHandler;
 
-    private AsyncUpdateDispatcher(@Nullable UpdatablesChanged updatablesChanged) {
-      this.updatablesChanged = updatablesChanged;
+    private AsyncUpdateDispatcher(@Nullable ActivationHandler activationHandler) {
+      this.activationHandler = activationHandler;
     }
 
     @Override
-    protected void firstUpdatableAdded() {
-      if (updatablesChanged != null) {
-        updatablesChanged.firstUpdatableAdded(this);
+    protected void observableActivated() {
+      if (activationHandler != null) {
+        activationHandler.observableActivated(this);
       }
     }
 
     @Override
-    protected void lastUpdatableRemoved() {
-      if (updatablesChanged != null) {
-        updatablesChanged.lastUpdatableRemoved(this);
+    protected void observableDeactivated() {
+      if (activationHandler != null) {
+        activationHandler.observableDeactivated(this);
       }
     }
 
