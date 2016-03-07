@@ -42,11 +42,15 @@ dependencies {
     compile project(':extensions:database')
     compile project(':extensions:net')
     compile project(':extensions:rvadapter')
-    compile 'com.android.support:recyclerview-v7:23.1.1'
+    compile "com.android.support:recyclerview-v7:$gradle.supportLibraryVersion"
     testCompile "org.hamcrest:hamcrest-library:1.3"
     testCompile 'junit:junit:4.12'
     androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.1'
     androidTestCompile 'com.android.support.test:runner:0.4.1'
     androidTestCompile 'com.android.support.test:rules:0.4.1'
     androidTestCompile 'com.android.support:support-annotations:' + gradle.supportLibraryVersion
+}
+
+configurations.all {
+    resolutionStrategy.force "com.android.support:support-annotations:$gradle.supportLibraryVersion"
 }
