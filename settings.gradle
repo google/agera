@@ -32,7 +32,7 @@ gradle.ext.licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
 gradle.ext.minSdkVersion = 9
 gradle.ext.compileSdkVersion = 23
 gradle.ext.buildToolsVersion = '23.0.2'
-gradle.ext.supportLibraryVersion = '23.1.1'
+gradle.ext.supportLibraryVersion = '23.0.1'
 
 gradle.allprojects {
     buildscript {
@@ -81,11 +81,9 @@ gradle.allprojects {
                 group = gradle.group
                 android {
                     lintOptions {
-                        abortOnError true
                         textReport true
                         textOutput 'stdout'
                         checkAllWarnings true
-                        warningsAsErrors true
                     }
                     buildTypes {
                         debug {
@@ -99,7 +97,7 @@ gradle.allprojects {
                     testCompile "org.hamcrest:hamcrest-library:1.3"
                     testCompile 'junit:junit:4.12'
                     testCompile 'org.robolectric:robolectric:3.0'
-                    testCompile "org.mockito:mockito-core:1.9.5"
+                    testCompile "org.mockito:mockito-core:1.10.19"
                 }
                 task sourcesJar(type: Jar) {
                     from android.sourceSets.main.java.srcDirs
