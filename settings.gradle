@@ -32,7 +32,7 @@ gradle.ext.licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
 gradle.ext.minSdkVersion = 9
 gradle.ext.compileSdkVersion = 23
 gradle.ext.buildToolsVersion = '23.0.2'
-gradle.ext.supportLibraryVersion = '23.0.1'
+gradle.ext.supportLibraryVersion = '23.2.1'
 
 gradle.allprojects {
     buildscript {
