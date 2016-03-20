@@ -16,6 +16,7 @@
 package com.google.android.agera;
 
 import static com.google.android.agera.Common.IDENTITY_FUNCTION;
+import static com.google.android.agera.Common.TRUE_CONDICATE;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
 
@@ -75,7 +76,9 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
   @NonNull
   @Override
   public FunctionCompilerStates.FList filter(@NonNull final Predicate filter) {
-    addFunction(new FilterFunction(filter));
+    if (filter != TRUE_CONDICATE) {
+      addFunction(new FilterFunction(filter));
+    }
     return this;
   }
 
@@ -147,6 +150,9 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
     @Override
     @SuppressWarnings("unchecked")
     public List<T> apply(@NonNull final List<F> input) {
+      if (input.isEmpty()) {
+        return emptyList();
+      }
       final List<T> result = new ArrayList(input.size());
       for (final F item : input) {
         result.add(function.apply(item));
@@ -187,6 +193,9 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
     @Override
     @SuppressWarnings("unchecked")
     public List<T> apply(@NonNull final List<T> input) {
+      if (input.isEmpty()) {
+        return emptyList();
+      }
       final List<T> result = new ArrayList(input.size());
       for (final T item : input) {
         if (filter.apply(item)) {
