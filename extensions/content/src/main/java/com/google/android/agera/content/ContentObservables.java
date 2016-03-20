@@ -90,12 +90,12 @@ public final class ContentObservables {
     }
 
     @Override
-    public void observableActivated(final UpdateDispatcher caller) {
+    public void observableActivated(@NonNull final UpdateDispatcher caller) {
       context.registerReceiver(this, filter);
     }
 
     @Override
-    public void observableDeactivated(final UpdateDispatcher caller) {
+    public void observableDeactivated(@NonNull final UpdateDispatcher caller) {
       context.unregisterReceiver(this);
     }
 
@@ -132,12 +132,12 @@ public final class ContentObservables {
     }
 
     @Override
-    public void observableActivated(final UpdateDispatcher caller) {
+    public void observableActivated(@NonNull final UpdateDispatcher caller) {
       preferences.registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
-    public void observableDeactivated(final UpdateDispatcher caller) {
+    public void observableDeactivated(@NonNull final UpdateDispatcher caller) {
       preferences.unregisterOnSharedPreferenceChangeListener(this);
     }
 

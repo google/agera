@@ -15,6 +15,8 @@
  */
 package com.google.android.agera;
 
+import android.support.annotation.NonNull;
+
 /**
  * Receives events of the {@link UpdateDispatcher} created with
  * {@link Observables#updateDispatcher(ActivationHandler)} when the first {@link Updatable} is added
@@ -32,11 +34,11 @@ public interface ActivationHandler {
    * Called when the the {@code caller} changes state from having no {@link Updatable}s to
    * having at least one {@link Updatable}.
    */
-  void observableActivated(UpdateDispatcher caller);
+  void observableActivated(@NonNull UpdateDispatcher caller);
 
   /**
    * Called when the the {@code caller} changes state from having {@link Updatable}s to
    * no longer having {@link Updatable}s.
    */
-  void observableDeactivated(UpdateDispatcher caller);
+  void observableDeactivated(@NonNull UpdateDispatcher caller);
 }
