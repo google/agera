@@ -21,7 +21,7 @@ Learn about Agera
 
 - [Agera Explained](https://github.com/google/agera/wiki)
 
-Agera Experimental Sample Extensions
+Experimental Sample Extensions
 ------------------------------------
 
 A few experimental sample extension libraries for Agera are also provided. These are:
