@@ -1,5 +1,6 @@
-Agera - Reactive Programming for Android
-========================================
+![Agera](https://github.com/google/agera/blob/master/doc/images/agera.png)
+Reactive Programming for Android
+================================
 
 Agera is a set of classes and interfaces to help write functional, asynchronous, and reactive 
 applications for Android.
