@@ -21,10 +21,10 @@ Learn about Agera
 
 - [Agera Explained](https://github.com/google/agera/wiki)
 
-Agera Extensions
-----------------
+Agera Experimental Sample Extensions
+------------------------------------
 
-A few sample extension libraries for Agera are also provided. These are:
+A few experimental sample extension libraries for Agera are also provided. These are:
 
 - Content - For `android.content` interaction, such as `BroadcastReceiver` and `SharedPreferences`
 - Database - For `SQLiteDatabase` interaction
