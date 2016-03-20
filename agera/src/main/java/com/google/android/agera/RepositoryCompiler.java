@@ -169,7 +169,8 @@ final class RepositoryCompiler implements
 
   @NonNull
   @Override
-  public RepositoryCompiler mergeIn(@NonNull final Supplier supplier, @NonNull final Merger merger) {
+  public RepositoryCompiler mergeIn(@NonNull final Supplier supplier,
+      @NonNull final Merger merger) {
     checkExpect(FLOW);
     addMergeIn(supplier, merger, directives);
     return this;
