@@ -7,13 +7,18 @@ applications for Android.
 
 Requires Android SDK version 9 or higher.
 
+Versions
+--------
+
+The latest version of Agera is 1.0.0-RC1
+
 Usage
 -----
 
 To add a dependency using Gradle:
 
 ```
-  compile 'com.google.android.agera:agera:1.0.0-SNAPSHOT'
+  compile 'com.google.android.agera:agera:1.0.0-RC1'
 ```
 
 Learn about Agera
@@ -34,10 +39,10 @@ A few experimental sample extension libraries for Agera are also provided. These
 To add dependencies to these using Gradle:
 
 ```
-  compile 'com.google.android.agera:content:1.0.0-SNAPSHOT'
-  compile 'com.google.android.agera:database:1.0.0-SNAPSHOT'
-  compile 'com.google.android.agera:net:1.0.0-SNAPSHOT'
-  compile 'com.google.android.agera:rvadapter:1.0.0-SNAPSHOT'
+  compile 'com.google.android.agera:content:1.0.0-RC1'
+  compile 'com.google.android.agera:database:1.0.0-RC1'
+  compile 'com.google.android.agera:net:1.0.0-RC1'
+  compile 'com.google.android.agera:rvadapter:1.0.0-RC1'
 ```
 
 Links

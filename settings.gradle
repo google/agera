@@ -21,7 +21,7 @@ include ':extensions:net'
 include ':testapp'
 
 gradle.ext.versionCode = 10000
-gradle.ext.versionName = '1.0.0-SNAPSHOT'
+gradle.ext.versionName = '1.0.0-RC1'
 
 gradle.ext.group = 'com.google.android.agera'
 gradle.ext.url = 'https://github.com/google/agera'

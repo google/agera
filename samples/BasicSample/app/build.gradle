@@ -45,11 +45,11 @@ android {
 
 dependencies {
     compile "com.android.support:appcompat-v7:$rootProject.supportLibraryVersion"
-    compile 'com.google.android.agera:agera:1.0.0-SNAPSHOT'
-    compile 'com.google.android.agera:content:1.0.0-SNAPSHOT'
-    compile 'com.google.android.agera:database:1.0.0-SNAPSHOT'
-    compile 'com.google.android.agera:net:1.0.0-SNAPSHOT'
-    compile 'com.google.android.agera:rvadapter:1.0.0-SNAPSHOT'
+    compile 'com.google.android.agera:agera:1.0.0-RC1'
+    compile 'com.google.android.agera:content:1.0.0-RC1'
+    compile 'com.google.android.agera:database:1.0.0-RC1'
+    compile 'com.google.android.agera:net:1.0.0-RC1'
+    compile 'com.google.android.agera:rvadapter:1.0.0-RC1'
     compile 'com.android.support.test.espresso:espresso-idling-resource:2.2.1'
 
     // Dependencies for local unit tests
