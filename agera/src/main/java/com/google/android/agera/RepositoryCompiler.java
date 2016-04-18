@@ -104,6 +104,7 @@ final class RepositoryCompiler implements
 
   private RepositoryCompiler() {}
 
+  @NonNull
   private RepositoryCompiler start(@NonNull final Object initialValue) {
     checkExpect(NOTHING);
     expect = FIRST_EVENT_SOURCE;

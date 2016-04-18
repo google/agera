@@ -37,9 +37,12 @@ import java.util.Map;
  * An object representing a response from the http functions.
  */
 public final class HttpResponse {
+  @NonNull
   private static final ExtractCharsetFromContentType
       CHARSET_FROM_CONTENT_TYPE = new ExtractCharsetFromContentType();
+  @NonNull
   private static final String CONTENT_TYPE = "Content-Type";
+  @NonNull
   private static final String DEFAULT_CHARSET = "ISO-8859-1";
 
   private final int responseCode;
@@ -51,7 +54,7 @@ public final class HttpResponse {
   final Map<String, String> header;
 
   private HttpResponse(final int responseCode, @NonNull final String responseMessage,
-      @NonNull final Map<String, String> header, final byte[] body) {
+      @NonNull final Map<String, String> header, @NonNull final byte[] body) {
     this.responseCode = responseCode;
     this.responseMessage = checkNotNull(responseMessage);
     this.header = checkNotNull(header);

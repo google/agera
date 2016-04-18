@@ -33,7 +33,9 @@ final class SqlRequestCompiler
   static final int SQL_DELETE_REQUEST = 1;
   static final int SQL_UPDATE_REQUEST = 2;
   static final int SQL_INSERT_REQUEST = 3;
+  @NonNull
   private static final String[] NO_ARGUMENTS = new String[] {};
+  @NonNull
   private static final String ERROR_MESSAGE = "Sql compiler cannot be reused";
 
   private final int type;
@@ -42,8 +44,11 @@ final class SqlRequestCompiler
 
   @NonNull
   private String[] arguments;
+  @NonNull
   private String table;
+  @NonNull
   private String query;
+  @NonNull
   private String where;
   private boolean compiled;
 
@@ -53,6 +58,8 @@ final class SqlRequestCompiler
     this.contentValues = new ContentValues();
     this.arguments = NO_ARGUMENTS;
     this.compiled = false;
+    this.table = "";
+    this.query = "";
   }
 
   @NonNull

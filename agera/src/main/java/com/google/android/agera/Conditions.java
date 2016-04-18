@@ -106,6 +106,7 @@ public final class Conditions {
     return new PredicateCondition<>(predicate, supplier);
   }
 
+  @NonNull
   private static Condition composite(@NonNull final Condition[] conditions,
       @NonNull final Condition defaultCondition, @NonNull final Condition definingCondition) {
     int nonDefaultCount = 0;

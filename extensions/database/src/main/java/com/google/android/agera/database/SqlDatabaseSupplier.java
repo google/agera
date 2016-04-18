@@ -15,6 +15,7 @@
  */
 package com.google.android.agera.database;
 
+import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.success;
 
@@ -47,7 +48,7 @@ public abstract class SqlDatabaseSupplier extends SQLiteOpenHelper
   @Override
   public final synchronized Result<SQLiteDatabase> get() {
     try {
-      return success(getWritableDatabase());
+      return absentIfNull(getWritableDatabase());
     } catch (final SQLException e) {
       return failure(e);
     }

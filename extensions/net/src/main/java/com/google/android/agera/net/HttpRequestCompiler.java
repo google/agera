@@ -34,7 +34,9 @@ final class HttpRequestCompiler
     implements HTBodyHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile {
   static final int CONNECT_TIMEOUT_MS = 2500;
   static final int READ_TIMEOUT_MS = 2500;
+  @NonNull
   private static final String ERROR_MESSAGE = "Http request compiler cannot be reused";
+  @NonNull
   private static final byte[] EMPTY_BODY = new byte[0];
 
   @NonNull

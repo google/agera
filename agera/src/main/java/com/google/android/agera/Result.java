@@ -36,8 +36,10 @@ import android.support.annotation.Nullable;
  * @param <T> The output value type.
  */
 public final class Result<T> {
+  @NonNull
   private static final Result<Object> FAILURE =
       new Result<>(null, new Throwable("Attempt failed"));
+  @NonNull
   private static final Result<Object> ABSENT =
       new Result<>(null, new NullPointerException("Value is absent"));
 
@@ -141,6 +143,7 @@ public final class Result<T> {
    *     because it is easily avoidable by first checking whether the attempt has {@link #succeeded}
    *     or {@link #failed}, or by using other fluent style methods to achieve the same purpose.
    */
+  @NonNull
   public T get() throws FailedResultException {
     if (value != null) {
       return value;

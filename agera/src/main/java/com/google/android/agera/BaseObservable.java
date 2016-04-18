@@ -83,6 +83,7 @@ public abstract class BaseObservable implements Observable {
    * Worker and synchronization lock behind a {@link BaseObservable}.
    */
   static final class Worker {
+    @NonNull
     private static final Object[] NO_UPDATABLES_OR_HANDLERS = new Object[0];
 
     @NonNull

@@ -94,7 +94,7 @@ public final class Predicates {
    * Returns a {@link Predicate} that negates {@code predicate}.
    */
   @NonNull
-  public static <T> Predicate<T> not(final Predicate<T> predicate) {
+  public static <T> Predicate<T> not(@NonNull final Predicate<T> predicate) {
     if (predicate instanceof NegatedPredicate) {
       return ((NegatedPredicate<T>) predicate).predicate;
     }
@@ -132,6 +132,7 @@ public final class Predicates {
   }
 
   @SuppressWarnings("unchecked")
+  @NonNull
   private static Predicate composite(@NonNull final Predicate[] predicates,
       @NonNull final Predicate defaultPredicate, @NonNull final Predicate definingPredicate,
       final boolean definingResult) {

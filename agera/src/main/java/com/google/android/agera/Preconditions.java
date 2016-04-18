@@ -34,8 +34,9 @@ public final class Preconditions {
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   @NonNull
-  public static <T> T checkNotNull(@Nullable final T object) {
+  public static <T> T checkNotNull(@NonNull final T object) {
     if (object == null) {
       throw new NullPointerException();
     }

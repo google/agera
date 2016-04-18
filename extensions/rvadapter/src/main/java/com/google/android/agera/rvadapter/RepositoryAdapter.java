@@ -65,8 +65,11 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
    * Builds a {@link RepositoryAdapter}.
    */
   public static final class Builder {
+    @NonNull
     final List<Repository<Object>> repositories = new ArrayList<>();
+    @NonNull
     final List<RepositoryPresenter<Object>> presenters = new ArrayList<>();
+    @NonNull
     final List<Observable> observables = new ArrayList<>();
 
     /**
@@ -81,7 +84,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
      *     position.
      * @return This instance, for chaining.
      */
-    public <T> Builder add(Repository<T> repository, RepositoryPresenter<T> presenter) {
+    public <T> Builder add(@NonNull final  Repository<T> repository,
+        @NonNull final RepositoryPresenter<T> presenter) {
       @SuppressWarnings("unchecked")
       Repository<Object> untypedRepository = (Repository<Object>) checkNotNull(repository);
       repositories.add(untypedRepository);
@@ -104,7 +108,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
      *     {@link #add}; they will be observed automatically.
      * @return This instance, for chaining.
      */
-    public Builder addAdditionalObservable(Observable observable) {
+    public Builder addAdditionalObservable(@NonNull final Observable observable) {
       observables.add(checkNotNull(observable));
       return this;
     }
@@ -132,13 +136,14 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
   private final RepositoryPresenter<Object>[] presenters;
   @NonNull
   private final Observable observable;
+  @NonNull
   private final int[] endPositions;
 
   private boolean dataInvalid;
   private int resolvedRepositoryIndex;
   private int resolvedItemIndex;
 
-  public RepositoryAdapter(Builder builder) {
+  public RepositoryAdapter(@NonNull final Builder builder) {
     int count = builder.repositories.size();
     checkArgument(count > 0, "Must add at least one repository");
     checkArgument(builder.presenters.size() == count,

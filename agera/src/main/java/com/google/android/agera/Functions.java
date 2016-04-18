@@ -85,9 +85,10 @@ public final class Functions {
   }
 
   private static final class SupplierAsFunction<F, T> implements Function<F, T> {
+    @NonNull
     private final Supplier<? extends T> supplier;
 
-    SupplierAsFunction(final Supplier<? extends T> supplier) {
+    SupplierAsFunction(@NonNull final Supplier<? extends T> supplier) {
       this.supplier = checkNotNull(supplier);
     }
 

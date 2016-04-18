@@ -460,7 +460,8 @@ final class CompiledRepository extends BaseObservable
     }
   }
 
-  private void runTerminate(Object caseValue, @Nullable Function terminatingValueFunction) {
+  private void runTerminate(@NonNull final Object caseValue,
+      @Nullable final Function terminatingValueFunction) {
     if (terminatingValueFunction == null) {
       skipAndEndFlow();
     } else {
