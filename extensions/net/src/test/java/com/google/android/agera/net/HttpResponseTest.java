@@ -41,7 +41,7 @@ import java.util.Map;
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)
 public final class HttpResponseTest {
-  private static final String DEFAULT_CHARSET = "ISO-8859-1";
+  private static final String DEFAULT_CHARSET = "UTF-8";
   private static final String UTF16_CHARSET = "UTF-16";
   private static final String BODY_STRING = "body stringÿ";
   private static final String CONTENT_TYPE = "content-type";
