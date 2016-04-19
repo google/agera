@@ -45,6 +45,10 @@ To add dependencies to these using Gradle:
   compile 'com.google.android.agera:rvadapter:1.0.0-RC1'
 ```
 
+FAQ: What's the relation with RxJava?
+-----
+See [this issue](https://github.com/google/agera/issues/20).
+
 Links
 -----
 
