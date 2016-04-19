@@ -40,7 +40,7 @@ public abstract class SqlDatabaseSupplier extends SQLiteOpenHelper
    * Extending the base constructor, for overriding in concrete implementations.
    */
   public SqlDatabaseSupplier(@NonNull final Context context, @NonNull final String path,
-      final int version, final CursorFactory factory) {
+      final CursorFactory factory, final int version) {
     super(context, path, factory, version);
   }
 

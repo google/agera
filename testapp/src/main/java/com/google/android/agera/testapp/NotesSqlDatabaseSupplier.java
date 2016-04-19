@@ -32,7 +32,7 @@ final class NotesSqlDatabaseSupplier extends SqlDatabaseSupplier {
   private static final int VERSION = 1;
 
   private NotesSqlDatabaseSupplier(@NonNull final Context context) {
-    super(context, DATABASE_NAME, VERSION, null);
+    super(context, DATABASE_NAME, null, VERSION);
   }
 
   @NonNull

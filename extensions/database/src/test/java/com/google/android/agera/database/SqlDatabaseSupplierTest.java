@@ -37,7 +37,7 @@ public final class SqlDatabaseSupplierTest {
   @Test
   public void shouldSupplyDatabase() throws Throwable {
     final SqlDatabaseSupplier sqlDatabaseSupplier = new SqlDatabaseSupplier(
-        application.getApplicationContext(), DATABASE_NAME, 1, null) {
+        application.getApplicationContext(), DATABASE_NAME, null, 1) {
       @Override
       public void onCreate(final SQLiteDatabase sqLiteDatabase) {}
 
@@ -51,7 +51,7 @@ public final class SqlDatabaseSupplierTest {
   @Test
   public void shouldSupplyFailureIfFailingOnCreate() throws Throwable {
     final SqlDatabaseSupplier sqlDatabaseSupplier = new SqlDatabaseSupplier(
-        application.getApplicationContext(), DATABASE_NAME, 1, null) {
+        application.getApplicationContext(), DATABASE_NAME, null, 1) {
       @Override
       public void onCreate(final SQLiteDatabase sqLiteDatabase) {
         throw new SQLException();
