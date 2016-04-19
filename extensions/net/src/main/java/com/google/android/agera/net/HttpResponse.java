@@ -43,7 +43,7 @@ public final class HttpResponse {
   @NonNull
   private static final String CONTENT_TYPE = "Content-Type";
   @NonNull
-  private static final String DEFAULT_CHARSET = "ISO-8859-1";
+  private static final String DEFAULT_CHARSET = "UTF-8";
 
   private final int responseCode;
   @NonNull
