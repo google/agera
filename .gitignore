@@ -5,3 +5,4 @@ gradle/
 gradlew*
 local.properties
 *.iml
+ readme.md 
