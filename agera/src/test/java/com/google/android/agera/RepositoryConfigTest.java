@@ -317,7 +317,7 @@ public final class RepositoryConfigTest {
 
     private boolean waitForState(int waitForState) throws InterruptedException {
       long now = System.currentTimeMillis();
-      long giveUpTime = now + 5000;
+      long giveUpTime = now + 20000;
       while (state != waitForState && now < giveUpTime) {
         wait(giveUpTime - now);
         now = System.currentTimeMillis();
