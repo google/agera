@@ -117,7 +117,9 @@ public abstract class BaseObservable implements Observable {
     }
 
     void dispatchUpdate() {
-      handler.obtainMessage(MSG_UPDATE, this).sendToTarget();
+      if (!handler.hasMessages(MSG_UPDATE, this)) {
+        handler.obtainMessage(MSG_UPDATE, this).sendToTarget();
+      }
     }
 
     private void add(@NonNull final Updatable updatable, @NonNull final Handler handler) {
@@ -164,7 +166,7 @@ public abstract class BaseObservable implements Observable {
         if (updatable != null) {
           if (handler.getLooper() == Looper.myLooper()) {
             updatable.update();
-          } else {
+          } else if (!handler.hasMessages(WorkerHandler.MSG_CALL_UPDATABLE, updatable)) {
             handler.obtainMessage(WorkerHandler.MSG_CALL_UPDATABLE, updatable).sendToTarget();
           }
         }

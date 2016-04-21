@@ -17,7 +17,6 @@ package com.google.android.agera;
 
 import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Preconditions.checkNotNull;
-import static com.google.android.agera.Preconditions.checkState;
 
 import com.google.android.agera.RepositoryCompilerStates.REventSource;
 
@@ -37,7 +36,7 @@ public final class Repositories {
    */
   @NonNull
   public static <T> Repository<T> repository(@NonNull final T object) {
-    return new SimpleRepository<>(object, false);
+    return new SimpleRepository<>(object);
   }
 
   /**
@@ -53,18 +52,16 @@ public final class Repositories {
    */
   @NonNull
   public static <T> MutableRepository<T> mutableRepository(@NonNull final T object) {
-    return new SimpleRepository<>(object, true);
+    return new SimpleRepository<>(object);
   }
 
   private static final class SimpleRepository<T> implements MutableRepository<T> {
-    private final boolean mutable;
     @NonNull
     private final UpdateDispatcher updateDispatcher;
     @NonNull
     private T reference;
 
-    SimpleRepository(@NonNull final T reference, boolean mutable) {
-      this.mutable = mutable;
+    SimpleRepository(@NonNull final T reference) {
       this.updateDispatcher = updateDispatcher();
       this.reference = checkNotNull(reference);
     }
@@ -77,7 +74,6 @@ public final class Repositories {
 
     @Override
     public synchronized void accept(@NonNull final T reference) {
-      checkState(mutable, "So you cast me?");
       if (this.reference.equals(checkNotNull(reference))) {
         // Keep the old reference to have a slight performance edge if GC is generational.
         return;
