@@ -239,4 +239,35 @@ public abstract class Agera implements Observable {
     public final Agera compose(@NonNull Function<? super Agera, ? extends Agera> composer) {
         return as(composer);
     }
+
+    /**
+     * Forwards update() signals to Updatables until the other Observable signals its
+     * first update().
+     * @param other the other Observable that indicates when to stop listening to
+     * @return the Agera instance
+     */
+    public final Agera takeUntil(@NonNull Observable other) {
+        return new AgeraTakeUntil(this, other);
+    }
+
+    /**
+     * Forwards update() signals if the condition returns true or disconnects
+     * if it returns false.
+     * @param condition the condition to check before delivering the update() signal
+     * @return the Agera instance
+     */
+    public final Agera takeWhile(Condition condition) {
+        return new AgeraTakeWhile(this, condition);
+    }
+
+    /**
+     * Forwards update() signals then checks if the condition returns true or disconnects
+     * if it returns false.
+     * @param condition the condition to check after the update() signal has been delivered
+     * @return the Agera instance
+     */
+    public final Agera takeUntil(Condition condition) {
+        return new AgeraTakeUntilCondition(this, condition);
+    }
+
 }

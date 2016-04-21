@@ -5,15 +5,19 @@ import android.support.annotation.NonNull;
 import com.google.android.agera.Observable;
 import com.google.android.agera.Updatable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Takes the first N update() signals and then removes itself from the source Observable.
  */
-final class AgeraTake extends AgeraSource<TakeUpdatable> {
+final class AgeraTake extends AgeraTracking<TakeUpdatable> {
+
+    final Observable source;
 
     final long n;
 
     AgeraTake(@NonNull Observable source, long n) {
-        super(source);
+        this.source = source;
         this.n = n;
     }
 
@@ -22,9 +26,21 @@ final class AgeraTake extends AgeraSource<TakeUpdatable> {
     protected TakeUpdatable createWrapper(@NonNull Updatable updatable) {
         return new TakeUpdatable(updatable, n, this);
     }
+
+    @Override
+    protected void onAdd(@NonNull Updatable updatable, @NonNull TakeUpdatable wrapper) {
+        source.addUpdatable(wrapper);
+    }
+
+    @Override
+    protected void onRemove(@NonNull Updatable updatable, @NonNull TakeUpdatable wrapper) {
+        wrapper.remove();
+    }
 }
 
-final class TakeUpdatable implements Updatable {
+final class TakeUpdatable
+extends AtomicBoolean
+implements Updatable {
     final Updatable actual;
 
     final Observable parent;
@@ -47,6 +63,12 @@ final class TakeUpdatable implements Updatable {
             remaining = --r;
         }
         if (r == 0) {
+            remove();
+        }
+    }
+
+    void remove() {
+        if (!get() && compareAndSet(false, true)) {
             parent.removeUpdatable(actual);
         }
     }
