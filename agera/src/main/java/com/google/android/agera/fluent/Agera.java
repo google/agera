@@ -27,6 +27,7 @@ import com.google.android.agera.Receiver;
 import com.google.android.agera.Supplier;
 import com.google.android.agera.Updatable;
 
+import java.io.Closeable;
 import java.util.concurrent.Executor;
 
 /**
@@ -42,6 +43,7 @@ public abstract class Agera implements Observable {
      * Returns an Agera which signals exactly one update().
      * @return the Agera instance
      */
+    @NonNull
     public static Agera just() {
         return new AgeraJust();
     }
@@ -51,6 +53,7 @@ public abstract class Agera implements Observable {
      * @param count the number of times to signal
      * @return the Agera instance
      */
+    @NonNull
     public static Agera range(int count) {
         return new AgeraRange(count);
     }
@@ -59,6 +62,7 @@ public abstract class Agera implements Observable {
      * Returns an Agera which never calls update().
      * @return the Agera instance
      */
+    @NonNull
     public static Agera empty() {
         return new AgeraEmpty();
     }
@@ -68,6 +72,7 @@ public abstract class Agera implements Observable {
      * @param observable the Observable to wrap
      * @return the Agera instance
      */
+    @NonNull
     public static Agera wrap(@NonNull Observable observable) {
         if (observable instanceof Agera) {
             return (Agera)observable;
@@ -81,6 +86,7 @@ public abstract class Agera implements Observable {
      * @param generator the generator that receives each updatable
      * @return the Agera instance
      */
+    @NonNull
     public static Agera generate(@NonNull Receiver<Updatable> generator) {
         return new AgeraGenerate(generator);
     }
@@ -93,6 +99,7 @@ public abstract class Agera implements Observable {
      * @param generator the generator that receives each updatable and condition pairs
      * @return the Agera instance
      */
+    @NonNull
     public static Agera generate(@NonNull Binder<Updatable, Condition> generator) {
         return new AgeraGenerateIf(generator);
     }
@@ -103,6 +110,7 @@ public abstract class Agera implements Observable {
      * @param supplier the supplier of Observables
      * @return the Agera instance
      */
+    @NonNull
     public static Agera defer(@NonNull Supplier<? extends Observable> supplier) {
         return new AgeraDefer(supplier);
     }
@@ -112,6 +120,7 @@ public abstract class Agera implements Observable {
      * @param sources the source Observables
      * @return the new Agera instance
      */
+    @NonNull
     public static Agera merge(@NonNull Observable... sources) {
         if (sources.length == 0) {
             return empty();
@@ -131,6 +140,7 @@ public abstract class Agera implements Observable {
      * on the main thread.
      * @return the Agera instance
      */
+    @NonNull
     public final Agera subscribeOnMain() {
         return subscribeOn(Looper.getMainLooper());
     }
@@ -141,6 +151,7 @@ public abstract class Agera implements Observable {
      * @param executor the Executor to use
      * @return the Agera instance
      */
+    @NonNull
     public final Agera subscribeOn(@NonNull Executor executor) {
         return new AgeraSubscribeOnExecutor(this, executor);
     }
@@ -151,6 +162,7 @@ public abstract class Agera implements Observable {
      * @param looper the looper to use
      * @return the Agera instance
      */
+    @NonNull
     public final Agera subscribeOn(@NonNull Looper looper) {
         return new AgeraSubscribeOnLooper(this, looper);
     }
@@ -159,6 +171,7 @@ public abstract class Agera implements Observable {
      * Makes sure update() signals are called on the main thread.
      * @return the Agera instance
      */
+    @NonNull
     public final Agera observeOnMain() {
         return observeOn(Looper.getMainLooper());
     }
@@ -168,8 +181,9 @@ public abstract class Agera implements Observable {
      * @param executor the Executor to use
      * @return the Agera instance
      */
+    @NonNull
     public final Agera observeOn(@NonNull Executor executor) {
-        return new AgeraObserveOnExecutor(this, executor);
+        return new AgeraObserveOnExecutor(this, executor, false);
     }
 
     /**
@@ -177,8 +191,44 @@ public abstract class Agera implements Observable {
      * @param looper the Looper to use
      * @return the Agera instance
      */
+    @NonNull
     public final Agera observeOn(@NonNull Looper looper) {
-        return new AgeraObserveOnLooper(this, looper);
+        return new AgeraObserveOnLooper(this, looper, false);
+    }
+
+    /**
+     * Makes sure update() signals are called on the main thread.
+     * @param coalesce if true, excess calls to update() will be reduced to a single update()
+     *                 call on the executor
+     * @return the Agera instance
+     */
+    @NonNull
+    public final Agera observeOnMain(boolean coalesce) {
+        return observeOn(Looper.getMainLooper(), coalesce);
+    }
+
+    /**
+     * Makes sure update() signals are called on the specified Executor.
+     * @param executor the Executor to use
+     * @param coalesce if true, excess calls to update() will be reduced to a single update()
+     *                 call on the executor
+     * @return the Agera instance
+     */
+    @NonNull
+    public final Agera observeOn(@NonNull Executor executor, boolean coalesce) {
+        return new AgeraObserveOnExecutor(this, executor, coalesce);
+    }
+
+    /**
+     * Makes sure update() signals are called on the specified Looper.
+     * @param looper the Looper to use
+     * @param coalesce if true, excess calls to update() will be reduced to a single update()
+     *                 call on the executor
+     * @return the Agera instance
+     */
+    @NonNull
+    public final Agera observeOn(@NonNull Looper looper, boolean coalesce) {
+        return new AgeraObserveOnLooper(this, looper, coalesce);
     }
 
     /**
@@ -186,6 +236,7 @@ public abstract class Agera implements Observable {
      * @param n the number of signals to skip
      * @return the Agera instance
      */
+    @NonNull
     public final Agera skip(long n) {
         return new AgeraSkip(this, n);
     }
@@ -195,6 +246,7 @@ public abstract class Agera implements Observable {
      * @param limit the number of signals to let through
      * @return the Agera instance
      */
+    @NonNull
     public final Agera take(long limit) {
         return new AgeraTake(this, limit);
     }
@@ -204,6 +256,7 @@ public abstract class Agera implements Observable {
      * @param condition the condition to check before each update() signal is forwarded
      * @return the Agera instance
      */
+    @NonNull
     public final Agera filter(@NonNull Condition condition) {
         return new AgeraFilter(this, condition);
     }
@@ -215,6 +268,7 @@ public abstract class Agera implements Observable {
      * @param mapper the supplier that returns an Observable, called for each main update() signal
      * @return the Agera instance
      */
+    @NonNull
     public final Agera flatMap(@NonNull Supplier<Observable> mapper) {
         return new AgeraFlatMap(this, mapper);
     }
@@ -225,6 +279,7 @@ public abstract class Agera implements Observable {
      * @param <U> the result type
      * @return the result returned by the converter function
      */
+    @NonNull
     public final <U> U as(@NonNull Function<? super Agera, ? extends U> converter) {
         return converter.apply(this);
     }
@@ -236,6 +291,7 @@ public abstract class Agera implements Observable {
      * @param composer the function that receives this Agera and must return some Agera instance
      * @return the Agera returned by the composer function
      */
+    @NonNull
     public final Agera compose(@NonNull Function<? super Agera, ? extends Agera> composer) {
         return as(composer);
     }
@@ -246,6 +302,7 @@ public abstract class Agera implements Observable {
      * @param other the other Observable that indicates when to stop listening to
      * @return the Agera instance
      */
+    @NonNull
     public final Agera takeUntil(@NonNull Observable other) {
         return new AgeraTakeUntil(this, other);
     }
@@ -256,7 +313,8 @@ public abstract class Agera implements Observable {
      * @param condition the condition to check before delivering the update() signal
      * @return the Agera instance
      */
-    public final Agera takeWhile(Condition condition) {
+    @NonNull
+    public final Agera takeWhile(@NonNull Condition condition) {
         return new AgeraTakeWhile(this, condition);
     }
 
@@ -266,8 +324,55 @@ public abstract class Agera implements Observable {
      * @param condition the condition to check after the update() signal has been delivered
      * @return the Agera instance
      */
-    public final Agera takeUntil(Condition condition) {
+    @NonNull
+    public final Agera takeUntil(@NonNull Condition condition) {
         return new AgeraTakeUntilCondition(this, condition);
     }
 
+    /**
+     * Calls the given Runnable  whenever the Observable signals an update().
+     * @param run the runnable action to invoke before forwarding an update() signal
+     * @return the Agera instance
+     */
+    @NonNull
+    public final Agera doOnUpdate(@NonNull Runnable run) {
+        return new AgeraDoOnUpdate(this, run);
+    }
+
+    /**
+     * Consumes the chain of Agera operators and offers a single-point
+     * cancellation (no need to remember this Agera instance).
+     * @return the Closeable that can be used for cancelling the sequence
+     */
+    @NonNull
+    public final Closeable consume() {
+        EmptyUpdatable u = new EmptyUpdatable(this);
+        addUpdatable(u);
+        return u;
+    }
+
+    /**
+     * Consumes the chain of Agera operators and executes a Runnable action
+     * on each update() signal, plus, allows single point-cancellation.
+     * @param run the Runnable action to execute on each update() signal
+     * @return the Closeable that can be used for cancelling the sequence
+     */
+    @NonNull
+    public final Closeable consume(@NonNull Runnable run) {
+        RunnableUpdatable ru = new RunnableUpdatable(this, run);
+        addUpdatable(ru);
+        return ru;
+    }
+
+    /**
+     * Consumes the chain of Agera operators and executes a Receiver action
+     * for each update() signal and allows in-sequence cancellation through
+     * the supplied Closeable to the receiver
+     * @param receiver the Receiver instance called for each update() with a Closeable
+     *                 instance allowing in-sequence cancellation
+     */
+    public final void consume(@NonNull Receiver<Closeable> receiver) {
+        ConsumingUpdatable cu = new ConsumingUpdatable(this, receiver);
+        addUpdatable(cu);
+    }
 }

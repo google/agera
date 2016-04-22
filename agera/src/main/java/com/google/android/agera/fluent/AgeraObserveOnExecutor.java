@@ -31,15 +31,18 @@ final class AgeraObserveOnExecutor extends AgeraTracking<ObserveOnExecutor> {
 
     final Executor executor;
 
-    AgeraObserveOnExecutor(Observable source, Executor executor) {
+    final boolean coalesce;
+
+    AgeraObserveOnExecutor(Observable source, Executor executor, boolean coalesce) {
         this.source = source;
         this.executor = executor;
+        this.coalesce = coalesce;
     }
 
     @NonNull
     @Override
     protected ObserveOnExecutor createWrapper(@NonNull Updatable updatable) {
-        return new ObserveOnExecutor(updatable, executor);
+        return new ObserveOnExecutor(updatable, executor, coalesce);
     }
 
     @Override
@@ -62,12 +65,14 @@ final class ObserveOnExecutor
     final Updatable actual;
 
     final Executor executor;
+    private final boolean coalesce;
 
     volatile boolean cancelled;
 
-    ObserveOnExecutor(Updatable actual, Executor executor) {
+    ObserveOnExecutor(Updatable actual, Executor executor, boolean coalesce) {
         this.actual = actual;
         this.executor = executor;
+        this.coalesce = coalesce;
     }
 
     @Override
@@ -77,7 +82,8 @@ final class ObserveOnExecutor
         Updatable u = actual;
 
         for (;;) {
-            for (long i = 0; i < c; i++) {
+            long d = coalesce ? 1 : c;
+            for (long i = 0; i < d; i++) {
                 if (cancelled) {
                     return;
                 }

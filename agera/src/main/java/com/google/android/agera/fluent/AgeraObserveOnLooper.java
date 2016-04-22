@@ -33,15 +33,18 @@ final class AgeraObserveOnLooper extends AgeraTracking<ObserveOnLooper> {
 
     final Handler handler;
 
-    AgeraObserveOnLooper(Observable source, Looper looper) {
+    final boolean coalesce;
+
+    AgeraObserveOnLooper(Observable source, Looper looper, boolean coalesce) {
         this.source = source;
         this.handler = new Handler(looper);
+        this.coalesce = coalesce;
     }
 
     @NonNull
     @Override
     protected ObserveOnLooper createWrapper(@NonNull Updatable updatable) {
-        return new ObserveOnLooper(updatable, handler);
+        return new ObserveOnLooper(updatable, handler, coalesce);
     }
 
     @Override
@@ -64,13 +67,15 @@ final class ObserveOnLooper
 
     final Handler handler;
 
+    final boolean coalesce;
+
     volatile boolean cancelled;
 
-    ObserveOnLooper(Updatable actual, Handler handler) {
+    ObserveOnLooper(Updatable actual, Handler handler, boolean coalesce) {
         this.actual = actual;
         this.handler = handler;
+        this.coalesce = coalesce;
     }
-
 
     @Override
     public void run() {
@@ -79,7 +84,8 @@ final class ObserveOnLooper
         Updatable u = actual;
 
         for (;;) {
-            for (long i = 0; i < c; i++) {
+            long d = coalesce ? 1 : c;
+            for (long i = 0; i < d; i++) {
                 if (cancelled) {
                     return;
                 }
