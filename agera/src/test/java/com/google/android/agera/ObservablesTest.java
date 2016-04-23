@@ -40,7 +40,6 @@ import com.google.android.agera.test.mocks.MockUpdatable;
 
 import android.app.Application;
 import android.content.Intent;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

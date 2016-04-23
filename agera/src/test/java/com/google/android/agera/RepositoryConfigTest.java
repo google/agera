@@ -40,7 +40,6 @@ import com.google.android.agera.test.SingleSlotDelayedExecutor;
 import com.google.android.agera.test.mocks.MockUpdatable;
 
 import android.support.annotation.NonNull;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;

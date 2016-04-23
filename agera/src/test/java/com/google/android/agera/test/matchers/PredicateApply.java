@@ -18,7 +18,6 @@ package com.google.android.agera.test.matchers;
 import com.google.android.agera.Predicate;
 
 import android.support.annotation.NonNull;
-
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;

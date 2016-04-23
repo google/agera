@@ -22,7 +22,6 @@ import com.google.android.agera.Result;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;

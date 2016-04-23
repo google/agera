@@ -23,7 +23,6 @@ import static org.robolectric.annotation.Config.NONE;
 
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;

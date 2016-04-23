@@ -19,9 +19,9 @@ import static android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
+import com.google.android.agera.ActivationHandler;
 import com.google.android.agera.Observable;
 import com.google.android.agera.Updatable;
-import com.google.android.agera.ActivationHandler;
 import com.google.android.agera.UpdateDispatcher;
 
 import android.content.BroadcastReceiver;

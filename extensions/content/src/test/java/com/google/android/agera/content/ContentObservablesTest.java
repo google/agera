@@ -33,7 +33,6 @@ import android.app.Application;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

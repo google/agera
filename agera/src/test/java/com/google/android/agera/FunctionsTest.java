@@ -35,7 +35,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
 import android.support.annotation.NonNull;
-
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;

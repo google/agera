@@ -17,7 +17,6 @@ package com.google.android.agera.database;
 
 import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.Result.failure;
-import static com.google.android.agera.Result.success;
 
 import com.google.android.agera.Result;
 import com.google.android.agera.Supplier;

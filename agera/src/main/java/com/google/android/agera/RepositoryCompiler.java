@@ -15,7 +15,6 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.CompiledRepository.compiledRepository;
 import static com.google.android.agera.CompiledRepository.addBindWith;
 import static com.google.android.agera.CompiledRepository.addCheck;
 import static com.google.android.agera.CompiledRepository.addEnd;
@@ -26,6 +25,7 @@ import static com.google.android.agera.CompiledRepository.addGoTo;
 import static com.google.android.agera.CompiledRepository.addMergeIn;
 import static com.google.android.agera.CompiledRepository.addSendTo;
 import static com.google.android.agera.CompiledRepository.addTransform;
+import static com.google.android.agera.CompiledRepository.compiledRepository;
 import static com.google.android.agera.Functions.identityFunction;
 import static com.google.android.agera.Mergers.objectsUnequal;
 import static com.google.android.agera.Preconditions.checkNotNull;
