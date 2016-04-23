@@ -13,4 +13,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-defaultTasks 'lint', 'jacocoTestReport', ':testapp:assembleRelease', 'install'
+defaultTasks 'lint', 'jacocoTestReport', ':testapp:assembleRelease'
