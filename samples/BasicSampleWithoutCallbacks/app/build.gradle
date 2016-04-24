@@ -45,7 +45,7 @@ android {
 
 dependencies {
     compile "com.android.support:appcompat-v7:$rootProject.supportLibraryVersion"
-    compile 'com.google.android.agera:agera:1.0.0-RC1'
+    compile 'com.google.android.agera:agera:1.0.0-rc2'
     compile "com.android.support.test.espresso:espresso-idling-resource:$rootProject.ext.espressoVersion"
 
     // Dependencies for local unit tests
