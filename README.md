@@ -1,4 +1,4 @@
-![Agera](https://github.com/google/agera/blob/master/doc/images/agera.png)
+![Agera](https://raw.githubusercontent.com/google/agera/master/doc/images/agera.png)
 Reactive Programming for Android
 ================================
 [![Build Status](https://travis-ci.org/google/agera.svg?branch=master)](https://travis-ci.org/google/agera)
