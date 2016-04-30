@@ -56,6 +56,7 @@ import java.util.concurrent.Executor;
 public final class RepositoriesTest {
   private static final int INITIAL_INT_VALUE = 0;
   private static final int INT_VALUE = 2;
+  private static final String STRING_VALUE = "string";
   private static final List<Integer> INITIAL_VALUE = singletonList(1);
   private static final List<Integer> LIST = asList(1, 2, 3);
   private static final List<Integer> OTHER_LIST = asList(4, 5);
@@ -71,7 +72,11 @@ public final class RepositoriesTest {
   @Mock
   private Receiver<List<Integer>> mockIntegerListReceiver;
   @Mock
+  private Binder<List<Integer>, String> mockIntegerListStringBinder;
+  @Mock
   private Supplier<List<Integer>> mockIntegerListSupplier;
+  @Mock
+  private Supplier<String> mockStringSupplier;
   @Mock
   private Predicate<List<Integer>> mockIntegerListPredicate;
   @Mock
@@ -81,6 +86,7 @@ public final class RepositoriesTest {
   public void setUp() {
     initMocks(this);
     when(mockIntegerListSupplier.get()).thenReturn(LIST);
+    when(mockStringSupplier.get()).thenReturn(STRING_VALUE);
     when(mockIntegerListToIntValueFunction.apply(Matchers.<List<Integer>>any()))
         .thenReturn(INT_VALUE);
     updateDispatcher = updateDispatcher();
@@ -322,6 +328,22 @@ public final class RepositoriesTest {
     updatable.addToObservable(repository);
 
     verify(mockIntegerListReceiver).accept(INITIAL_VALUE);
+    assertThat(updatable, wasNotUpdated());
+    assertThat(repository, has(INITIAL_VALUE));
+  }
+
+  @Test
+  public void shouldBindWith() throws Exception {
+    final Repository<List<Integer>> repository = repositoryWithInitialValue(INITIAL_VALUE)
+        .observe()
+        .onUpdatesPerLoop()
+        .bindWith(mockStringSupplier, mockIntegerListStringBinder)
+        .thenSkip()
+        .compile();
+
+    updatable.addToObservable(repository);
+
+    verify(mockIntegerListStringBinder).bind(INITIAL_VALUE, STRING_VALUE);
     assertThat(updatable, wasNotUpdated());
     assertThat(repository, has(INITIAL_VALUE));
   }

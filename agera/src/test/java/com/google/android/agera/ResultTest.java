@@ -500,6 +500,11 @@ public final class ResultTest {
   }
 
   @Test
+  public void shouldHaveSameHashcodeForSameFailure() {
+    assertThat(FAILURE_WITH_THROWABLE, hasHashCodeOf(failure(THROWABLE)));
+  }
+
+  @Test
   public void shouldPrintStringRepresentationForSuccess() {
     assertThat(SUCCESS_WITH_VALUE, hasToString(not(isEmptyOrNullString())));
   }
