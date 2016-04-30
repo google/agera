@@ -205,7 +205,6 @@ public final class ObservablesTest {
     verify(mockActivationHandler).observableActivated(updateDispatcherWithUpdatablesChanged);
   }
 
-
   @Test
   public void shouldUpdateAllUpdatablesWhenUpdateFromSameThreadForUpdateDispatcher() {
     updatable.addToObservable(updateDispatcher);

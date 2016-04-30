@@ -15,7 +15,6 @@
  */
 package com.google.android.agera.net;
 
-
 import static com.google.android.agera.net.HttpFunctions.httpFunction;
 import static com.google.android.agera.net.HttpRequests.httpDeleteRequest;
 import static com.google.android.agera.net.HttpRequests.httpGetRequest;
@@ -267,7 +266,6 @@ public final class HttpFunctionsTest {
     assertThat(httpResponse.getResponseMessage(), is(""));
     verify(mockHttpURLConnection).disconnect();
   }
-
 
   @Test
   public void shouldHavePrivateConstructor() {

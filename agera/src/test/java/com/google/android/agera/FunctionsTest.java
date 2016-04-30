@@ -50,12 +50,10 @@ import java.util.List;
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)
 public final class FunctionsTest {
-  private static final int VALUE = 42;
   private static final int VALUE_PLUS_TWO = 44;
   private static final int RECOVER_VALUE = 43;
   private static final String INPUT_STRING = "input";
   private static final List<String> INPUT_LIST = asList("some", "strings", "for", "testing");
-  private static final Result<Integer> SUCCESS = success(VALUE);
   @SuppressWarnings("ThrowableInstanceNeverThrown")
   private static final Throwable THROWABLE = new Throwable();
   private static final Result<Integer> FAILURE = failure(THROWABLE);

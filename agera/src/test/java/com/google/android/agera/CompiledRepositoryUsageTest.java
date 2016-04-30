@@ -40,11 +40,8 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 public final class CompiledRepositoryUsageTest {
   private static final String STRING_A = "STRING_A";
-  private static final String STRING_B = "STRING_B";
   private static final int INTEGER_1 = 1;
-  private static final int INTEGER_2 = 2;
   private static final double DOUBLE_3 = 3.0;
-  private static final double DOUBLE_4 = 4.0;
 
   @Mock
   private Supplier<String> mockStringSupplier;

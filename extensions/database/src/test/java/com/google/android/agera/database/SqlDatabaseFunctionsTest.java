@@ -245,7 +245,6 @@ public final class SqlDatabaseFunctionsTest {
         is(true));
   }
 
-
   @Test
   public void shouldHavePrivateConstructor() {
     assertThat(SqlDatabaseFunctions.class, hasPrivateConstructor());
@@ -258,7 +257,6 @@ public final class SqlDatabaseFunctionsTest {
       return input.getString(input.getColumnIndex("column"));
     }
   }
-
 
   private void assertDatabaseEmpty() {
     final Cursor cursor = database.rawQuery(SELECT_TABLE, null);
