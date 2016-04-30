@@ -16,6 +16,7 @@
 package com.google.android.agera;
 
 import static com.google.android.agera.Preconditions.checkNotNull;
+import static com.google.android.agera.Result.failure;
 
 import com.google.android.agera.BaseObservable.Worker;
 import com.google.android.agera.Observables.LowPassFilterObservable;
@@ -27,6 +28,7 @@ import android.support.annotation.NonNull;
 import java.lang.ref.WeakReference;
 
 final class Common {
+  static final Function<Throwable, ? extends Result<?>> FAILED_RESULT = new FailedResult<>();
   static final Function IDENTITY_FUNCTION = new IdentityFunction();
   static final StaticCondicate TRUE_CONDICATE = new StaticCondicate(true);
   static final StaticCondicate FALSE_CONDICATE = new StaticCondicate(false);
@@ -136,6 +138,14 @@ final class Common {
           break;
         default:
       }
+    }
+  }
+
+  private static final class FailedResult<T> implements Function<Throwable, Result<T>> {
+    @NonNull
+    @Override
+    public Result<T> apply(@NonNull final Throwable input) {
+      return failure(input);
     }
   }
 

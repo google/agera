@@ -15,6 +15,7 @@
  */
 package com.google.android.agera;
 
+import static com.google.android.agera.Common.FAILED_RESULT;
 import static com.google.android.agera.Common.IDENTITY_FUNCTION;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
@@ -82,6 +83,16 @@ public final class Functions {
   public static <F> FList<F, List<F>, List<F>> functionFromListOf(
       @Nullable final Class<F> from) {
     return new FunctionCompiler();
+  }
+
+  /**
+   * Returns a {@link Function} that wraps a {@link Throwable} in a
+   * {@link Result#failure(Throwable)}).
+   */
+  @SuppressWarnings("unchecked")
+  @NonNull
+  public static <T> Function<Throwable, Result<T>> failedResult() {
+    return (Function<Throwable, Result<T>>) FAILED_RESULT;
   }
 
   private static final class SupplierAsFunction<F, T> implements Function<F, T> {

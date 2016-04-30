@@ -15,6 +15,7 @@
  */
 package com.google.android.agera;
 
+import static com.google.android.agera.Functions.failedResult;
 import static com.google.android.agera.Functions.functionFrom;
 import static com.google.android.agera.Functions.functionFromListOf;
 import static com.google.android.agera.Functions.identityFunction;
@@ -79,6 +80,13 @@ public final class FunctionsTest {
     when(mockDivideTenFunction.apply(eq(2))).thenReturn(success(5));
     when(mockDivideTenFunction.apply(eq(0))).thenReturn(FAILURE);
     when(mockSupplier.get()).thenReturn(INPUT_STRING);
+  }
+
+  @Test
+  public void shouldWrapThrowableInFailedResult() {
+    final Throwable throwable = new Throwable();
+
+    assertThat(failedResult().apply(throwable).getFailure(), is(throwable));
   }
 
   @Test
