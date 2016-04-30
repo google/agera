@@ -117,14 +117,10 @@ final class Common {
           ((Worker) message.obj).sendUpdate();
           break;
         case MSG_FIRST_ADDED:
-          if (!hasMessages(MSG_LAST_REMOVED, message.obj)) {
-            ((Worker) message.obj).callFirstUpdatableAdded();
-          }
+          ((Worker) message.obj).callFirstUpdatableAdded();
           break;
         case MSG_LAST_REMOVED:
-          if (!hasMessages(MSG_FIRST_ADDED, message.obj)) {
-            ((Worker) message.obj).callLastUpdatableRemoved();
-          }
+          ((Worker) message.obj).callLastUpdatableRemoved();
           break;
         case MSG_CALL_UPDATABLE:
           ((Updatable) message.obj).update();
