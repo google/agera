@@ -105,7 +105,11 @@ public abstract class BaseObservable implements Observable {
     synchronized void addUpdatable(@NonNull final Updatable updatable) {
       add(updatable, workerHandler());
       if (size == 1) {
-        handler.obtainMessage(WorkerHandler.MSG_FIRST_ADDED, this).sendToTarget();
+        if (handler.hasMessages(MSG_LAST_REMOVED, this)) {
+          handler.removeMessages(MSG_LAST_REMOVED, this);
+        } else {
+          handler.obtainMessage(WorkerHandler.MSG_FIRST_ADDED, this).sendToTarget();
+        }
       }
     }
 
