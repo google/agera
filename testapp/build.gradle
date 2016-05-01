@@ -17,6 +17,8 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.getkeepsafe.dexcount'
 
 android {
+    compileSdkVersion gradle.ext.compileSdkVersion
+    buildToolsVersion gradle.ext.buildToolsVersion
     defaultConfig {
         applicationId "com.google.android.agera.testapp"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

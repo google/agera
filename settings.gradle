@@ -33,6 +33,7 @@ gradle.ext.minSdkVersion = 9
 gradle.ext.compileSdkVersion = 23
 gradle.ext.buildToolsVersion = '23.0.3'
 gradle.ext.supportLibraryVersion = '23.3.0'
+gradle.ext.javaVersion = JavaVersion.VERSION_1_7
 
 gradle.allprojects {
     buildscript {
@@ -66,14 +67,12 @@ gradle.allprojects {
             android {
                 defaultConfig {
                     minSdkVersion gradle.minSdkVersion
-                    compileSdkVersion gradle.compileSdkVersion
-                    buildToolsVersion gradle.buildToolsVersion
                     versionCode gradle.versionCode
                     versionName gradle.versionName
                 }
                 compileOptions {
-                    sourceCompatibility JavaVersion.VERSION_1_7
-                    targetCompatibility JavaVersion.VERSION_1_7
+                    sourceCompatibility gradle.javaVersion
+                    targetCompatibility gradle.javaVersion
                 }
             }
             if (android.hasProperty('libraryVariants')) {
@@ -150,6 +149,10 @@ gradle.allprojects {
                 artifacts {
                     archives javadocJar
                     archives sourcesJar
+                }
+                android {
+                    compileSdkVersion gradle.compileSdkVersion
+                    buildToolsVersion gradle.buildToolsVersion
                 }
             }
         }
