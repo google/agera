@@ -48,7 +48,7 @@ final class WorkerHandler extends Handler {
         ((Updatable) message.obj).update();
         break;
       case MSG_CALL_MAYBE_START_FLOW:
-        ((CompiledRepository) message.obj).maybeStartFlow();
+        ((CompiledRepository) message.obj).maybeStartFlow(false);
         break;
       case MSG_CALL_ACKNOWLEDGE_CANCEL:
         ((CompiledRepository) message.obj).acknowledgeCancel();

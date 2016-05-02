@@ -130,7 +130,7 @@ final class CompiledRepository extends BaseObservable
   @Override
   protected void observableActivated() {
     eventSource.addUpdatable(this);
-    maybeStartFlow();
+    maybeStartFlow(true);
   }
 
   @Override
@@ -142,20 +142,23 @@ final class CompiledRepository extends BaseObservable
   @Override
   public void update() {
     maybeCancelFlow(concurrentUpdateConfig, true);
-    maybeStartFlow();
+    maybeStartFlow(false);
   }
 
   /**
    * Called on the worker looper thread. Starts the data processing flow if it's not running. This
    * also cancels the lazily-executed part of the flow if the run state is "paused at lazy".
    */
-  void maybeStartFlow() {
+  void maybeStartFlow(final boolean restartNeeded) {
     synchronized (this) {
       if (runState == IDLE || runState == PAUSED_AT_GO_LAZY) {
         runState = RUNNING;
         lastDirectiveIndex = -1; // this could be pointing at the goLazy directive
-        restartNeeded = false;
+        this.restartNeeded = false;
       } else {
+        if (runState == CANCEL_REQUESTED) {
+          this.restartNeeded |= restartNeeded;
+        }
         return; // flow already running, do not continue.
       }
     }
@@ -228,7 +231,7 @@ final class CompiledRepository extends BaseObservable
       }
     }
     if (shouldStartFlow) {
-      maybeStartFlow();
+      maybeStartFlow(false);
     }
   }
 
