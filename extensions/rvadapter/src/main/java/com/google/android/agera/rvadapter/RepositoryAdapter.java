@@ -84,13 +84,13 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
      *     position.
      * @return This instance, for chaining.
      */
-    public <T> Builder add(@NonNull final  Repository<T> repository,
+    public <T> Builder add(@NonNull final Repository<T> repository,
         @NonNull final RepositoryPresenter<T> presenter) {
       @SuppressWarnings("unchecked")
-      Repository<Object> untypedRepository = (Repository<Object>) checkNotNull(repository);
+      final Repository<Object> untypedRepository = (Repository<Object>) checkNotNull(repository);
       repositories.add(untypedRepository);
       @SuppressWarnings("unchecked")
-      RepositoryPresenter<Object> untypedPresenter =
+      final RepositoryPresenter<Object> untypedPresenter =
           (RepositoryPresenter<Object>) checkNotNull(presenter);
       presenters.add(untypedPresenter);
       observables.add(untypedRepository);
@@ -144,17 +144,17 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
   private int resolvedItemIndex;
 
   public RepositoryAdapter(@NonNull final Builder builder) {
-    int count = builder.repositories.size();
+    final int count = builder.repositories.size();
     checkArgument(count > 0, "Must add at least one repository");
     checkArgument(builder.presenters.size() == count,
         "Unexpected repository and presenter count mismatch");
 
     @SuppressWarnings("unchecked")
-    Repository<Object>[] repositories = builder.repositories.toArray(
+    final Repository<Object>[] repositories = builder.repositories.toArray(
         (Repository<Object>[]) new Repository[count]);
 
     @SuppressWarnings("unchecked")
-    RepositoryPresenter<Object>[] presenters = builder.presenters.toArray(
+    final RepositoryPresenter<Object>[] presenters = builder.presenters.toArray(
         (RepositoryPresenter<Object>[]) new RepositoryPresenter[count]);
 
     final Observable[] observables =
@@ -209,7 +209,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
   }
 
   @Override
-  public final int getItemViewType(int position) {
+  public final int getItemViewType(final int position) {
     resolveIndices(position);
     int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
     int resolvedItemIndex = this.resolvedItemIndex;
@@ -218,7 +218,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
   }
 
   @Override
-  public final long getItemId(int position) {
+  public final long getItemId(final int position) {
     resolveIndices(position);
     int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
     int resolvedItemIndex = this.resolvedItemIndex;
@@ -233,13 +233,14 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
    * any special requirements.
    */
   @Override
-  public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int layoutResourceId) {
+  public RecyclerView.ViewHolder onCreateViewHolder(final ViewGroup parent,
+      final int layoutResourceId) {
     return new RecyclerView.ViewHolder(
         LayoutInflater.from(parent.getContext()).inflate(layoutResourceId, parent, false)) {};
   }
 
   @Override
-  public final void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+  public final void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
     resolveIndices(position);
     int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
     int resolvedItemIndex = this.resolvedItemIndex;
@@ -251,7 +252,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
    * Converts the given overall adapter {@code position} into {@link #resolvedRepositoryIndex}
    * and {@link #resolvedItemIndex}.
    */
-  private void resolveIndices(int position) {
+  private void resolveIndices(final int position) {
     int itemCount = getItemCount(); // This conveniently rebuilds endPositions if necessary.
     if (position < 0 || position >= itemCount) {
       throw new IndexOutOfBoundsException(
