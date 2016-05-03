@@ -18,33 +18,13 @@ package com.google.android.agera;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Result.failure;
 
-import com.google.android.agera.BaseObservable.Worker;
-import com.google.android.agera.Observables.LowPassFilterObservable;
-
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.NonNull;
-
-import java.lang.ref.WeakReference;
 
 final class Common {
   static final Function<Throwable, ? extends Result<?>> FAILED_RESULT = new FailedResult<>();
   static final Function IDENTITY_FUNCTION = new IdentityFunction();
   static final StaticCondicate TRUE_CONDICATE = new StaticCondicate(true);
   static final StaticCondicate FALSE_CONDICATE = new StaticCondicate(false);
-
-  private static final ThreadLocal<WeakReference<WorkerHandler>> handlers = new ThreadLocal<>();
-
-  @NonNull
-  static WorkerHandler workerHandler() {
-    final WeakReference<WorkerHandler> handlerReference = handlers.get();
-    WorkerHandler handler = handlerReference != null ? handlerReference.get() : null;
-    if (handler == null) {
-      handler = new WorkerHandler();
-      handlers.set(new WeakReference<>(handler));
-    }
-    return handler;
-  }
 
   private static final class IdentityFunction implements Function {
     @NonNull
@@ -97,47 +77,6 @@ final class Common {
     @Override
     public TTo get() {
       return staticValue;
-    }
-  }
-
-  /**
-   * Shared per-thread worker Handler behind internal logic of various Agera classes.
-   */
-  static final class WorkerHandler extends Handler {
-    static final int MSG_FIRST_ADDED = 0;
-    static final int MSG_LAST_REMOVED = 1;
-    static final int MSG_UPDATE = 2;
-    static final int MSG_CALL_UPDATABLE = 3;
-    static final int MSG_CALL_MAYBE_START_FLOW = 4;
-    static final int MSG_CALL_ACKNOWLEDGE_CANCEL = 5;
-    static final int MSG_CALL_LOW_PASS_UPDATE = 6;
-
-    @Override
-    public void handleMessage(final Message message) {
-      switch (message.what) {
-        case MSG_UPDATE:
-          ((Worker) message.obj).sendUpdate();
-          break;
-        case MSG_FIRST_ADDED:
-          ((Worker) message.obj).callFirstUpdatableAdded();
-          break;
-        case MSG_LAST_REMOVED:
-          ((Worker) message.obj).callLastUpdatableRemoved();
-          break;
-        case MSG_CALL_UPDATABLE:
-          ((Updatable) message.obj).update();
-          break;
-        case MSG_CALL_MAYBE_START_FLOW:
-          ((CompiledRepository) message.obj).maybeStartFlow();
-          break;
-        case MSG_CALL_ACKNOWLEDGE_CANCEL:
-          ((CompiledRepository) message.obj).acknowledgeCancel();
-          break;
-        case MSG_CALL_LOW_PASS_UPDATE:
-          ((LowPassFilterObservable) message.obj).lowPassUpdate();
-          break;
-        default:
-      }
     }
   }
 

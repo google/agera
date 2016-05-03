@@ -15,9 +15,9 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Common.WorkerHandler.MSG_CALL_ACKNOWLEDGE_CANCEL;
-import static com.google.android.agera.Common.WorkerHandler.MSG_CALL_MAYBE_START_FLOW;
-import static com.google.android.agera.Common.workerHandler;
+import static com.google.android.agera.WorkerHandler.MSG_CALL_ACKNOWLEDGE_CANCEL;
+import static com.google.android.agera.WorkerHandler.MSG_CALL_MAYBE_START_FLOW;
+import static com.google.android.agera.WorkerHandler.workerHandler;
 import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Observables.perMillisecondObservable;
 import static com.google.android.agera.Preconditions.checkNotNull;
@@ -26,8 +26,6 @@ import static com.google.android.agera.RepositoryConfig.CANCEL_FLOW;
 import static com.google.android.agera.RepositoryConfig.RESET_TO_INITIAL_VALUE;
 import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
 import static java.lang.Thread.currentThread;
-
-import com.google.android.agera.Common.WorkerHandler;
 
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;

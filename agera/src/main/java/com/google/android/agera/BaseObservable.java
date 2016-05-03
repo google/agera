@@ -15,12 +15,10 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Common.WorkerHandler.MSG_LAST_REMOVED;
-import static com.google.android.agera.Common.WorkerHandler.MSG_UPDATE;
-import static com.google.android.agera.Common.workerHandler;
+import static com.google.android.agera.WorkerHandler.MSG_LAST_REMOVED;
+import static com.google.android.agera.WorkerHandler.MSG_UPDATE;
+import static com.google.android.agera.WorkerHandler.workerHandler;
 import static com.google.android.agera.Preconditions.checkState;
-
-import com.google.android.agera.Common.WorkerHandler;
 
 import android.os.Handler;
 import android.os.Looper;

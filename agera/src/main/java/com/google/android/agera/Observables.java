@@ -15,10 +15,8 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Common.workerHandler;
+import static com.google.android.agera.WorkerHandler.workerHandler;
 import static com.google.android.agera.Preconditions.checkNotNull;
-
-import com.google.android.agera.Common.WorkerHandler;
 
 import android.os.Looper;
 import android.os.SystemClock;
