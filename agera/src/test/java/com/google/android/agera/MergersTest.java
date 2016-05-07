@@ -17,15 +17,9 @@ package com.google.android.agera;
 
 import static com.google.android.agera.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.robolectric.annotation.Config.NONE;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 
-@Config(manifest = NONE)
-@RunWith(RobolectricTestRunner.class)
 public final class MergersTest {
   @Test
   public void shouldHavePrivateConstructor() {

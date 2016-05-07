@@ -37,17 +37,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.robolectric.annotation.Config.NONE;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 
-@Config(manifest = NONE)
-@RunWith(RobolectricTestRunner.class)
 public final class ResultTest {
   @SuppressWarnings("ThrowableInstanceNeverThrown")
   private static final Throwable THROWABLE = new Throwable();

@@ -25,21 +25,15 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
-import static org.robolectric.annotation.Config.NONE;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
-@Config(manifest = NONE)
-@RunWith(RobolectricTestRunner.class)
 public final class HttpResponseTest {
   private static final String DEFAULT_CHARSET = "UTF-8";
   private static final String UTF16_CHARSET = "UTF-16";

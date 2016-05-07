@@ -34,14 +34,10 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.robolectric.annotation.Config.NONE;
 
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -57,8 +53,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Config(manifest = NONE)
-@RunWith(RobolectricTestRunner.class)
 public final class HttpFunctionsTest {
   private static final String TEST_PROTOCOL = "httptest";
   private static final String TEST_URI = TEST_PROTOCOL + "://path";

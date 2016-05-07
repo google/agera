@@ -20,7 +20,6 @@ import static com.google.android.agera.Common.TRUE_CONDICATE;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
 
 /**
  * Utility methods for obtaining {@link Predicate} instances.
@@ -179,7 +178,7 @@ public final class Predicates {
 
     @Override
     public boolean apply(@NonNull final CharSequence input) {
-      return TextUtils.isEmpty(input);
+      return input == null || input.length() == 0;
     }
   }
 

@@ -33,23 +33,17 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.robolectric.annotation.Config.NONE;
 
 import android.support.annotation.NonNull;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Config(manifest = NONE)
-@RunWith(RobolectricTestRunner.class)
 public final class FunctionsTest {
   private static final int VALUE_PLUS_TWO = 44;
   private static final int RECOVER_VALUE = 43;

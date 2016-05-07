@@ -29,17 +29,11 @@ import static org.hamcrest.Matchers.hasToString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
-import static org.robolectric.annotation.Config.NONE;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 
 import java.util.Map;
 
-@Config(manifest = NONE)
-@RunWith(RobolectricTestRunner.class)
 public final class HttpRequestTest {
   private static final String URL = "http://agera";
   private static final byte[] DATA = "Body data".getBytes();
