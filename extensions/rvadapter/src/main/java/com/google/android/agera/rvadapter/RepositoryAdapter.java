@@ -248,6 +248,12 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         data[resolvedRepositoryIndex], resolvedItemIndex, holder);
   }
 
+  @Override
+  public void onViewRecycled(RecyclerView.ViewHolder holder) {
+    super.onViewRecycled(holder);
+    presenters[resolvedRepositoryIndex].recycled(holder);
+  }
+
   /**
    * Converts the given overall adapter {@code position} into {@link #resolvedRepositoryIndex}
    * and {@link #resolvedItemIndex}.
