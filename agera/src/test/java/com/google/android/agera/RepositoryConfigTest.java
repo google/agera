@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
-import static org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks;
+import static org.robolectric.shadows.ShadowLooper.getShadowMainLooper;
 
 import com.google.android.agera.test.SingleSlotDelayedExecutor;
 import com.google.android.agera.test.mocks.MockUpdatable;
@@ -48,6 +48,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)
@@ -64,6 +65,7 @@ public final class RepositoryConfigTest {
   private InterruptibleMonitoredSupplier monitoredSupplier;
   @Mock
   private Supplier<Object> mockSupplier;
+  private ShadowLooper looper;
 
   @Before
   public void setUp() {
@@ -73,6 +75,7 @@ public final class RepositoryConfigTest {
     delayedExecutor = new SingleSlotDelayedExecutor();
     monitoredSupplier = new InterruptibleMonitoredSupplier();
     when(mockSupplier.get()).thenReturn(UPDATED_VALUE);
+    looper = getShadowMainLooper();
   }
 
   @After
@@ -83,7 +86,7 @@ public final class RepositoryConfigTest {
   private void retriggerUpdate() {
     updatable.resetUpdated();
     updateDispatcher.update();
-    runUiThreadTasksIncludingDelayedTasks();
+    looper.runToEndOfTasks();
   }
 
   @Test
@@ -126,6 +129,7 @@ public final class RepositoryConfigTest {
     updatable.addToObservable(repository);
     assertThat(delayedExecutor.hasRunnable(), is(true));
     updatable.removeFromObservables();
+    looper.runToEndOfTasks();
     delayedExecutor.resumeOrThrow();
     assertThat(repository, has(UPDATED_VALUE));
   }
@@ -166,6 +170,7 @@ public final class RepositoryConfigTest {
     updatable.addToObservable(repository);
     assertThat(delayedExecutor.hasRunnable(), is(true));
     updatable.removeFromObservables();
+    looper.runToEndOfTasks();
     delayedExecutor.resumeOrThrow();
     assertThat(repository, has(INITIAL_VALUE));
     verifyZeroInteractions(mockSupplier);
@@ -201,6 +206,7 @@ public final class RepositoryConfigTest {
       public Object apply(@NonNull Object input) {
         // Sneak in a deactivation here to test cancellation mid-flow.
         updatable.removeFromObservables();
+        looper.runToEndOfTasks();
         return input;
       }
     };
@@ -231,6 +237,7 @@ public final class RepositoryConfigTest {
     updatable.addToObservable(repository);
     assertThat(repository, has(UPDATED_VALUE));
     updatable.removeFromObservables();
+    looper.runToEndOfTasks();
     assertThat(repository, has(INITIAL_VALUE));
   }
 
@@ -247,6 +254,7 @@ public final class RepositoryConfigTest {
     updatable.addToObservable(repository);
     monitoredSupplier.waitForGetToStart();
     updatable.removeFromObservables();
+    looper.runToEndOfTasks();
     monitoredSupplier.waitForGetToEnd();
     assertThat(monitoredSupplier.wasInterrupted(), is(true));
     assertThat(repository, has(INITIAL_VALUE));
@@ -270,7 +278,7 @@ public final class RepositoryConfigTest {
     assertThat(monitoredSupplier.wasInterrupted(), is(true));
     assertThat(repository, has(INITIAL_VALUE));
 
-    runUiThreadTasksIncludingDelayedTasks(); // allows second run; asserted in waitForGetToStart()
+    looper.runToEndOfTasks(); // allows second run; asserted in waitForGetToStart()
     monitoredSupplier.waitForGetToStart().resumeIfWaiting().waitForGetToEnd();
     assertThat(repository, has(RESUMED_VALUE));
   }

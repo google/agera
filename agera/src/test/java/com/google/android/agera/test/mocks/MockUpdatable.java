@@ -63,6 +63,5 @@ public final class MockUpdatable implements Updatable {
       observable.removeUpdatable(this);
     }
     observables.clear();
-    runUiThreadTasksIncludingDelayedTasks();
   }
 }
