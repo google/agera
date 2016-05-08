@@ -80,8 +80,8 @@ public final class NotesActivity extends Activity implements Updatable {
     setContentView(R.layout.notes_activity);
 
     // Setup strict mode, no violations using Agera
-    setThreadPolicy(new ThreadPolicy.Builder().detectAll().penaltyLog().penaltyDeath().build());
-    setVmPolicy(new VmPolicy.Builder().detectAll().penaltyLog().penaltyDeath().build());
+    setThreadPolicy(new ThreadPolicy.Builder().detectAll().penaltyLog().build());
+    setVmPolicy(new VmPolicy.Builder().detectAll().penaltyLog().build());
 
     // Create the notes store, containing all async IO
     notesStore = notesStore(getApplicationContext());
