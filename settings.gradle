@@ -16,6 +16,7 @@
 include ':agera'
 include ':extensions:content'
 include ':extensions:rvadapter'
+include ':extensions:rvdatabinding'
 include ':extensions:database'
 include ':extensions:net'
 include ':testapp'
@@ -109,9 +110,8 @@ gradle.allprojects {
                 task jacocoTestReport(type:JacocoReport, dependsOn: "testDebugUnitTest") {
                     group = "Reporting"
                     description = "Generate Jacoco coverage reports"
-                    def fileFilter = ['**/R.class', '**/R$*.class',
-                                      '**/BuildConfig.*', '**/Manifest*.*',
-                                      'android/**/*.*']
+                    def fileFilter = ['**/R.class', '**/R$*.class', '**/BR.class',
+                                      '**/BuildConfig.*', '**/Manifest*.*', 'android/**/*.*']
                     def debugTree = fileTree(dir:
                             "${project.buildDir}/intermediates/classes/debug",
                             excludes: fileFilter)

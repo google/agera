@@ -20,6 +20,9 @@ apply plugin: 'me.tatarka.retrolambda'
 android {
     compileSdkVersion gradle.ext.compileSdkVersion
     buildToolsVersion gradle.ext.buildToolsVersion
+    dataBinding {
+        enabled = true
+    }
     defaultConfig {
         applicationId "com.google.android.agera.testapp"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -49,6 +52,7 @@ dependencies {
     compile project(':extensions:database')
     compile project(':extensions:net')
     compile project(':extensions:rvadapter')
+    compile project(':extensions:rvdatabinding')
     compile "com.android.support:recyclerview-v7:$gradle.supportLibraryVersion"
     testCompile "org.hamcrest:hamcrest-library:1.3"
     testCompile 'junit:junit:4.12'

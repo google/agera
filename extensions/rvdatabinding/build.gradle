@@ -1,0 +1,50 @@
+/*
+ * Copyright 2016 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'jacoco'
+
+dependencies {
+    compile project(':agera')
+    compile project(':extensions:rvadapter')
+    compile "com.android.support:recyclerview-v7:$gradle.supportLibraryVersion"
+}
+android {
+    dataBinding {
+        enabled = true
+    }
+}
+install {
+    repositories.mavenInstaller {
+        pom {
+            project {
+                packaging 'aar'
+                name 'Agera RecyclerView Data Binding'
+                url gradle.url
+                licenses {
+                    license {
+                        name gradle.licenseName
+                        url gradle.licenseUrl
+                    }
+                }
+                scm {
+                    url gradle.url
+                    connection gradle.gitUrl
+                }
+            }
+        }
+    }
+}

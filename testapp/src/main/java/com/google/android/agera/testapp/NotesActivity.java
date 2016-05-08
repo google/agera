@@ -26,11 +26,12 @@ import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.net.HttpFunctions.httpFunction;
 import static com.google.android.agera.net.HttpRequests.httpGetRequest;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
-import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
+import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
 import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
-import com.google.android.agera.Binder;
+import com.google.android.agera.Predicate;
+import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.Updatable;
@@ -38,16 +39,15 @@ import com.google.android.agera.rvadapter.RepositoryAdapter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import java.util.concurrent.Executor;
 
@@ -88,29 +88,24 @@ public final class NotesActivity extends Activity {
           .create().show();
     });
 
-    // Create a repository adapter, wiring up the notes repository from the store with a presenter
     adapter = repositoryAdapter()
-        .add(notesStore.getNotesRepository(), repositoryPresenterOf(Note.class)
+        .add(notesStore.getNotesRepository(), dataBindingRepositoryPresenterOf(Note.class)
             .layout(R.layout.text_layout)
-            .bindWith((note, view) -> {
-              final TextView textView = (TextView) view;
-              textView.setText(note.getNote());
-              view.setOnClickListener(v -> {
-                final EditText editText = new EditText(v.getContext());
-                editText.setId(R.id.edit);
-                editText.setText(note.getNote());
-                new AlertDialog.Builder(v.getContext())
-                    .setTitle(R.string.edit_note)
-                    .setView(editText)
-                    .setPositiveButton(R.string.edit,
-                        (d, i) -> notesStore.updateNote(note, editText.getText().toString()))
-                    .create().show();
-              });
-              view.setOnLongClickListener(v -> {
-                notesStore.deleteNote(note);
-                return true;
-              });
-            })
+            .itemId(com.google.android.agera.testapp.BR.note)
+            .handler(com.google.android.agera.testapp.BR.click,
+                (Receiver<Note>) note -> {
+                  final EditText editText = new EditText(this);
+                  editText.setId(R.id.edit);
+                  editText.setText(note.getNote());
+                  new AlertDialog.Builder(this)
+                      .setTitle(R.string.edit_note)
+                      .setView(editText)
+                      .setPositiveButton(R.string.edit,
+                          (d, i) -> notesStore.updateNote(note, editText.getText().toString()))
+                      .create().show();
+                })
+            .handler(com.google.android.agera.testapp.BR.longClick,
+                (Predicate<Note>) notesStore::deleteNote)
             .forList())
         .build();
 
