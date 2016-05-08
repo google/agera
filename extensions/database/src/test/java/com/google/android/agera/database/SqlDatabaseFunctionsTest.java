@@ -15,6 +15,10 @@
  */
 package com.google.android.agera.database;
 
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL;
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE;
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_NONE;
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE;
 import static android.database.sqlite.SQLiteDatabase.create;
 import static com.google.android.agera.Result.success;
 import static com.google.android.agera.Suppliers.staticSupplier;
@@ -233,6 +237,92 @@ public final class SqlDatabaseFunctionsTest {
                 .compile()).succeeded(),
         is(true));
     assertDatabaseContainsValue();
+  }
+
+  @Test
+  public void shouldAddFailConflictAlgorithmForUpdate() {
+    assertThat(sqlUpdateRequest()
+                .table(TABLE)
+                .column("column", "value4")
+                .where("column=?")
+                .arguments("value3")
+                .failOnConflict()
+                .compile().conflictAlgorithm,
+        is(CONFLICT_FAIL));
+  }
+
+  @Test
+  public void shouldAddReplaceConflictAlgorithmForUpdate() {
+    assertThat(sqlUpdateRequest()
+            .table(TABLE)
+            .column("column", "value4")
+            .where("column=?")
+            .arguments("value3")
+            .replaceOnConflict()
+            .compile().conflictAlgorithm,
+        is(CONFLICT_REPLACE));
+  }
+
+  @Test
+  public void shouldAddIgnoreConflictAlgorithmForUpdate() {
+    assertThat(sqlUpdateRequest()
+            .table(TABLE)
+            .column("column", "value4")
+            .where("column=?")
+            .arguments("value3")
+            .ignoreOnConflict()
+            .compile().conflictAlgorithm,
+        is(CONFLICT_IGNORE));
+  }
+
+  @Test
+  public void shouldNotAddConflictAlgorithmForUpdate() {
+    assertThat(sqlUpdateRequest()
+            .table(TABLE)
+            .column("column", "value4")
+            .where("column=?")
+            .arguments("value3")
+            .compile().conflictAlgorithm,
+        is(CONFLICT_NONE));
+  }
+
+  @Test
+  public void shouldNotAddConflictAlgorithmForInsert() {
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .emptyColumn("column")
+            .compile().conflictAlgorithm,
+        is(CONFLICT_NONE));
+  }
+
+  @Test
+  public void shouldAddFailConflictAlgorithmForInsert() {
+    assertThat(sqlInsertRequest()
+                .table(TABLE)
+                .emptyColumn("column")
+                .failOnConflict()
+                .compile().conflictAlgorithm,
+        is(CONFLICT_FAIL));
+  }
+
+  @Test
+  public void shouldAddIgnoreConflictAlgorithmForInsert() {
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .emptyColumn("column")
+            .ignoreOnConflict()
+            .compile().conflictAlgorithm,
+        is(CONFLICT_IGNORE));
+  }
+
+  @Test
+  public void shouldAddReplaceConflictAlgorithmForInsert() {
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .emptyColumn("column")
+            .replaceOnConflict()
+            .compile().conflictAlgorithm,
+        is(CONFLICT_REPLACE));
   }
 
   @Test

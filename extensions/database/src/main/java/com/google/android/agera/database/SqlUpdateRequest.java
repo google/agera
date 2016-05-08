@@ -34,9 +34,11 @@ public final class SqlUpdateRequest {
   final String table;
   @NonNull
   final String where;
+  final int conflictAlgorithm;
 
   SqlUpdateRequest(@NonNull final ContentValues contentValues, @NonNull final String[] arguments,
-      @NonNull final String table, @NonNull final String where) {
+      @NonNull final String table, @NonNull final String where, final int conflictAlgorithm) {
+    this.conflictAlgorithm = conflictAlgorithm;
     this.table = checkNotNull(table);
     this.where = checkNotNull(where);
     this.contentValues = checkNotNull(contentValues);
@@ -54,7 +56,8 @@ public final class SqlUpdateRequest {
 
     final SqlUpdateRequest that = (SqlUpdateRequest) o;
 
-    return contentValues.equals(that.contentValues)
+    return conflictAlgorithm == that.conflictAlgorithm
+        && contentValues.equals(that.contentValues)
         && Arrays.equals(arguments, that.arguments)
         && table.equals(that.table)
         && where.equals(that.where);
@@ -66,6 +69,7 @@ public final class SqlUpdateRequest {
     result = 31 * result + Arrays.hashCode(arguments);
     result = 31 * result + table.hashCode();
     result = 31 * result + where.hashCode();
+    result = 31 * result + conflictAlgorithm;
     return result;
   }
 
@@ -76,6 +80,7 @@ public final class SqlUpdateRequest {
         ", arguments=" + Arrays.toString(arguments) +
         ", table='" + table + '\'' +
         ", where='" + where + '\'' +
+        ", conflictAlgorithm=" + conflictAlgorithm +
         '}';
   }
 }

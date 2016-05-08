@@ -28,8 +28,11 @@ public final class SqlInsertRequest {
   final ContentValues contentValues;
   @NonNull
   final String table;
+  final int conflictAlgorithm;
 
-  SqlInsertRequest(@NonNull final ContentValues contentValues, @NonNull final String table) {
+  SqlInsertRequest(@NonNull final ContentValues contentValues, @NonNull final String table,
+      final int conflictAlgorithm) {
+    this.conflictAlgorithm = conflictAlgorithm;
     this.table = checkNotNull(table);
     this.contentValues = checkNotNull(contentValues);
   }
@@ -45,7 +48,8 @@ public final class SqlInsertRequest {
 
     final SqlInsertRequest that = (SqlInsertRequest) o;
 
-    return contentValues.equals(that.contentValues)
+    return conflictAlgorithm == that.conflictAlgorithm
+        && contentValues.equals(that.contentValues)
         && table.equals(that.table);
   }
 
@@ -53,6 +57,7 @@ public final class SqlInsertRequest {
   public int hashCode() {
     int result = contentValues.hashCode();
     result = 31 * result + table.hashCode();
+    result = 31 * result + conflictAlgorithm;
     return result;
   }
 
@@ -61,6 +66,7 @@ public final class SqlInsertRequest {
     return "SqlInsertRequest{" +
         "contentValues=" + contentValues +
         ", table='" + table + '\'' +
+        ", conflictAlgorithm=" + conflictAlgorithm +
         '}';
   }
 }

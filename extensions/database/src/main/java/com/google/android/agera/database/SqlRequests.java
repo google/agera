@@ -21,9 +21,12 @@ import static com.google.android.agera.database.SqlRequestCompiler.SQL_REQUEST;
 import static com.google.android.agera.database.SqlRequestCompiler.SQL_UPDATE_REQUEST;
 
 import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentConflictCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBColumn;
-import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnCompile;
-import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnWhereCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnConflictCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnWhereConflictCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBConflictCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBSql;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBTable;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBWhereCompile;
@@ -39,7 +42,8 @@ public final class SqlRequests {
    */
   @SuppressWarnings("unchecked")
   @NonNull
-  public static DBSql<DBArgumentCompile<SqlRequest>> sqlRequest() {
+  public static DBSql<DBArgumentCompile<
+      SqlRequest, DBArgumentCompile<SqlRequest, DBCompile<SqlRequest>>>> sqlRequest() {
     return new SqlRequestCompiler(SQL_REQUEST);
   }
 
@@ -48,7 +52,8 @@ public final class SqlRequests {
    */
   @SuppressWarnings("unchecked")
   @NonNull
-  public static DBTable<DBWhereCompile<SqlDeleteRequest>> sqlDeleteRequest() {
+  public static DBTable<DBWhereCompile<SqlDeleteRequest, DBArgumentCompile<
+      SqlDeleteRequest, DBCompile<SqlDeleteRequest>>>> sqlDeleteRequest() {
     return new SqlRequestCompiler(SQL_DELETE_REQUEST);
   }
 
@@ -57,7 +62,7 @@ public final class SqlRequests {
    */
   @SuppressWarnings("unchecked")
   @NonNull
-  public static DBTable<DBColumn<DBColumnCompile<SqlInsertRequest, ?>>> sqlInsertRequest() {
+  public static DBTable<DBColumn<DBColumnConflictCompile<SqlInsertRequest, ?>>> sqlInsertRequest() {
     return new SqlRequestCompiler(SQL_INSERT_REQUEST);
   }
 
@@ -66,7 +71,9 @@ public final class SqlRequests {
    */
   @SuppressWarnings("unchecked")
   @NonNull
-  public static DBTable<DBColumn<DBColumnWhereCompile<SqlUpdateRequest, ?>>> sqlUpdateRequest() {
+  public static DBTable<DBColumn<DBColumnWhereConflictCompile<SqlUpdateRequest,
+      DBArgumentConflictCompile<SqlUpdateRequest, DBConflictCompile<SqlUpdateRequest>>, ?>>>
+  sqlUpdateRequest() {
     return new SqlRequestCompiler(SQL_UPDATE_REQUEST);
   }
 

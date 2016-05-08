@@ -15,20 +15,27 @@
  */
 package com.google.android.agera.database;
 
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL;
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE;
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_NONE;
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
+import static com.google.android.agera.database.SqlRequestCompilerStates.DBColumnConflictCompile;
+import static com.google.android.agera.database.SqlRequestCompilerStates.DBColumnWhereConflictCompile;
 
 import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentCompile;
-import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnCompile;
-import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnWhereCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentConflictCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBSql;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBTable;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBWhereCompile;
 
 import android.content.ContentValues;
 import android.support.annotation.NonNull;
 
 final class SqlRequestCompiler
-    implements DBTable, DBSql, DBArgumentCompile, DBColumnCompile, DBColumnWhereCompile {
+    implements DBTable, DBSql, DBArgumentCompile, DBColumnConflictCompile, DBWhereCompile,
+    DBColumnWhereConflictCompile, DBArgumentConflictCompile {
   static final int SQL_REQUEST = 0;
   static final int SQL_DELETE_REQUEST = 1;
   static final int SQL_UPDATE_REQUEST = 2;
@@ -51,6 +58,7 @@ final class SqlRequestCompiler
   @NonNull
   private String where;
   private boolean compiled;
+  private int conflictAlgorithm;
 
   SqlRequestCompiler(final int type) {
     this.type = type;
@@ -60,6 +68,7 @@ final class SqlRequestCompiler
     this.compiled = false;
     this.table = "";
     this.query = "";
+    this.conflictAlgorithm = CONFLICT_NONE;
   }
 
   @NonNull
@@ -112,6 +121,30 @@ final class SqlRequestCompiler
 
   @NonNull
   @Override
+  public Object failOnConflict() {
+    checkState(!compiled, ERROR_MESSAGE);
+    conflictAlgorithm = CONFLICT_FAIL;
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object ignoreOnConflict() {
+    checkState(!compiled, ERROR_MESSAGE);
+    conflictAlgorithm = CONFLICT_IGNORE;
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object replaceOnConflict() {
+    checkState(!compiled, ERROR_MESSAGE);
+    conflictAlgorithm = CONFLICT_REPLACE;
+    return this;
+  }
+
+  @NonNull
+  @Override
   public Object compile() {
     checkState(!compiled, ERROR_MESSAGE);
     this.compiled = true;
@@ -119,9 +152,9 @@ final class SqlRequestCompiler
       case SQL_DELETE_REQUEST:
         return new SqlDeleteRequest(arguments, table, where);
       case SQL_INSERT_REQUEST:
-        return new SqlInsertRequest(contentValues, table);
+        return new SqlInsertRequest(contentValues, table, conflictAlgorithm);
       case SQL_UPDATE_REQUEST:
-        return new SqlUpdateRequest(contentValues, arguments, table, where);
+        return new SqlUpdateRequest(contentValues, arguments, table, where, conflictAlgorithm);
       default:
         return new SqlRequest(arguments, query);
     }
