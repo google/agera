@@ -15,8 +15,8 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.WorkerHandler.workerHandler;
 import static com.google.android.agera.Preconditions.checkNotNull;
+import static com.google.android.agera.WorkerHandler.workerHandler;
 
 import android.os.Looper;
 import android.os.SystemClock;
@@ -24,6 +24,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -138,31 +139,71 @@ public final class Observables {
     return new AsyncUpdateDispatcher(activationHandler);
   }
 
-  private static final class CompositeObservable extends BaseObservable implements Updatable {
+  private static final class CompositeObservable implements Observable {
+    @NonNull
+    private static final Updatable[] NO_UPDATABLES = new Updatable[0];
     @NonNull
     private final Observable[] observables;
+    @NonNull
+    private Updatable[] updatables;
 
     CompositeObservable(@NonNull final Observable... observables) {
       this.observables = observables;
+      this.updatables = NO_UPDATABLES;
     }
 
     @Override
-    protected void observableActivated() {
+    public synchronized void addUpdatable(@NonNull final Updatable updatable) {
+      int indexToAdd = -1;
+      Updatable localUpdatable = null;
+      for (int index = 0; index < updatables.length; index += 2) {
+        if (updatables[index] == updatable) {
+          throw new IllegalStateException("Updatable already added, cannot add.");
+        }
+        if (updatables[index] == null) {
+          indexToAdd = index;
+        }
+      }
+      if (indexToAdd == -1) {
+        indexToAdd = updatables.length;
+        updatables = Arrays.copyOf(updatables, indexToAdd < 2 ? 2 : indexToAdd * 2);
+      }
+      updatables[indexToAdd] = updatable;
+      localUpdatable = new WrapperUpdatable(updatable);
+      updatables[indexToAdd + 1] = localUpdatable;
       for (final Observable observable : observables) {
-        observable.addUpdatable(this);
+        observable.addUpdatable(localUpdatable);
       }
     }
 
     @Override
-    protected void observableDeactivated() {
-      for (final Observable observable : observables) {
-        observable.removeUpdatable(this);
+    public synchronized void removeUpdatable(@NonNull final Updatable updatable) {
+      for (int index = 0; index < updatables.length; index += 2) {
+        if (updatables[index] == updatable) {
+          for (final Observable observable : observables) {
+            observable.removeUpdatable(updatables[index + 1]);
+          }
+          updatables[index] = null;
+          updatables[index + 1] = null;
+          return;
+        }
       }
+      throw new IllegalStateException("Updatable not added, cannot remove.");
+
+    }
+  }
+
+  private static final class WrapperUpdatable implements Updatable {
+    @NonNull
+    private final Updatable updatable;
+
+    public WrapperUpdatable(@NonNull final Updatable updatable) {
+      this.updatable = updatable;
     }
 
     @Override
     public void update() {
-      dispatchUpdate();
+      updatable.update();
     }
   }
 
