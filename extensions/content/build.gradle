@@ -15,10 +15,21 @@
  */
 apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.novoda.bintray-release'
 apply plugin: 'jacoco'
 
 dependencies {
     compile project(':agera')
+}
+
+publish {
+    userOrg = gradle.bintrayUser
+    uploadName = gradle.bintrayName
+    repoName = gradle.bintrayRepo
+    groupId = gradle.group
+    artifactId = 'content'
+    version = gradle.versionName
+    autoPublish = false
 }
 
 install {

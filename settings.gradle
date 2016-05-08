@@ -23,6 +23,11 @@ include ':testapp'
 gradle.ext.versionCode = 10100
 gradle.ext.versionName = '1.1.0-SNAPSHOT'
 
+gradle.ext.bintrayRepo = 'Agera'
+gradle.ext.bintrayName = 'Agera'
+gradle.ext.bintrayUser = 'ernstsson'
+
+gradle.ext.description = 'Reactive Programming for Android'
 gradle.ext.group = 'com.google.android.agera'
 gradle.ext.url = 'https://github.com/google/agera'
 gradle.ext.gitUrl = 'https://github.com/google/agera.git'
@@ -44,6 +49,7 @@ gradle.allprojects {
             classpath 'com.android.tools.build:gradle:2.1.0'
             classpath 'com.github.dcendents:android-maven-gradle-plugin:1.3'
             classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.3.1'
+            classpath 'com.novoda:bintray-release:0.3.4'
         }
     }
     repositories {
