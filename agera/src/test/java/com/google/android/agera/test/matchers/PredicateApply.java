@@ -43,11 +43,13 @@ public final class PredicateApply<T> extends TypeSafeMatcher<Predicate<? super T
     description.appendText(value ? "applies for " : "does not apply for ").appendValue(data);
   }
 
+  @NonNull
   @Factory
   public static <T> Matcher<Predicate<? super T>> appliesFor(@NonNull final T data) {
     return new PredicateApply<>(true, data);
   }
 
+  @NonNull
   @Factory
   public static <T> Matcher<Predicate<? super T>> doesNotApplyFor(@NonNull final T data) {
     return new PredicateApply<>(false, data);

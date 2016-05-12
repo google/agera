@@ -87,11 +87,13 @@ public interface FunctionCompilerStates {
      */
     @NonNull
     <TTo> FList<TTo, List<TTo>, TFrom> map(@NonNull Function<TPrev, TTo> function);
+
     /**
      * Adds a {@link Function} to the end of the behavior chain to map each item into a new type.
      *
      * @param function the function to apply to each item to create a new list
      */
+    @NonNull
     <TTo> Function<TFrom, List<TTo>> thenMap(@NonNull Function<? super TPrev, TTo> function);
 
     /**

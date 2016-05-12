@@ -40,7 +40,7 @@ public final class SingleSlotDelayedExecutor implements Executor {
   }
 
   public void resumeOrThrow() {
-    Runnable runnable = this.runnable;
+    final Runnable runnable = this.runnable;
     assertThat("delayedExecutor should have queued a Runnable for resumeOrThrow()",
         runnable, is(notNullValue()));
     this.runnable = null;

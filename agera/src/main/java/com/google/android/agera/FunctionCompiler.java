@@ -98,6 +98,7 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
     return this;
   }
 
+  @NonNull
   @Override
   public Function thenMap(@NonNull final Function function) {
     map(function);

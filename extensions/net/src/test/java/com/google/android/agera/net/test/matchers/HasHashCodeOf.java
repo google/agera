@@ -15,6 +15,7 @@
  */
 package com.google.android.agera.net.test.matchers;
 
+import android.support.annotation.NonNull;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -38,6 +39,7 @@ public final class HasHashCodeOf extends TypeSafeMatcher<Object> {
     description.appendValue(object);
   }
 
+  @NonNull
   @Factory
   public static Matcher<Object> hasHashCodeOf(final Object object) {
     return new HasHashCodeOf(object);

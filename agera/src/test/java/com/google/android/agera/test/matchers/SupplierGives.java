@@ -47,11 +47,13 @@ public final class SupplierGives<T> extends TypeSafeMatcher<Supplier<T>> {
     description.appendText("was ").appendValue(supplier.get());
   }
 
+  @NonNull
   @Factory
   public static <T> Matcher<Supplier<T>> gives(@NonNull final T value) {
     return new SupplierGives<>(value);
   }
 
+  @NonNull
   @Factory
   public static <T> Matcher<Supplier<T>> has(@NonNull final T value) {
     return new SupplierGives<>(value);

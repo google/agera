@@ -27,6 +27,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 /**
  * Abstract extension of {@link SQLiteOpenHelper} implementing a sql database {@link Supplier} to be
@@ -39,7 +40,7 @@ public abstract class SqlDatabaseSupplier extends SQLiteOpenHelper
    * Extending the base constructor, for overriding in concrete implementations.
    */
   public SqlDatabaseSupplier(@NonNull final Context context, @NonNull final String path,
-      final CursorFactory factory, final int version) {
+      @Nullable final CursorFactory factory, final int version) {
     super(context, path, factory, version);
   }
 

@@ -15,6 +15,7 @@
  */
 package com.google.android.agera.database.test.matchers;
 
+import android.support.annotation.NonNull;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -26,13 +27,12 @@ import java.lang.reflect.Modifier;
 public final class HasPrivateConstructor extends TypeSafeMatcher<Class<?>> {
   private static final HasPrivateConstructor INSTANCE = new HasPrivateConstructor();
 
-  private HasPrivateConstructor() {
-  }
+  private HasPrivateConstructor() {}
 
   @Override
   protected boolean matchesSafely(final Class<?> clazz) {
     try {
-      Constructor<?> constructor = clazz.getDeclaredConstructor();
+      final Constructor<?> constructor = clazz.getDeclaredConstructor();
       constructor.setAccessible(true);
       constructor.newInstance();
       return Modifier.isPrivate(constructor.getModifiers());
@@ -46,6 +46,7 @@ public final class HasPrivateConstructor extends TypeSafeMatcher<Class<?>> {
     description.appendText("should have private constructor");
   }
 
+  @NonNull
   @Factory
   public static Matcher<Class<?>> hasPrivateConstructor() {
     return INSTANCE;

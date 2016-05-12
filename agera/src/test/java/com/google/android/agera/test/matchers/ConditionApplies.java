@@ -17,6 +17,7 @@ package com.google.android.agera.test.matchers;
 
 import com.google.android.agera.Condition;
 
+import android.support.annotation.NonNull;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
@@ -39,11 +40,13 @@ public final class ConditionApplies extends TypeSafeMatcher<Condition> {
     description.appendText(value ? "applies " : "does not apply");
   }
 
+  @NonNull
   @Factory
   public static Matcher<Condition> applies() {
     return new ConditionApplies(true);
   }
 
+  @NonNull
   @Factory
   public static Matcher<Condition> doesNotApply() {
     return new ConditionApplies(false);

@@ -36,7 +36,7 @@ public final class SqlUpdateRequest {
   final String where;
 
   SqlUpdateRequest(@NonNull final ContentValues contentValues, @NonNull final String[] arguments,
-      final @NonNull String table, final @NonNull String where) {
+      @NonNull final String table, @NonNull final String where) {
     this.table = checkNotNull(table);
     this.where = checkNotNull(where);
     this.contentValues = checkNotNull(contentValues);

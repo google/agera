@@ -251,7 +251,7 @@ final class RepositoryCompiler implements
     return this;
   }
 
-  private void endFlow(boolean skip) {
+  private void endFlow(final boolean skip) {
     addEnd(skip, directives);
     expect = CONFIG;
   }

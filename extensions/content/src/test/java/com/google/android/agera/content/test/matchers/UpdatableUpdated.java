@@ -42,11 +42,13 @@ public final class UpdatableUpdated extends TypeSafeMatcher<MockUpdatable> {
     description.appendText(updated ? "was updated" : "not updated");
   }
 
+  @NonNull
   @Factory
   public static UpdatableUpdated wasUpdated() {
     return WAS_UPDATED;
   }
 
+  @NonNull
   @Factory
   public static UpdatableUpdated wasNotUpdated() {
     return WAS_NOT_UPDATED;

@@ -95,6 +95,7 @@ public final class Conditions {
    * If {@link Predicates#truePredicate} or {@link Predicates#falsePredicate} is passed,
    * {@code supplier} will never be called.
    */
+  @NonNull
   public static <T> Condition predicateAsCondition(@NonNull final Predicate<T> predicate,
       @NonNull final Supplier<? extends T> supplier) {
     if (predicate == TRUE_CONDICATE) {

@@ -32,8 +32,8 @@ public final class SqlDeleteRequest {
   @NonNull
   final String where;
 
-  SqlDeleteRequest(@NonNull final String[] arguments, final @NonNull String table,
-      final @NonNull String where) {
+  SqlDeleteRequest(@NonNull final String[] arguments, @NonNull final String table,
+      @NonNull final String where) {
     this.table = checkNotNull(table);
     this.where = checkNotNull(where);
     this.arguments = checkNotNull(arguments);

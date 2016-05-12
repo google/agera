@@ -40,6 +40,7 @@ public final class HasHashCodeOf extends TypeSafeMatcher<Object> {
     description.appendValue(object);
   }
 
+  @NonNull
   @Factory
   public static Matcher<Object> hasHashCodeOf(@NonNull final Object object) {
     return new HasHashCodeOf(object);

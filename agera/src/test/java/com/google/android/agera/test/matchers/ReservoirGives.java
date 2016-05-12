@@ -44,11 +44,13 @@ public final class ReservoirGives<T> extends TypeSafeMatcher<Reservoir<T>> {
     this.value = value;
   }
 
+  @NonNull
   @Factory
   public static <T> Matcher<Reservoir<T>> givesPresentValue(final T value) {
     return new ReservoirGives<>(present(value));
   }
 
+  @NonNull
   @Factory
   public static <T> Matcher<Reservoir<T>> givesAbsentValueOf(
       @SuppressWarnings("unused") @Nullable final Class<T> ofClass) {
@@ -57,7 +59,7 @@ public final class ReservoirGives<T> extends TypeSafeMatcher<Reservoir<T>> {
 
   @Override
   protected boolean matchesSafely(@NonNull final Reservoir<T> item) {
-    Result<T> got = item.get();
+    final Result<T> got = item.get();
     if (value.equals(got)) {
       if (lastFailedMatch == item) {
         lastFailedMatch = null;

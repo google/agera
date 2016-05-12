@@ -29,7 +29,7 @@ public final class SqlInsertRequest {
   @NonNull
   final String table;
 
-  SqlInsertRequest(@NonNull final ContentValues contentValues, final @NonNull String table) {
+  SqlInsertRequest(@NonNull final ContentValues contentValues, @NonNull final String table) {
     this.table = checkNotNull(table);
     this.contentValues = checkNotNull(contentValues);
   }
