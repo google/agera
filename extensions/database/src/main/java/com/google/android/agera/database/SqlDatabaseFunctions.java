@@ -83,7 +83,8 @@ public final class SqlDatabaseFunctions {
     public Result<Long> merge(@NonNull final SQLiteDatabase database,
         @NonNull final SqlInsertRequest input) {
       try {
-        return success(database.insertOrThrow(input.table, null, input.contentValues));
+        return success(database.insertWithOnConflict(input.table, null, input.contentValues,
+            input.conflictAlgorithm));
       } catch (final SQLException e) {
         return failure(e);
       }
@@ -98,8 +99,8 @@ public final class SqlDatabaseFunctions {
     public Result<Integer> merge(@NonNull final SQLiteDatabase database,
         @NonNull final SqlUpdateRequest input) {
       try {
-        return success(database.update(input.table, input.contentValues, input.where,
-            input.arguments));
+        return success(database.updateWithOnConflict(input.table, input.contentValues,
+            input.where, input.arguments, input.conflictAlgorithm));
       } catch (final SQLException e) {
         return failure(e);
       }

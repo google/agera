@@ -85,6 +85,35 @@ public interface SqlRequestCompilerStates {
   }
 
   /**
+   * Compiler state allowing to add conflict algorithm.
+   * <p>
+   * The default algorithm aborts the current SQL statement with an SQLITE_CONSTRAINT
+   * error and backs out any changes made.
+   */
+  interface DBConflict<T> {
+
+    /**
+     * When a constraint violation occurs, the command aborts with a return code SQLITE_CONSTRAINT.
+     */
+    @NonNull
+    T failOnConflict();
+
+    /**
+     * When a constraint violation occurs, the one row that contains the constraint violation is not
+     * inserted or changed.
+     */
+    @NonNull
+    T ignoreOnConflict();
+
+    /**
+     * When a UNIQUE constraint violation occurs, the pre-existing rows that are causing the
+     * constraint violation are removed prior to inserting or updating the current row.
+     */
+    @NonNull
+    T replaceOnConflict();
+  }
+
+  /**
    * Compiler state to compile the sql request.
    */
   interface DBCompile<T> {
@@ -99,22 +128,38 @@ public interface SqlRequestCompilerStates {
   /**
    * Compiler state allowing to specify sql arguments or compile.
    */
-  interface DBArgumentCompile<T> extends DBArgument<DBCompile<T>>, DBCompile<T> {}
+  interface DBArgumentCompile<T, TC> extends DBArgument<TC>, DBCompile<T> {}
 
   /**
-   * Compiler state allowing to specify columns or compile.
+   * Compiler state allowing to specify sql arguments, conflict algorithm or compile.
    */
-  interface DBColumnCompile<T, TSelf extends DBColumnCompile<T, TSelf>>
-      extends DBColumn<TSelf>, DBCompile<T> {}
+  interface DBArgumentConflictCompile<T, TCc> extends DBArgument<TCc>, DBConflictCompile<T> {}
+
+  /**
+   * Compiler state allowing to specify columns, a conflict algorithm or compile.
+   */
+  interface DBColumnConflictCompile<T, TSelf extends DBColumnConflictCompile<T, TSelf>>
+      extends DBColumn<TSelf>, DBConflictCompile<T> {}
 
   /**
    * Compiler state allowing to specify a where clause or compile.
    */
-  interface DBWhereCompile<T> extends DBWhere<DBArgumentCompile<T>>, DBCompile<T> {}
+  interface DBWhereCompile<T, TAc> extends DBWhere<TAc>, DBCompile<T> {}
 
   /**
-   * Compiler state allowing to specify a column, where clause or compile.
+   * Compiler state allowing to specify a conflict algorithm or compile.
    */
-  interface DBColumnWhereCompile<T, TSelf extends DBColumnWhereCompile<T, TSelf>>
-      extends DBColumn<TSelf>, DBWhereCompile<T> {}
+  interface DBConflictCompile<T> extends DBConflict<DBCompile<T>>, DBCompile<T> {}
+
+  /**
+   * Compiler state allowing to specify a conflict algorithm, a where clause or compile.
+   */
+  interface DBWhereConflictCompile<T, TAcc> extends DBWhere<TAcc>, DBConflictCompile<T> {}
+
+  /**
+   * Compiler state allowing to specify a column, conflict algorithm, where clause or compile.
+   */
+  interface DBColumnWhereConflictCompile<T, TAac, TSelf
+      extends DBColumnWhereConflictCompile<T, TAac,TSelf>>
+      extends DBColumn<TSelf>, DBWhereConflictCompile<T, TAac> {}
 }
