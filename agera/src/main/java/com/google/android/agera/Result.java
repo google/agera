@@ -207,6 +207,35 @@ public final class Result<T> {
     return this;
   }
 
+
+  /**
+   * Passes the encountered failure to the {@code receiver} if the failure is absent; otherwise
+   * does nothing.
+   *
+   * @return This instance, for chaining.
+   */
+  @NonNull
+  public Result<T> ifAbsentFailureSendTo(@NonNull final Receiver<? super Throwable> receiver) {
+    if (failure != null && failure == ABSENT.failure) {
+      receiver.accept(failure);
+    }
+    return this;
+  }
+
+  /**
+   * Passes the encountered failure to the {@code receiver} if the attempt has failed, except for
+   * the failure absent; otherwise does nothing.
+   *
+   * @return This instance, for chaining.
+   */
+  @NonNull
+  public Result<T> ifNonAbsentFailureSendTo(@NonNull final Receiver<? super Throwable> receiver) {
+    if (failure != null && failure != ABSENT.failure) {
+      receiver.accept(failure);
+    }
+    return this;
+  }
+
   /**
    * Binds the output value with {@code bindValue} using {@code binder} if the attempt has
    * succeeded; otherwise does nothing.

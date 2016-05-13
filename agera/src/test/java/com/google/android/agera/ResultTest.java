@@ -281,6 +281,48 @@ public final class ResultTest {
   }
 
   @Test
+  public void shouldApplySendIfFailedExceptAbsent() {
+    failure(THROWABLE).ifNonAbsentFailureSendTo(mockThrowableReceiver);
+
+    verify(mockThrowableReceiver).accept(THROWABLE);
+  }
+
+  @Test
+  public void shouldNotApplySendIfFailedIfSucceeded() {
+    SUCCESS_WITH_VALUE.ifFailedSendTo(mockThrowableReceiver);
+
+    verifyZeroInteractions(mockThrowableReceiver);
+  }
+
+  @Test
+  public void shouldNotApplySendIfFailedExceptAbsentIfSucceeded() {
+    SUCCESS_WITH_VALUE.ifFailedSendTo(mockThrowableReceiver);
+
+    verifyZeroInteractions(mockThrowableReceiver);
+  }
+
+  @Test
+  public void shouldNotApplySendIfFailedExceptAbsentIfAbsent() {
+    absent().ifNonAbsentFailureSendTo(mockThrowableReceiver);
+
+    verifyZeroInteractions(mockThrowableReceiver);
+  }
+
+  @Test
+  public void shouldApplySendIfFailedAbsent() {
+    absent().ifAbsentFailureSendTo(mockThrowableReceiver);
+
+    verify(mockThrowableReceiver).accept(absent().getFailure());
+  }
+
+  @Test
+  public void shouldNotApplySendIfFailedAbsentIfAbsent() {
+    failure(THROWABLE).ifAbsentFailureSendTo(mockThrowableReceiver);
+
+    verifyZeroInteractions(mockThrowableReceiver);
+  }
+
+  @Test
   public void shouldAllowForChainedCallsToSendIfFailed() {
     assertThat(SUCCESS_WITH_VALUE.ifSucceededSendTo(mockReceiver),
         sameInstance(SUCCESS_WITH_VALUE));
