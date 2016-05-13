@@ -2,6 +2,7 @@
 Reactive Programming for Android
 ================================
 [![Build Status](https://travis-ci.org/google/agera.svg?branch=master)](https://travis-ci.org/google/agera)
+[![Coverage](https://codecov.io/gh/google/agera/branch/master/graph/badge.svg)](https://codecov.io/gh/google/agera)
 [![Download](https://api.bintray.com/packages/ernstsson/Agera/agera/images/download.svg)](https://bintray.com/ernstsson/Agera/agera/_latestVersion)
 
 Agera is a set of classes and interfaces to help write functional, asynchronous, and reactive 
