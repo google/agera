@@ -19,7 +19,6 @@ import static com.google.android.agera.database.SqlRequests.sqlDeleteRequest;
 import static com.google.android.agera.database.SqlRequests.sqlInsertRequest;
 import static com.google.android.agera.database.SqlRequests.sqlRequest;
 import static com.google.android.agera.database.SqlRequests.sqlUpdateRequest;
-import static com.google.android.agera.database.test.matchers.HasHashCodeOf.hasHashCodeOf;
 import static com.google.android.agera.database.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -28,6 +27,7 @@ import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.robolectric.annotation.Config.NONE;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -103,107 +103,23 @@ public final class SqlRequestsTest {
   }
 
   @Test
-  public void shouldNotBeEqualForDifferentArguments() {
-    assertThat(sqlRequest, not(equalTo(sqlRequest2)));
+  public void shouldVerifyEqualsForSqlRequest() {
+    EqualsVerifier.forClass(SqlRequest.class).verify();
   }
 
   @Test
-  public void shouldBeEqualForSameInstance() {
-    assertThat(sqlRequest, equalTo(sqlRequest));
+  public void shouldVerifyEqualsForSqlDeleteRequest() {
+    EqualsVerifier.forClass(SqlDeleteRequest.class).verify();
   }
 
   @Test
-  public void shouldNotBeEqualForOtherType() {
-    assertThat(sqlRequest, not(equalTo(new Object())));
+  public void shouldVerifyEqualsForSqlUpdateRequest() {
+    EqualsVerifier.forClass(SqlUpdateRequest.class).verify();
   }
 
   @Test
-  public void shouldBeEqualForSameArgumentsButDifferentInstance() {
-    assertThat(sqlRequest, equalTo(sqlRequest().sql(SQL_QUERY).compile()));
-  }
-
-  @Test
-  public void shouldHaveSameHashcodeForSameQueryStringButDifferentInstance() {
-    assertThat(sqlRequest, hasHashCodeOf(sqlRequest().sql(SQL_QUERY).compile()));
-  }
-
-  @Test
-  public void shouldNotBeEqualForDifferentArgumentsForDelete() {
-    assertThat(sqlDeleteRequest, not(equalTo(sqlDeleteRequest2)));
-  }
-
-  @Test
-  public void shouldBeEqualForSameInstanceForDelete() {
-    assertThat(sqlDeleteRequest, equalTo(sqlDeleteRequest));
-  }
-
-  @Test
-  public void shouldNotBeEqualForOtherTypeForDelete() {
-    assertThat(sqlDeleteRequest, not(equalTo(new Object())));
-  }
-
-  @Test
-  public void shouldBeEqualForSameArgumentsButDifferentInstanceForDelete() {
-    assertThat(sqlDeleteRequest, equalTo(sqlDeleteRequest().table(TABLE).compile()));
-  }
-
-  @Test
-  public void shouldHaveSameHashcodeForSameQueryStringButDifferentInstanceForDelete() {
-    assertThat(sqlDeleteRequest, hasHashCodeOf(sqlDeleteRequest().table(TABLE).compile()));
-  }
-
-  @Test
-  public void shouldNotBeEqualForDifferentArgumentsForUpdate() {
-    assertThat(sqlUpdateRequest, not(equalTo(sqlUpdateRequest2)));
-  }
-
-  @Test
-  public void shouldBeEqualForSameInstanceForUpdate() {
-    assertThat(sqlUpdateRequest, equalTo(sqlUpdateRequest));
-  }
-
-  @Test
-  public void shouldNotBeEqualForOtherTypeForUpdate() {
-    assertThat(sqlUpdateRequest, not(equalTo(new Object())));
-  }
-
-  @Test
-  public void shouldBeEqualForSameArgumentsButDifferentInstanceForUpdate() {
-    assertThat(sqlUpdateRequest,
-        equalTo(sqlUpdateRequest().table(TABLE).column("column", "value4").compile()));
-  }
-
-  @Test
-  public void shouldHaveSameHashcodeForSameQueryStringButDifferentInstanceForUpdate() {
-    assertThat(sqlUpdateRequest,
-        hasHashCodeOf(sqlUpdateRequest().table(TABLE).column("column", "value4").compile()));
-  }
-
-  @Test
-  public void shouldNotBeEqualForDifferentArgumentsForInsert() {
-    assertThat(sqlInsertRequest, not(equalTo(sqlInsertRequest2)));
-  }
-
-  @Test
-  public void shouldBeEqualForSameInstanceForInsert() {
-    assertThat(sqlInsertRequest, equalTo(sqlInsertRequest));
-  }
-
-  @Test
-  public void shouldNotBeEqualForOtherTypeForInsert() {
-    assertThat(sqlInsertRequest, not(equalTo(new Object())));
-  }
-
-  @Test
-  public void shouldBeEqualForSameArgumentsButDifferentInstanceForInsert() {
-    assertThat(sqlInsertRequest,
-        equalTo(sqlInsertRequest().table(TABLE).column("column", "value").compile()));
-  }
-
-  @Test
-  public void shouldHaveSameHashcodeForSameQueryStringButDifferentInstanceForInsert() {
-    assertThat(sqlInsertRequest,
-        hasHashCodeOf(sqlInsertRequest().table(TABLE).column("column", "value").compile()));
+  public void shouldVerifyEqualsForSqlInsertRequest() {
+    EqualsVerifier.forClass(SqlInsertRequest.class).verify();
   }
 
   @Test

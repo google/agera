@@ -21,7 +21,6 @@ import static com.google.android.agera.net.HttpRequests.httpDeleteRequest;
 import static com.google.android.agera.net.HttpRequests.httpGetRequest;
 import static com.google.android.agera.net.HttpRequests.httpPostRequest;
 import static com.google.android.agera.net.HttpRequests.httpPutRequest;
-import static com.google.android.agera.net.test.matchers.HasHashCodeOf.hasHashCodeOf;
 import static com.google.android.agera.net.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
@@ -33,6 +32,8 @@ import static org.hamcrest.Matchers.not;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTBodyHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
 
+import dalvik.annotation.TestTarget;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Test;
 
 import java.util.Map;
@@ -197,31 +198,13 @@ public final class HttpRequestTest {
   }
 
   @Test
-  public void shouldBeEqualForSameData() {
-    assertThat(httpGetRequest(URL).compile(), is(httpGetRequest(URL).compile()));
-  }
-
-  @Test
-  public void shouldBeEqualForSameInstance() {
-    final HttpRequest httpRequest = httpGetRequest(URL).compile();
-    assertThat(httpRequest, is(httpRequest));
-  }
-
-  @Test
-  public void shouldNotBeEqualForDifferentType() {
-    final HttpRequest request = httpGetRequest(URL).compile();
-    assertThat(request, is(not(new Object())));
+  public void shouldVerifyEquals() {
+    EqualsVerifier.forClass(HttpRequest.class).verify();
   }
 
   @Test
   public void shouldHaveToString() {
     assertThat(httpGetRequest(URL).compile(), hasToString(not(isEmptyOrNullString())));
-  }
-
-  @Test
-  public void shouldHaveSameHashcodeForSameData() {
-    assertThat(httpGetRequest(URL).compile(),
-        hasHashCodeOf(httpGetRequest(URL).compile()));
   }
 
   @Test

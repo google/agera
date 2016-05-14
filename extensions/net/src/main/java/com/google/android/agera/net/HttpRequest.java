@@ -52,20 +52,32 @@ public final class HttpRequest {
   }
 
   @Override
+  public String toString() {
+    return "HttpRequest{" +
+        "method='" + method + '\'' +
+        ", url='" + url + '\'' +
+        ", body=" + Arrays.toString(body) +
+        ", header=" + header +
+        '}';
+  }
+
+  @Override
   public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof HttpRequest)) {
-      return false;
-    }
+    if (this == o) { return true; }
+    if (o == null || getClass() != o.getClass()) { return false; }
 
     final HttpRequest that = (HttpRequest) o;
 
-    return method.equals(that.method)
-        && url.equals(that.url)
-        && Arrays.equals(body, that.body)
-        && header.equals(that.header);
+    if (useCaches != that.useCaches) { return false; }
+    if (followRedirects != that.followRedirects) { return false; }
+    if (connectTimeoutMs != that.connectTimeoutMs) { return false; }
+    if (readTimeoutMs != that.readTimeoutMs) { return false; }
+    if (!method.equals(that.method)) { return false; }
+    if (!url.equals(that.url)) { return false; }
+    if (!Arrays.equals(body, that.body)) { return false; }
+    if (!header.equals(that.header)) { return false; }
+
+    return true;
   }
 
   @Override
@@ -74,16 +86,10 @@ public final class HttpRequest {
     result = 31 * result + url.hashCode();
     result = 31 * result + Arrays.hashCode(body);
     result = 31 * result + header.hashCode();
+    result = 31 * result + (useCaches ? 1 : 0);
+    result = 31 * result + (followRedirects ? 1 : 0);
+    result = 31 * result + connectTimeoutMs;
+    result = 31 * result + readTimeoutMs;
     return result;
-  }
-
-  @Override
-  public String toString() {
-    return "HttpRequest{" +
-        "method='" + method + '\'' +
-        ", url='" + url + '\'' +
-        ", body=" + Arrays.toString(body) +
-        ", header=" + header +
-        '}';
   }
 }

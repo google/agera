@@ -427,27 +427,23 @@ public final class Result<T> {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof Result)) {
+  public boolean equals(final Object o) {
+    if (this == o) { return true; }
+    if (o == null || getClass() != o.getClass()) { return false; }
+
+    final Result<?> result = (Result<?>) o;
+
+    if (value != null ? !value.equals(result.value) : result.value != null) { return false; }
+    if (failure != null ? !failure.equals(result.failure) : result.failure != null) {
       return false;
     }
 
-    final Result<?> other = (Result<?>) o;
-
-    if (value != null) {
-      return value.equals(other.value);
-    } else {
-      //noinspection ConstantConditions -- value == null implies failure != null
-      return failure.equals(other.failure);
-    }
+    return true;
   }
 
   @Override
   public int hashCode() {
-    int result = (value != null ? value.hashCode() : 0);
+    int result = value != null ? value.hashCode() : 0;
     result = 31 * result + (failure != null ? failure.hashCode() : 0);
     return result;
   }

@@ -20,7 +20,6 @@ import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.present;
 import static com.google.android.agera.Result.success;
-import static com.google.android.agera.test.matchers.HasHashCodeOf.hasHashCodeOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasToString;
@@ -38,6 +37,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -511,34 +511,15 @@ public final class ResultTest {
   }
 
   @Test
-  public void shouldBeEqualForFailureAndFailure() {
-    assertThat(FAILURE_WITH_THROWABLE, equalTo(Result.<Integer>failure(THROWABLE)));
-  }
-
-  @Test
   public void shouldBeSingletonForFailureWithoutExplicitThrowable() {
     assertThat(failure(), equalTo(failure()));
   }
 
   @Test
-  public void shouldNotBeEqualForFailureAndSuccess() {
-    assertThat(SUCCESS_WITH_VALUE, not(equalTo(FAILURE_WITH_THROWABLE)));
+  public void shouldVerifyEqualsForSqlDeleteRequest() {
+    EqualsVerifier.forClass(Result.class).verify();
   }
 
-  @Test
-  public void shouldNotBeEqualForDifferentType() {
-    assertThat(SUCCESS_WITH_VALUE, not(equalTo(new Object())));
-  }
-
-  @Test
-  public void shouldHaveSameHashcodeForSameValue() {
-    assertThat(SUCCESS_WITH_VALUE, hasHashCodeOf(success(VALUE)));
-  }
-
-  @Test
-  public void shouldHaveSameHashcodeForSameFailure() {
-    assertThat(FAILURE_WITH_THROWABLE, hasHashCodeOf(failure(THROWABLE)));
-  }
 
   @Test
   public void shouldPrintStringRepresentationForSuccess() {
