@@ -25,6 +25,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -36,7 +37,9 @@ import com.google.android.agera.Repository;
 import com.google.android.agera.UpdateDispatcher;
 
 import android.content.Context;
+import android.support.annotation.LayoutRes;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.AdapterDataObserver;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,6 +58,7 @@ public final class RepositoryAdapterTest {
   private static final List<String> REPOSITORY_LIST = asList("a", "b", "c");
   private static final String REPOSITORY_ITEM = "d";
   private static final String ALTERNATIVE_REPOSITORY_ITEM = "e";
+  @LayoutRes
   public static final int LAYOUT_ID = 3;
   @Mock
   private RepositoryPresenter repositoryPresenter;
@@ -70,6 +74,8 @@ public final class RepositoryAdapterTest {
   private LayoutInflater layoutInflater;
   @Mock
   private View view;
+  @Mock
+  private AdapterDataObserver observer;
   private UpdateDispatcher updateDispatcher;
   private MutableRepository repository;
   private Repository secondRepository;
@@ -121,6 +127,19 @@ public final class RepositoryAdapterTest {
     repositoryAdapter.getItemId(4);
   }
 
+
+  @Test(expected = IndexOutOfBoundsException.class)
+  public void shouldThrowExceptionForNegativeIndex() {
+    repositoryAdapter.getItemId(-1);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void shouldThrowExceptionForAdapterWithoutRepositories() {
+    repositoryAdapter()
+        .addAdditionalObservable(updateDispatcher)
+        .build();
+  }
+
   @Test
   public void shouldReturnItemViewTypeFromFirstPresenter() {
     when(repositoryPresenter.getLayoutResId(REPOSITORY_ITEM, 0)).thenReturn(1);
@@ -140,6 +159,18 @@ public final class RepositoryAdapterTest {
   @Test
   public void shouldCreateViewHolder() {
     assertThat(repositoryAdapter.onCreateViewHolder(viewGroup, LAYOUT_ID).itemView, is(view));
+  }
+
+  @Test
+  public void shouldUpdateOnAdditionalObservablesWhenObserving() {
+    repositoryAdapter.registerAdapterDataObserver(observer);
+
+    repositoryAdapter.startObserving();
+    updateDispatcher.update();
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+
+    verify(observer, times(2)).onChanged();
   }
 
   @Test

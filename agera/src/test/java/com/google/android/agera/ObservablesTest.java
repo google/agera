@@ -24,6 +24,7 @@ import static com.google.android.agera.Observables.perLoopObservable;
 import static com.google.android.agera.Observables.perMillisecondObservable;
 import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
+import static com.google.android.agera.WorkerHandler.workerHandler;
 import static com.google.android.agera.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static com.google.android.agera.test.matchers.UpdatableUpdated.wasUpdated;
 import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
@@ -310,6 +311,13 @@ public final class ObservablesTest {
         looper.runToEndOfTasks();
       }
     }
+  }
+
+  @Test
+  public void shouldCallMessageObjUpdateForMsgCallUpdatableMessage() {
+    workerHandler().obtainMessage(WorkerHandler.MSG_CALL_UPDATABLE, updatable).sendToTarget();
+
+    assertThat(updatable, wasUpdated());
   }
 
   @Test
