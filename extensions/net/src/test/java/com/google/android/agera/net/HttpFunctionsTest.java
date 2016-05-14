@@ -171,6 +171,23 @@ public final class HttpFunctionsTest {
   }
 
   @Test
+  public void shouldNotPassOnNullResponseHeader() throws Throwable {
+    final ByteArrayInputStream inputStream = new ByteArrayInputStream(RESPONSE_BODY);
+    when(mockHttpURLConnection.getInputStream()).thenReturn(inputStream);
+    when(mockHttpURLConnection.getContentLength()).thenReturn(RESPONSE_BODY.length);
+    final Map<String, List<String>> headerFields = new HashMap<>();
+    headerFields.put(null, singletonList("value"));
+    headerFields.put("naMe2", singletonList("value2"));
+    when(mockHttpURLConnection.getHeaderFields()).thenReturn(headerFields);
+
+    final HttpResponse httpResponse = httpFunction().apply(HTTP_GET_REQUEST).get();
+
+    assertThat(httpResponse.header.size(), is(1));
+    assertThat(httpResponse.header, hasEntry("name2", "value2"));
+    verify(mockHttpURLConnection).disconnect();
+  }
+
+  @Test
   public void shouldGetOutputStreamForPutWithBody() throws Throwable {
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(RESPONSE_BODY);
