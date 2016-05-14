@@ -57,6 +57,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
   /**
    * Builds a {@link RepositoryAdapter}.
    */
+  @NonNull
   public static Builder repositoryAdapter() {
     return new Builder();
   }
@@ -84,6 +85,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
      *     position.
      * @return This instance, for chaining.
      */
+    @NonNull
     public <T> Builder add(@NonNull final Repository<T> repository,
         @NonNull final RepositoryPresenter<T> presenter) {
       @SuppressWarnings("unchecked")
@@ -108,6 +110,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
      *     {@link #add}; they will be observed automatically.
      * @return This instance, for chaining.
      */
+    @NonNull
     public Builder addAdditionalObservable(@NonNull final Observable observable) {
       observables.add(checkNotNull(observable));
       return this;
@@ -120,6 +123,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
      * a new instance of the subclass, passing this builder to the base constructor
      * {@link RepositoryAdapter#RepositoryAdapter(Builder)}.
      */
+    @NonNull
     public RepositoryAdapter build() {
       return new RepositoryAdapter(this);
     }
@@ -246,12 +250,6 @@ public class RepositoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     int resolvedItemIndex = this.resolvedItemIndex;
     presenters[resolvedRepositoryIndex].bind(
         data[resolvedRepositoryIndex], resolvedItemIndex, holder);
-  }
-
-  @Override
-  public void onViewRecycled(RecyclerView.ViewHolder holder) {
-    super.onViewRecycled(holder);
-    presenters[resolvedRepositoryIndex].recycled(holder);
   }
 
   /**

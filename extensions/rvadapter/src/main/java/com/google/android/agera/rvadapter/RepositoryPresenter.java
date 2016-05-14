@@ -66,13 +66,4 @@ public abstract class RepositoryPresenter<T> {
    *     object will be of that custom type.
    */
   public abstract void bind(@NonNull T data, int index, @NonNull RecyclerView.ViewHolder holder);
-
-  /**
-   * Called when the given {@code holder} is recycled.
-   *
-   * @param holder The view holder that holds the view. If a subclass of {@link RepositoryAdapter}
-   *     is used, which returns a custom view holder for this item's layout resource ID, then this
-   *     object will be of that custom type.
-   */
-  public void recycled(@NonNull final RecyclerView.ViewHolder holder) {}
 }
