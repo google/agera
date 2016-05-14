@@ -30,6 +30,9 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 
+import com.google.android.agera.net.HttpRequestCompilerStates.HTBodyHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
+import com.google.android.agera.net.HttpRequestCompilerStates.HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
+
 import org.junit.Test;
 
 import java.util.Map;
@@ -130,9 +133,84 @@ public final class HttpRequestTest {
     assertThat(httpDeleteRequest(URL).connectTimeoutMs(3).compile().connectTimeoutMs, is(3));
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionForReuseOfCompilerOfNoRedirects() {
+    final HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile incompleteRequest =
+        httpGetRequest(URL);
+    incompleteRequest.compile();
+
+    incompleteRequest.noRedirects();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionForReuseOfCompilerOfNoCaches() {
+    final HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile incompleteRequest =
+        httpGetRequest(URL);
+    incompleteRequest.compile();
+
+    incompleteRequest.noCaches();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionForReuseOfCompilerOfConnectTimeoutMs() {
+    final HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile incompleteRequest =
+        httpGetRequest(URL);
+    incompleteRequest.compile();
+
+    incompleteRequest.connectTimeoutMs(1);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionForReuseOfCompilerOfReadTimeoutMs() {
+    final HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile incompleteRequest =
+        httpGetRequest(URL);
+    incompleteRequest.compile();
+
+    incompleteRequest.readTimeoutMs(1);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionForReuseOfCompilerOfCompile() {
+    final HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile incompleteRequest =
+        httpGetRequest(URL);
+    incompleteRequest.compile();
+
+    incompleteRequest.compile();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionForReuseOfCompilerOfHeaderField() {
+    final HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile incompleteRequest =
+        httpGetRequest(URL);
+    incompleteRequest.compile();
+
+    incompleteRequest.headerField("", "");
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionForReuseOfCompilerOfBody() {
+    final HTBodyHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile incompleteRequest =
+        httpPostRequest(URL);
+    incompleteRequest.compile();
+
+    incompleteRequest.body(new byte[]{});
+  }
+
   @Test
   public void shouldBeEqualForSameData() {
     assertThat(httpGetRequest(URL).compile(), is(httpGetRequest(URL).compile()));
+  }
+
+  @Test
+  public void shouldBeEqualForSameInstance() {
+    final HttpRequest httpRequest = httpGetRequest(URL).compile();
+    assertThat(httpRequest, is(httpRequest));
+  }
+
+  @Test
+  public void shouldNotBeEqualForDifferentType() {
+    final HttpRequest request = httpGetRequest(URL).compile();
+    assertThat(request, is(not(new Object())));
   }
 
   @Test
