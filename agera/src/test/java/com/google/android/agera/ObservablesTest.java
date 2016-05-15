@@ -30,6 +30,7 @@ import static com.google.android.agera.test.matchers.UpdatableUpdated.wasUpdated
 import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.mock;
@@ -44,6 +45,7 @@ import static org.robolectric.shadows.ShadowLooper.idleMainLooper;
 
 import com.google.android.agera.test.mocks.MockUpdatable;
 
+import android.support.annotation.NonNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,6 +59,7 @@ import org.robolectric.util.Scheduler;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)
@@ -321,7 +324,72 @@ public final class ObservablesTest {
   }
 
   @Test
+  public void shouldNotAllowAddingUpdatablesOnNonLooperThreadInBaseObservable() {
+    final Observable observable = new BaseObservable() {};
+
+    assertThat(throwsIllegalStateExceptionForCallOnNonLooperThread(new Runnable() {
+      @Override
+      public void run() {
+        updatable.addToObservable(observable);
+      }
+    }), is(true));
+  }
+
+  @Test
+  public void shouldNotAllowCreatingBaseObservableOnNonLooperThread() {
+
+    assertThat(throwsIllegalStateExceptionForCallOnNonLooperThread(new Runnable() {
+      @Override
+      public void run() {
+        new BaseObservable() {};
+      }
+    }), is(true));
+  }
+
+  @Test
+  public void shouldNotAllowRemovingUpdatablesOnNonLooperThreadInBaseObservable() {
+    final Observable observable = new BaseObservable() {};
+    updatable.addToObservable(observable);
+
+    assertThat(throwsIllegalStateExceptionForCallOnNonLooperThread(new Runnable() {
+      @Override
+      public void run() {
+        updatable.removeFromObservables();
+      }
+    }), is(true));
+  }
+
+  @Test
+  public void shouldHandleLifeCycleInBaseObservable() {
+    final Observable observable = new BaseObservable() {};
+
+    updatable.addToObservable(observable);
+    updatable.removeFromObservables();
+  }
+
+  @Test
   public void shouldHavePrivateConstructor() {
     assertThat(Observables.class, hasPrivateConstructor());
+  }
+
+  private boolean throwsIllegalStateExceptionForCallOnNonLooperThread(
+      @NonNull final Runnable runnable) {
+    final AtomicBoolean gotException = new AtomicBoolean(false);
+    final Thread thread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          runnable.run();
+        } catch (IllegalStateException e) {
+          gotException.set(true);
+        }
+      }
+    });
+    thread.start();
+    try {
+      thread.join();
+    } catch (InterruptedException ignored) {
+    }
+    return gotException.get();
   }
 }
