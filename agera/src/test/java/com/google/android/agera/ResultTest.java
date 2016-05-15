@@ -288,6 +288,13 @@ public final class ResultTest {
   }
 
   @Test
+  public void shouldNotApplySendIfSucceededIfAbsent() {
+    SUCCESS_WITH_VALUE.ifNonAbsentFailureSendTo(mockThrowableReceiver);
+
+    verifyZeroInteractions(mockThrowableReceiver);
+  }
+
+  @Test
   public void shouldNotApplySendIfFailedIfSucceeded() {
     SUCCESS_WITH_VALUE.ifFailedSendTo(mockThrowableReceiver);
 
@@ -317,6 +324,13 @@ public final class ResultTest {
 
   @Test
   public void shouldNotApplySendIfFailedAbsentIfAbsent() {
+    failure(THROWABLE).ifAbsentFailureSendTo(mockThrowableReceiver);
+
+    verifyZeroInteractions(mockThrowableReceiver);
+  }
+
+  @Test
+  public void shouldNotApplySendIfFailedAbsentIfSucceeded() {
     failure(THROWABLE).ifAbsentFailureSendTo(mockThrowableReceiver);
 
     verifyZeroInteractions(mockThrowableReceiver);

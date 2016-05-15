@@ -39,9 +39,11 @@ public final class Result<T> {
   @NonNull
   private static final Result<Object> FAILURE =
       new Result<>(null, new Throwable("Attempt failed"));
+  @SuppressWarnings("ThrowableInstanceNeverThrown")
   @NonNull
-  private static final Result<Object> ABSENT =
-      new Result<>(null, new NullPointerException("Value is absent"));
+  private static final Throwable ABSENT_THROWABLE = new NullPointerException("Value is absent");
+  @NonNull
+  private static final Result<Object> ABSENT = new Result<>(null, ABSENT_THROWABLE);
 
   @Nullable
   private final T value;
@@ -216,7 +218,7 @@ public final class Result<T> {
    */
   @NonNull
   public Result<T> ifAbsentFailureSendTo(@NonNull final Receiver<? super Throwable> receiver) {
-    if (failure != null && failure == ABSENT.failure) {
+    if (failure == ABSENT_THROWABLE) {
       receiver.accept(failure);
     }
     return this;
@@ -230,7 +232,7 @@ public final class Result<T> {
    */
   @NonNull
   public Result<T> ifNonAbsentFailureSendTo(@NonNull final Receiver<? super Throwable> receiver) {
-    if (failure != null && failure != ABSENT.failure) {
+    if (failure != null && failure != ABSENT_THROWABLE) {
       receiver.accept(failure);
     }
     return this;
