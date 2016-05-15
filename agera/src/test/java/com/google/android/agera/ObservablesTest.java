@@ -42,6 +42,7 @@ import static org.robolectric.annotation.Config.NONE;
 import static org.robolectric.internal.ShadowExtractor.extract;
 import static org.robolectric.shadows.ShadowLooper.getShadowMainLooper;
 import static org.robolectric.shadows.ShadowLooper.idleMainLooper;
+import static org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks;
 
 import com.google.android.agera.test.mocks.MockUpdatable;
 
@@ -69,6 +70,7 @@ public final class ObservablesTest {
   private Observable compositeObservableOfMany;
   private Observable chainedCompositeObservableOfOne;
   private Observable chainedCompositeObservable;
+  private Observable chainedDupeCompositeObservable;
   private UpdateDispatcher firstUpdateDispatcher;
   private UpdateDispatcher secondUpdateDispatcher;
   private UpdateDispatcher thirdUpdateDispatcher;
@@ -101,6 +103,9 @@ public final class ObservablesTest {
         compositeObservable(firstUpdateDispatcher));
     chainedCompositeObservable = compositeObservable(compositeObservable(firstUpdateDispatcher,
         secondUpdateDispatcher), thirdUpdateDispatcher);
+    chainedDupeCompositeObservable = compositeObservable(firstUpdateDispatcher,
+        compositeObservable(firstUpdateDispatcher, secondUpdateDispatcher),
+        secondUpdateDispatcher, thirdUpdateDispatcher);
     updatable = mockUpdatable();
     secondUpdatable = mockUpdatable();
     looper = getShadowMainLooper();
@@ -155,6 +160,18 @@ public final class ObservablesTest {
     thirdUpdateDispatcher.update();
 
     assertThat(updatable, wasUpdated());
+  }
+
+  @Test
+  public void shouldUpdateOnlyOnceFromDupeInChainedComposite() {
+    final Updatable updatable = mock(Updatable.class);
+    chainedDupeCompositeObservable.addUpdatable(updatable);
+    runUiThreadTasksIncludingDelayedTasks();
+
+    thirdUpdateDispatcher.update();
+    runUiThreadTasksIncludingDelayedTasks();
+
+    verify(updatable).update();
   }
 
   @Test
@@ -321,6 +338,11 @@ public final class ObservablesTest {
     workerHandler().obtainMessage(WorkerHandler.MSG_CALL_UPDATABLE, updatable).sendToTarget();
 
     assertThat(updatable, wasUpdated());
+  }
+
+  @Test
+  public void shouldIgnoreUnknownMessage() {
+    workerHandler().obtainMessage(-1).sendToTarget();
   }
 
   @Test

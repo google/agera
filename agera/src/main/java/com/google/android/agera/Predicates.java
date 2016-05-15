@@ -178,7 +178,7 @@ public final class Predicates {
 
     @Override
     public boolean apply(@NonNull final CharSequence input) {
-      return input == null || input.length() == 0;
+      return input.length() == 0;
     }
   }
 

@@ -20,6 +20,7 @@ import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Repositories.mutableRepository;
 import static com.google.android.agera.Repositories.repository;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
+import static com.google.android.agera.Result.success;
 import static com.google.android.agera.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static com.google.android.agera.test.matchers.SupplierGives.has;
 import static com.google.android.agera.test.matchers.UpdatableUpdated.wasNotUpdated;
@@ -28,6 +29,7 @@ import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -56,7 +58,9 @@ import java.util.concurrent.Executor;
 public final class RepositoriesTest {
   private static final int INITIAL_INT_VALUE = 0;
   private static final int INT_VALUE = 2;
+  private static final String INITIAL_STRING_VALUE = "init";
   private static final String STRING_VALUE = "string";
+  private static final Result<String> RESULT_STRING_VALUE = success(STRING_VALUE);
   private static final List<Integer> INITIAL_VALUE = singletonList(1);
   private static final List<Integer> LIST = asList(1, 2, 3);
   private static final List<Integer> OTHER_LIST = asList(4, 5);
@@ -78,15 +82,36 @@ public final class RepositoriesTest {
   @Mock
   private Supplier<String> mockStringSupplier;
   @Mock
+  private Supplier<Result<String>> mockResultStringSupplier;
+  @Mock
+  private Supplier<Result<String>> mockFailedResultStringSupplier;
+  @Mock
+  private Function<String, Result<String>> mockResultStringFunction;
+  @Mock
+  private Function<String, Result<String>> mockFailedResultStringFunction;
+  @Mock
   private Predicate<List<Integer>> mockIntegerListPredicate;
   @Mock
   private Function<List<Integer>, Integer> mockIntegerListToIntValueFunction;
+  @Mock
+  private Merger<String, String, Result<String>> mockResultStringMerger;
+  @Mock
+  private Merger<String, String, Result<String>> mockFailedResultStringMerger;
 
   @Before
   public void setUp() {
     initMocks(this);
     when(mockIntegerListSupplier.get()).thenReturn(LIST);
     when(mockStringSupplier.get()).thenReturn(STRING_VALUE);
+    when(mockResultStringSupplier.get()).thenReturn(RESULT_STRING_VALUE);
+    when(mockFailedResultStringSupplier.get()).thenReturn(Result.<String>failure());
+    when(mockResultStringFunction.apply(INITIAL_STRING_VALUE)).thenReturn(RESULT_STRING_VALUE);
+    when(mockFailedResultStringFunction.apply(INITIAL_STRING_VALUE))
+        .thenReturn(Result.<String>failure());
+    when(mockResultStringMerger.merge(INITIAL_STRING_VALUE, STRING_VALUE))
+        .thenReturn(RESULT_STRING_VALUE);
+    when(mockFailedResultStringMerger.merge(INITIAL_STRING_VALUE, STRING_VALUE))
+        .thenReturn(Result.<String>failure());
     when(mockIntegerListToIntValueFunction.apply(Matchers.<List<Integer>>any()))
         .thenReturn(INT_VALUE);
     updateDispatcher = updateDispatcher();
@@ -346,6 +371,90 @@ public final class RepositoriesTest {
     verify(mockIntegerListStringBinder).bind(INITIAL_VALUE, STRING_VALUE);
     assertThat(updatable, wasNotUpdated());
     assertThat(repository, has(INITIAL_VALUE));
+  }
+
+  @Test
+  public void shouldGetSuccessfulValueFromThenAttemptGetFrom() {
+    final Repository<String> repository = repositoryWithInitialValue(INITIAL_STRING_VALUE)
+        .observe()
+        .onUpdatesPerLoop()
+        .thenAttemptGetFrom(mockResultStringSupplier).orSkip()
+        .compile();
+
+    updatable.addToObservable(repository);
+
+    assertThat(updatable, wasUpdated());
+    assertThat(repository, has(STRING_VALUE));
+  }
+
+  @Test
+  public void shouldNotUpdateForSkippedFailedValueFromThenAttemptGetFrom() {
+    final Repository<String> repository = repositoryWithInitialValue(INITIAL_STRING_VALUE)
+        .observe()
+        .onUpdatesPerLoop()
+        .thenAttemptGetFrom(mockFailedResultStringSupplier).orSkip()
+        .compile();
+
+    updatable.addToObservable(repository);
+
+    assertThat(updatable, wasNotUpdated());
+    assertThat(repository, has(INITIAL_STRING_VALUE));
+  }
+
+  @Test
+  public void shouldGetSuccessfulValueFromThenAttemptTransform() {
+    final Repository<String> repository = repositoryWithInitialValue(INITIAL_STRING_VALUE)
+        .observe()
+        .onUpdatesPerLoop()
+        .thenAttemptTransform(mockResultStringFunction).orSkip()
+        .compile();
+
+    updatable.addToObservable(repository);
+
+    assertThat(updatable, wasUpdated());
+    assertThat(repository, has(STRING_VALUE));
+  }
+
+  @Test
+  public void shouldNotUpdateForSkippedFailedValueFromThenAttemptTransform() {
+    final Repository<String> repository = repositoryWithInitialValue(INITIAL_STRING_VALUE)
+        .observe()
+        .onUpdatesPerLoop()
+        .thenAttemptTransform(mockFailedResultStringFunction).orSkip()
+        .compile();
+
+    updatable.addToObservable(repository);
+
+    assertThat(updatable, wasNotUpdated());
+    assertThat(repository, has(INITIAL_STRING_VALUE));
+  }
+
+  @Test
+  public void shouldGetSuccessfulValueFromThenAttemptMergeIn() {
+    final Repository<String> repository = repositoryWithInitialValue(INITIAL_STRING_VALUE)
+        .observe()
+        .onUpdatesPerLoop()
+        .thenAttemptMergeIn(mockStringSupplier, mockResultStringMerger).orSkip()
+        .compile();
+
+    updatable.addToObservable(repository);
+
+    assertThat(updatable, wasUpdated());
+    assertThat(repository, has(STRING_VALUE));
+  }
+
+  @Test
+  public void shouldNotUpdateForSkippedFailedValueFromThenAttemptMergeIn() {
+    final Repository<String> repository = repositoryWithInitialValue(INITIAL_STRING_VALUE)
+        .observe()
+        .onUpdatesPerLoop()
+        .thenAttemptMergeIn(mockStringSupplier, mockFailedResultStringMerger).orSkip()
+        .compile();
+
+    updatable.addToObservable(repository);
+
+    assertThat(updatable, wasNotUpdated());
+    assertThat(repository, has(INITIAL_STRING_VALUE));
   }
 
   @Test
