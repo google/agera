@@ -30,7 +30,9 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -187,6 +189,28 @@ public final class FunctionsTest {
         .thenMap(new StringLength());
 
     assertThat(function.apply(INPUT_LIST), contains(4, 7, 3, 7));
+  }
+
+  @Test
+  public void shouldReturnEmptyListForFilterOfEmptyList() {
+    final Predicate<String> predicate = mock(Predicate.class);
+    when(predicate.apply(anyString())).thenReturn(true);
+
+    final Function<List<String>, List<String>> function = functionFromListOf(String.class)
+        .thenFilter(predicate);
+
+    assertThat(function.apply(new ArrayList<String>()),
+        sameInstance(Collections.<String>emptyList()));
+  }
+
+  @Test
+  public void shouldReturnIdentityFunctionIfNoFunctionsAddedToCompiler() {
+    final Function<List<String>, List<String>> function = functionFromListOf(String.class)
+        .map(Functions.<String>identityFunction())
+        .filter(Predicates.<String>truePredicate())
+        .thenApply(Functions.<List<String>>identityFunction());
+
+    assertThat(function, sameInstance(Functions.<List<String>>identityFunction()));
   }
 
   private static final class DoubleString implements Function<String, String> {

@@ -49,6 +49,9 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
 
   @NonNull
   private Function createFunction() {
+    if (functions.isEmpty()) {
+      return IDENTITY_FUNCTION;
+    }
     return new ChainFunction(functions.toArray(new Function[functions.size()]));
   }
 
