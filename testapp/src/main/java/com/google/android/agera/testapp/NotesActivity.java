@@ -15,44 +15,57 @@
  */
 package com.google.android.agera.testapp;
 
+import static android.graphics.Bitmap.Config.ARGB_8888;
+import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.BitmapFactory.decodeByteArray;
 import static android.os.StrictMode.ThreadPolicy;
 import static android.os.StrictMode.VmPolicy;
 import static android.os.StrictMode.setThreadPolicy;
 import static android.os.StrictMode.setVmPolicy;
+import static com.google.android.agera.Functions.functionFromListOf;
+import static com.google.android.agera.Functions.parallelMap;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
 import static com.google.android.agera.Result.absentIfNull;
+import static com.google.android.agera.Result.failure;
+import static com.google.android.agera.Result.success;
 import static com.google.android.agera.net.HttpFunctions.httpFunction;
 import static com.google.android.agera.net.HttpRequests.httpGetRequest;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
 import static com.google.android.agera.testapp.NotesStore.notesStore;
-import static java.util.concurrent.Executors.newSingleThreadExecutor;
+import static java.util.Arrays.asList;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 
 import com.google.android.agera.Predicate;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.Updatable;
+import com.google.android.agera.net.HttpResponse;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.ViewHolder;
-import android.util.DisplayMetrics;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import java.util.concurrent.Executor;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 public final class NotesActivity extends Activity {
-  private static final Executor networkExecutor = newSingleThreadExecutor();
-  private static final Executor calculationExecutor = newSingleThreadExecutor();
+  private static final ExecutorService networkExecutor = newFixedThreadPool(5);
+  private static final ExecutorService calculationExecutor = newFixedThreadPool(5);
+  private static final String BASE_URL =
+      "http://www.gravatar.com/avatar/4df6f4fe5976df17deeea19443d4429d?s=";
+  private static final List<String> URLS =
+      asList(BASE_URL + "50", BASE_URL + "100", BASE_URL + "200", BASE_URL + "400");
 
   private Repository<Result<Bitmap>> backgroundRepository;
   private Updatable updatable;
@@ -112,21 +125,49 @@ public final class NotesActivity extends Activity {
     recyclerView.setAdapter(adapter);
     recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-    final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-
     backgroundRepository = repositoryWithInitialValue(Result.<Bitmap>absent())
         .observe()
         .onUpdatesPerLoop()
         .goTo(networkExecutor)
-        .getFrom(() -> "http://www.gravatar.com/avatar/4df6f4fe5976df17deeea19443d4429d?s="
-            + Math.max(displayMetrics.heightPixels, displayMetrics.widthPixels))
-        .transform(url -> httpGetRequest(url).compile())
-        .attemptTransform(httpFunction()).orEnd(Result::failure)
+        .getFrom(() -> URLS)
+        .transform(functionFromListOf(String.class)
+            .map(url -> httpGetRequest(url).compile())
+            .morph(parallelMap(networkExecutor, httpFunction()))
+            .filter(Result::succeeded)
+            .map(Result::get)
+            .filter(Result::succeeded)
+            .thenMap(Result::get))
         .goTo(calculationExecutor)
-        .thenTransform(input -> {
-          final byte[] body = input.getBody();
-          return absentIfNull(decodeByteArray(body, 0, body.length));
-        })
+        .thenTransform(functionFromListOf(HttpResponse.class)
+            .morph(parallelMap(calculationExecutor, input -> {
+              final byte[] body = input.getBody();
+              return absentIfNull(decodeByteArray(body, 0, body.length));
+            }))
+            .filter(Result::succeeded)
+            .map(Result::get)
+            .filter(Result::succeeded)
+            .map(Result::get)
+            .thenApply(bitmaps -> {
+              int width = 0;
+              int height = 0;
+              for (final Bitmap bitmap : bitmaps) {
+                width += bitmap.getWidth();
+                height += bitmap.getHeight();
+              }
+              final Bitmap background = createBitmap(width, height, ARGB_8888);
+              if (background == null) {
+                return failure();
+              }
+              final Canvas backgroundCanvas = new Canvas(background);
+              width = 0;
+              height = 0;
+              for (final Bitmap bitmap : bitmaps) {
+                backgroundCanvas.drawBitmap(bitmap, width, height, null);
+                width += bitmap.getWidth();
+                height += bitmap.getHeight();
+              }
+              return success(background);
+            }))
         .onDeactivation(SEND_INTERRUPT)
         .compile();
 
