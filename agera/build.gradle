@@ -18,6 +18,13 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.novoda.bintray-release'
 apply plugin: 'jacoco'
 
+android {
+    compileOptions {
+        sourceCompatibility gradle.javaVersion
+        targetCompatibility gradle.javaVersion
+    }
+}
+
 publish {
     userOrg = gradle.bintrayUser
     uploadName = gradle.bintrayName

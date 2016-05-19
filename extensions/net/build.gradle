@@ -22,6 +22,13 @@ dependencies {
     compile project(':agera')
 }
 
+android {
+    compileOptions {
+        sourceCompatibility gradle.javaVersion
+        targetCompatibility gradle.javaVersion
+    }
+}
+
 publish {
     userOrg = gradle.bintrayUser
     uploadName = gradle.bintrayName

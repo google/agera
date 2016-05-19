@@ -21,7 +21,6 @@ import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
 import static com.google.android.agera.Reservoirs.reservoir;
 import static com.google.android.agera.Result.failure;
-import static com.google.android.agera.Suppliers.staticSupplier;
 import static com.google.android.agera.database.SqlDatabaseFunctions.databaseDeleteFunction;
 import static com.google.android.agera.database.SqlDatabaseFunctions.databaseInsertFunction;
 import static com.google.android.agera.database.SqlDatabaseFunctions.databaseQueryFunction;
@@ -45,15 +44,11 @@ import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Reservoir;
 import com.google.android.agera.Result;
-import com.google.android.agera.Supplier;
-import com.google.android.agera.Updatable;
 import com.google.android.agera.database.SqlDeleteRequest;
 import com.google.android.agera.database.SqlInsertRequest;
-import com.google.android.agera.database.SqlRequest;
 import com.google.android.agera.database.SqlUpdateRequest;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.support.annotation.NonNull;
 
 import java.util.List;
@@ -106,23 +101,6 @@ final class NotesStore {
         databaseUpdateFunction(databaseSupplier);
     final Function<SqlDeleteRequest, Result<Integer>> deleteNoteFunction =
         databaseDeleteFunction(databaseSupplier);
-    final Function<Object, Result<? extends Number>> writeOperation =
-        new Function<Object, Result<? extends Number>>() {
-          @NonNull
-          @Override
-          public Result<? extends Number> apply(@NonNull Object input) {
-            if (input instanceof SqlInsertRequest) {
-              return insertNoteFunction.apply((SqlInsertRequest) input);
-            }
-            if (input instanceof SqlUpdateRequest) {
-              return updateNoteFunction.apply((SqlUpdateRequest) input);
-            }
-            if (input instanceof SqlDeleteRequest) {
-              return deleteNoteFunction.apply((SqlDeleteRequest) input);
-            }
-            return failure();
-          }
-        };
 
     // Create a reservoir of database write requests. This will be used as the receiver of write
     // requests submitted to the NotesStore, and the event/data source of the reacting repository.
@@ -140,45 +118,41 @@ final class NotesStore {
         .onUpdatesPerLoop()
         .goTo(executor)
         .attemptGetFrom(writeRequestReservoir).orSkip()
-        .thenAttemptTransform(writeOperation).orSkip()
+        .thenAttemptTransform(input -> {
+          if (input instanceof SqlInsertRequest) {
+            return insertNoteFunction.apply((SqlInsertRequest) input);
+          }
+          if (input instanceof SqlUpdateRequest) {
+            return updateNoteFunction.apply((SqlUpdateRequest) input);
+          }
+          if (input instanceof SqlDeleteRequest) {
+            return deleteNoteFunction.apply((SqlDeleteRequest) input);
+          }
+          return failure();
+        }).orSkip()
         .notifyIf(alwaysNotify)
         .compile();
 
     // Keep the reacting repository in this lazy singleton activated for the full app life cycle.
     // This is optional -- it allows the write requests submitted when the notes repository is not
     // active to still be processed asap.
-    final Updatable dummyUpdatable = new Updatable() {
-      @Override
-      public void update() {}
-    };
-    writeReaction.addUpdatable(dummyUpdatable);
-
-    // Create a function to map each data row to a Note.
-    final Function<Cursor, Note> cursorToNote = new Function<Cursor, Note>() {
-      @NonNull
-      @Override
-      public Note apply(@NonNull final Cursor cursor) {
-        return note(cursor.getInt(ID_COLUMN_INDEX), cursor.getString(NOTE_COLUMN_INDEX));
-      }
-    };
+    writeReaction.addUpdatable(() -> {});
 
     // Create the repository of notes, wire it up to update on each database write, set it to fetch
     // notes from the database on the database thread executor.
-    final Supplier<SqlRequest> getNotesQuerySupplier =
-        staticSupplier(sqlRequest().sql(GET_NOTES_FROM_TABLE).compile());
-    final Repository<List<Note>> notesRepository = repositoryWithInitialValue(INITIAL_VALUE)
+
+    // Create the wired up notes store
+    notesStore = new NotesStore(repositoryWithInitialValue(INITIAL_VALUE)
         .observe(writeReaction)
         .onUpdatesPerLoop()
         .goTo(executor)
-        .getFrom(getNotesQuerySupplier)
-        .thenAttemptTransform(databaseQueryFunction(databaseSupplier, cursorToNote))
+        .getFrom(() -> sqlRequest().sql(GET_NOTES_FROM_TABLE).compile())
+        .thenAttemptTransform(databaseQueryFunction(databaseSupplier,
+            cursor -> note(cursor.getInt(ID_COLUMN_INDEX), cursor.getString(NOTE_COLUMN_INDEX))))
         .orEnd(staticFunction(INITIAL_VALUE))
         .onConcurrentUpdate(SEND_INTERRUPT)
         .onDeactivation(SEND_INTERRUPT)
-        .compile();
-
-    // Create the wired up notes store
-    notesStore = new NotesStore(notesRepository, writeRequestReservoir);
+        .compile(), writeRequestReservoir);
     return notesStore;
   }
 

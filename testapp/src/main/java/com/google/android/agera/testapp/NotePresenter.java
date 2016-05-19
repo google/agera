@@ -19,8 +19,10 @@ import static com.google.android.agera.Preconditions.checkNotNull;
 
 import com.google.android.agera.rvadapter.RepositoryPresenter;
 
+import android.app.AlertDialog;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.List;
@@ -49,7 +51,20 @@ final class NotePresenter extends RepositoryPresenter<List<Note>> {
     final Note note = notes.get(index);
     final TextView view = (TextView) holder.itemView;
     view.setText(note.getNote());
-    view.setOnClickListener(new EditOnClickListener(notesStore, note));
-    view.setOnLongClickListener(new DeleteOnLongClickListener(notesStore, note));
+    view.setOnClickListener(v -> {
+      final EditText editText = new EditText(v.getContext());
+      editText.setId(R.id.edit);
+      editText.setText(note.getNote());
+      new AlertDialog.Builder(v.getContext())
+          .setTitle(R.string.edit_note)
+          .setView(editText)
+          .setPositiveButton(R.string.edit,
+              (d, i) -> notesStore.updateNote(note, editText.getText().toString()))
+          .create().show();
+    });
+    view.setOnLongClickListener(v -> {
+      notesStore.deleteNote(note);
+      return true;
+    });
   }
 }

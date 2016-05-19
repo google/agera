@@ -15,45 +15,44 @@
  */
 package com.google.android.agera.testapp;
 
+import static android.graphics.BitmapFactory.decodeByteArray;
 import static android.os.StrictMode.ThreadPolicy;
 import static android.os.StrictMode.VmPolicy;
 import static android.os.StrictMode.setThreadPolicy;
 import static android.os.StrictMode.setVmPolicy;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
-import static com.google.android.agera.Suppliers.staticSupplier;
+import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.net.HttpFunctions.httpFunction;
+import static com.google.android.agera.net.HttpRequests.httpGetRequest;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
 import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
-import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.Updatable;
 import com.google.android.agera.rvadapter.RepositoryAdapter;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import java.util.concurrent.Executor;
 
-public final class NotesActivity extends Activity implements Updatable {
-  private static final UrlToHttpRequest URL_TO_HTTP_REQUEST = new UrlToHttpRequest();
-  private static final HttpResponseToBitmap HTTP_RESPONSE_TO_BITMAP = new HttpResponseToBitmap();
+public final class NotesActivity extends Activity {
   private static final Executor networkExecutor = newSingleThreadExecutor();
   private static final Executor calculationExecutor = newSingleThreadExecutor();
-  private static final String BACKGROUND_URL =
-      "http://www.gravatar.com/avatar/4df6f4fe5976df17deeea19443d4429d";
 
   private RepositoryAdapter adapter;
   private Repository<Result<Bitmap>> backgroundRepository;
-  private Receiver<Bitmap> setBackgroundReceiver;
+  private Updatable updatable;
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
@@ -68,11 +67,21 @@ public final class NotesActivity extends Activity implements Updatable {
     final NotesStore notesStore = notesStore(getApplicationContext());
 
     // Find the clear button and wire the click listener to call the clear notes updatable
-    findViewById(R.id.clear).setOnClickListener(new ClearOnClickListener(notesStore));
+    findViewById(R.id.clear).setOnClickListener(v -> notesStore.clearNotes());
 
     // Find the add button and wire the click listener to show a dialog that in turn calls the add
     // note from text from the notes store when adding notes
-    findViewById(R.id.add).setOnClickListener(new AddOnClickListener(notesStore));
+    findViewById(R.id.add).setOnClickListener(v -> {
+      final EditText editText = new EditText(v.getContext());
+      editText.setId(R.id.edit);
+      new AlertDialog.Builder(v.getContext())
+          .setTitle(R.string.add_note)
+          .setView(editText)
+          .setPositiveButton(R.string.add, (d, i) -> {
+            notesStore.insertNoteFromText(editText.getText().toString());
+          })
+          .create().show();
+    });
 
     // Create a repository adapter, wiring up the notes repository from the store with a presenter
     adapter = repositoryAdapter()
@@ -84,22 +93,27 @@ public final class NotesActivity extends Activity implements Updatable {
     recyclerView.setAdapter(adapter);
     recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-    setBackgroundReceiver = new ImageViewBitmapReceiver((ImageView) findViewById(R.id.background));
-
     final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
 
     backgroundRepository = repositoryWithInitialValue(Result.<Bitmap>absent())
         .observe()
         .onUpdatesPerLoop()
         .goTo(networkExecutor)
-        .getFrom(staticSupplier(BACKGROUND_URL
-            + "?s=" + Math.max(displayMetrics.heightPixels, displayMetrics.widthPixels)))
-        .transform(URL_TO_HTTP_REQUEST)
-        .attemptTransform(httpFunction()).orSkip()
+        .getFrom(() -> "http://www.gravatar.com/avatar/4df6f4fe5976df17deeea19443d4429d?s="
+            + Math.max(displayMetrics.heightPixels, displayMetrics.widthPixels))
+        .transform(url -> httpGetRequest(url).compile())
+        .attemptTransform(httpFunction()).orEnd(Result::failure)
         .goTo(calculationExecutor)
-        .thenTransform(HTTP_RESPONSE_TO_BITMAP)
+        .thenTransform(input -> {
+          final byte[] body = input.getBody();
+          return absentIfNull(decodeByteArray(body, 0, body.length));
+        })
         .onDeactivation(SEND_INTERRUPT)
         .compile();
+
+    final ImageView imageView = (ImageView) findViewById(R.id.background);
+
+    updatable = () -> backgroundRepository.get().ifSucceededSendTo(imageView::setImageBitmap);
   }
 
   @Override
@@ -107,7 +121,7 @@ public final class NotesActivity extends Activity implements Updatable {
     super.onResume();
     // The adapter is dormant before start observing is called
     adapter.startObserving();
-    backgroundRepository.addUpdatable(this);
+    backgroundRepository.addUpdatable(updatable);
   }
 
   @Override
@@ -115,11 +129,6 @@ public final class NotesActivity extends Activity implements Updatable {
     super.onPause();
     // Start observing needs to be paired with stop observing
     adapter.stopObserving();
-    backgroundRepository.removeUpdatable(this);
-  }
-
-  @Override
-  public void update() {
-    backgroundRepository.get().ifSucceededSendTo(setBackgroundReceiver);
+    backgroundRepository.removeUpdatable(updatable);
   }
 }
