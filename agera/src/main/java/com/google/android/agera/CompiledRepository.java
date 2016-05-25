@@ -49,10 +49,9 @@ final class CompiledRepository extends BaseObservable
       @NonNull final Merger<Object, Object, Boolean> notifyChecker,
       @RepositoryConfig final int concurrentUpdateConfig,
       @RepositoryConfig final int deactivationConfig) {
-    final Observable eventSource = perMillisecondObservable(frequency,
-        compositeObservable(eventSources.toArray(new Observable[eventSources.size()])));
     final Object[] directiveArray = directives.toArray();
-    return new CompiledRepository(initialValue, eventSource,
+    return new CompiledRepository(initialValue, compositeObservable(frequency,
+        eventSources.toArray(new Observable[eventSources.size()])),
         directiveArray, notifyChecker, deactivationConfig, concurrentUpdateConfig);
   }
 
