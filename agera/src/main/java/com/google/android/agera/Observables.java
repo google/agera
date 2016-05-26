@@ -15,11 +15,9 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.WorkerHandler.workerHandler;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
 import android.os.Looper;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -45,17 +43,23 @@ public final class Observables {
    */
   @NonNull
   public static Observable compositeObservable(@NonNull final Observable... observables) {
+    return compositeObservable(0, observables);
+  }
+
+  @NonNull
+  static Observable compositeObservable(final int shortestUpdateWindowMillis,
+      @NonNull final Observable... observables) {
     if (observables.length == 0) {
-      return new CompositeObservable();
+      return new CompositeObservable(0);
     }
 
     if (observables.length == 1) {
       final Observable singleObservable = observables[0];
       if (singleObservable instanceof CompositeObservable) {
-        return new CompositeObservable(
+        return new CompositeObservable(0,
             ((CompositeObservable) singleObservable).observables);
       } else {
-        return new CompositeObservable(singleObservable);
+        return new CompositeObservable(0, singleObservable);
       }
     }
 
@@ -73,7 +77,7 @@ public final class Observables {
         }
       }
     }
-    return new CompositeObservable(
+    return new CompositeObservable(0,
         flattenedDedupedObservables.toArray(new Observable[flattenedDedupedObservables.size()]));
   }
 
@@ -89,13 +93,13 @@ public final class Observables {
 
   /**
    * Returns an {@link Observable} that notifies added {@link Updatable}s that the
-   * {@code observable} has changed, but never more often than every
+   * {@code observables} has changed, but never more often than every
    * {@code shortestUpdateWindowMillis}.
    */
   @NonNull
   public static Observable perMillisecondObservable(
-      final int shortestUpdateWindowMillis, @NonNull final Observable observable) {
-    return new LowPassFilterObservable(shortestUpdateWindowMillis, observable);
+      final int shortestUpdateWindowMillis, @NonNull final Observable... observables) {
+    return compositeObservable(shortestUpdateWindowMillis, observables);
   }
 
   /**
@@ -103,8 +107,8 @@ public final class Observables {
    * {@code observable} has changed, but never more often than once per {@link Looper} cycle.
    */
   @NonNull
-  public static Observable perLoopObservable(@NonNull final Observable observable) {
-    return perMillisecondObservable(0, observable);
+  public static Observable perLoopObservable(@NonNull final Observable... observables) {
+    return compositeObservable(observables);
   }
 
   /**
@@ -142,7 +146,9 @@ public final class Observables {
     @NonNull
     private final Observable[] observables;
 
-    CompositeObservable(@NonNull final Observable... observables) {
+    CompositeObservable(final int shortestUpdateWindowMillis,
+        @NonNull final Observable... observables) {
+      super(shortestUpdateWindowMillis);
       this.observables = observables;
     }
 
@@ -192,54 +198,6 @@ public final class Observables {
     public void update() {
       if (condition.applies()) {
         dispatchUpdate();
-      }
-    }
-  }
-
-  static final class LowPassFilterObservable extends BaseObservable implements Updatable {
-    @NonNull
-    private final Observable observable;
-    @NonNull
-    private final WorkerHandler workerHandler;
-    private final int shortestUpdateWindowMillis;
-
-    private long lastUpdateTimestamp;
-
-    LowPassFilterObservable(final int shortestUpdateWindowMillis,
-        @NonNull final Observable observable) {
-      this.shortestUpdateWindowMillis = shortestUpdateWindowMillis;
-      this.observable = checkNotNull(observable);
-      this.workerHandler = workerHandler();
-    }
-
-    @Override
-    protected void observableActivated() {
-      observable.addUpdatable(this);
-    }
-
-    @Override
-    protected void observableDeactivated() {
-      observable.removeUpdatable(this);
-      workerHandler.removeMessages(WorkerHandler.MSG_CALL_LOW_PASS_UPDATE, this);
-    }
-
-    @Override
-    public void update() {
-      workerHandler.sendMessageDelayed(
-          workerHandler.obtainMessage(WorkerHandler.MSG_CALL_LOW_PASS_UPDATE, this), (long) 0);
-    }
-
-    void lowPassUpdate() {
-      workerHandler.removeMessages(WorkerHandler.MSG_CALL_LOW_PASS_UPDATE, this);
-      final long elapsedRealtimeMillis = SystemClock.elapsedRealtime();
-      final long timeFromLastUpdate = elapsedRealtimeMillis - lastUpdateTimestamp;
-      if (timeFromLastUpdate >= shortestUpdateWindowMillis) {
-        lastUpdateTimestamp = elapsedRealtimeMillis;
-        dispatchUpdate();
-      } else {
-        workerHandler.sendMessageDelayed(
-            workerHandler.obtainMessage(WorkerHandler.MSG_CALL_LOW_PASS_UPDATE, this),
-            shortestUpdateWindowMillis - timeFromLastUpdate);
       }
     }
   }
