@@ -254,6 +254,51 @@ public final class Result<T> {
   }
 
   /**
+   * Binds the output value with {@code bindValue} using {@code binder} if the attempt has failed;
+   * otherwise does nothing.
+   *
+   * @return This instance, for chaining.
+   */
+  @NonNull
+  public <U> Result<T> ifFailedBind(@NonNull final U bindValue,
+      @NonNull final Binder<Throwable, ? super U> binder) {
+    if (failure != null) {
+      binder.bind(failure, bindValue);
+    }
+    return this;
+  }
+
+  /**
+   * Binds the output value with {@code bindValue} using {@code binder} if the failure is absent;
+   * otherwise does nothing.
+   *
+   * @return This instance, for chaining.
+   */
+  @NonNull
+  public <U> Result<T> ifAbsentFailureBind(@NonNull final U bindValue,
+      @NonNull final Binder<Throwable, ? super U> binder) {
+    if (failure == ABSENT_THROWABLE) {
+      binder.bind(failure, bindValue);
+    }
+    return this;
+  }
+
+  /**
+   * Binds the output value with {@code bindValue} using {@code binder} if the attempt has failed,
+   * except for the failure absent; otherwise does nothing.
+   *
+   * @return This instance, for chaining.
+   */
+  @NonNull
+  public <U> Result<T> ifNonAbsentFailureBind(@NonNull final U bindValue,
+      @NonNull final Binder<Throwable, ? super U> binder) {
+    if (failure != null && failure != ABSENT_THROWABLE) {
+      binder.bind(failure, bindValue);
+    }
+    return this;
+  }
+
+  /**
    * Binds the output value with the value from the {@code supplier} using {@code binder} if the
    * attempt has succeeded; otherwise does nothing, not calling either the binder or the supplier.
    *
@@ -264,6 +309,51 @@ public final class Result<T> {
       @NonNull final Binder<? super T, ? super U> binder) {
     if (value != null) {
       binder.bind(value, supplier.get());
+    }
+    return this;
+  }
+
+  /**
+   * Binds the output value with the value from the {@code supplier} using {@code binder} if the
+   * attempt has failed; otherwise does nothing.
+   *
+   * @return This instance, for chaining.
+   */
+  @NonNull
+  public <U> Result<T> ifFailedBindFrom(@NonNull final Supplier<U> supplier,
+      @NonNull final Binder<Throwable, ? super U> binder) {
+    if (failure != null) {
+      binder.bind(failure, supplier.get());
+    }
+    return this;
+  }
+
+  /**
+   * Binds the output value with the value from the {@code supplier} using {@code binder} if the
+   * failure is absent; otherwise does nothing.
+   *
+   * @return This instance, for chaining.
+   */
+  @NonNull
+  public <U> Result<T> ifAbsentFailureBindFrom(@NonNull final Supplier<U> supplier,
+      @NonNull final Binder<Throwable, ? super U> binder) {
+    if (failure == ABSENT_THROWABLE) {
+      binder.bind(failure, supplier.get());
+    }
+    return this;
+  }
+
+  /**
+   * Binds the output value with the value from the {@code supplier} using {@code binder} if the
+   * attempt has failed, except for the failure absent; otherwise does nothing.
+   *
+   * @return This instance, for chaining.
+   */
+  @NonNull
+  public <U> Result<T> ifNonAbsentFailureBindFrom(@NonNull final Supplier<U> supplier,
+      @NonNull final Binder<Throwable, ? super U> binder) {
+    if (failure != null && failure != ABSENT_THROWABLE) {
+      binder.bind(failure, supplier.get());
     }
     return this;
   }
