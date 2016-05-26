@@ -80,6 +80,8 @@ public final class ResultTest {
   @Mock
   private Receiver<Throwable> mockThrowableReceiver;
   @Mock
+  private Binder<Throwable, String> mockThrowableStringBinder;
+  @Mock
   private Supplier<Integer> mockOtherValueSupplier;
   @Mock
   private Supplier<Result<Integer>> mockOtherValueSuccessfulAttemptSupplier;
@@ -337,6 +339,138 @@ public final class ResultTest {
   }
 
   @Test
+  public void shouldApplyBindIfFailed() {
+    failure(THROWABLE).ifFailedBind(STRING_VALUE, mockThrowableStringBinder);
+
+    verify(mockThrowableStringBinder).bind(THROWABLE, STRING_VALUE);
+  }
+
+  @Test
+  public void shouldApplyBindIfFailedExceptAbsent() {
+    failure(THROWABLE).ifNonAbsentFailureBind(STRING_VALUE, mockThrowableStringBinder);
+
+    verify(mockThrowableStringBinder).bind(THROWABLE, STRING_VALUE);
+  }
+
+  @Test
+  public void shouldNotApplyBindIfSucceededIfAbsent() {
+    SUCCESS_WITH_VALUE.ifNonAbsentFailureBind(STRING_VALUE, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+  }
+
+  @Test
+  public void shouldNotApplyBindIfFailedIfSucceeded() {
+    SUCCESS_WITH_VALUE.ifFailedBind(STRING_VALUE, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+  }
+
+  @Test
+  public void shouldNotApplyBindIfFailedExceptAbsentIfSucceeded() {
+    SUCCESS_WITH_VALUE.ifFailedBind(STRING_VALUE, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+  }
+
+  @Test
+  public void shouldNotApplyBindIfFailedExceptAbsentIfAbsent() {
+    absent().ifNonAbsentFailureBind(STRING_VALUE, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+  }
+
+  @Test
+  public void shouldApplyBindIfFailedAbsent() {
+    absent().ifAbsentFailureBind(STRING_VALUE, mockThrowableStringBinder);
+
+    verify(mockThrowableStringBinder).bind(absent().getFailure(), STRING_VALUE);
+  }
+
+  @Test
+  public void shouldNotApplyBindIfFailedAbsentIfAbsent() {
+    failure(THROWABLE).ifAbsentFailureBind(STRING_VALUE, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+  }
+
+  @Test
+  public void shouldNotApplyBindIfFailedAbsentIfSucceeded() {
+    failure(THROWABLE).ifAbsentFailureBind(STRING_VALUE, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+  }
+
+  @Test
+  public void shouldApplyBindFromIfFailed() {
+    failure(THROWABLE).ifFailedBindFrom(mockSupplier, mockThrowableStringBinder);
+
+    verify(mockThrowableStringBinder).bind(THROWABLE, STRING_VALUE);
+  }
+
+  @Test
+  public void shouldApplyBindFromIfFailedExceptAbsent() {
+    failure(THROWABLE).ifNonAbsentFailureBindFrom(mockSupplier, mockThrowableStringBinder);
+
+    verify(mockThrowableStringBinder).bind(THROWABLE, STRING_VALUE);
+  }
+
+  @Test
+  public void shouldNotApplyBindFromIfSucceededIfAbsent() {
+    SUCCESS_WITH_VALUE.ifNonAbsentFailureBindFrom(mockSupplier, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+    verifyZeroInteractions(mockSupplier);
+  }
+
+  @Test
+  public void shouldNotApplyBindFromIfFailedIfSucceeded() {
+    SUCCESS_WITH_VALUE.ifFailedBindFrom(mockSupplier, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+    verifyZeroInteractions(mockSupplier);
+  }
+
+  @Test
+  public void shouldNotApplyBindFromIfFailedExceptAbsentIfSucceeded() {
+    SUCCESS_WITH_VALUE.ifFailedBindFrom(mockSupplier, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+    verifyZeroInteractions(mockSupplier);
+  }
+
+  @Test
+  public void shouldNotApplyBindFromIfFailedExceptAbsentIfAbsent() {
+    absent().ifNonAbsentFailureBindFrom(mockSupplier, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+    verifyZeroInteractions(mockSupplier);
+  }
+
+  @Test
+  public void shouldApplyBindFromIfFailedAbsent() {
+    absent().ifAbsentFailureBindFrom(mockSupplier, mockThrowableStringBinder);
+
+    verify(mockThrowableStringBinder).bind(absent().getFailure(), STRING_VALUE);
+  }
+
+  @Test
+  public void shouldNotApplyBindFromIfFailedAbsentIfAbsent() {
+    failure(THROWABLE).ifAbsentFailureBindFrom(mockSupplier, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+    verifyZeroInteractions(mockSupplier);
+  }
+
+  @Test
+  public void shouldNotApplyBindFromIfFailedAbsentIfSucceeded() {
+    failure(THROWABLE).ifAbsentFailureBindFrom(mockSupplier, mockThrowableStringBinder);
+
+    verifyZeroInteractions(mockThrowableStringBinder);
+    verifyZeroInteractions(mockSupplier);
+  }
+
+  @Test
   public void shouldAllowForChainedCallsToSendIfFailed() {
     assertThat(SUCCESS_WITH_VALUE.ifSucceededSendTo(mockReceiver),
         sameInstance(SUCCESS_WITH_VALUE));
@@ -533,7 +667,6 @@ public final class ResultTest {
   public void shouldVerifyEqualsForSqlDeleteRequest() {
     EqualsVerifier.forClass(Result.class).verify();
   }
-
 
   @Test
   public void shouldPrintStringRepresentationForSuccess() {
