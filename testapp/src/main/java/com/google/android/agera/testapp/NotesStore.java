@@ -168,12 +168,13 @@ final class NotesStore {
         .compile());
   }
 
-  public void deleteNote(@NonNull final Note note) {
+  public boolean deleteNote(@NonNull final Note note) {
     writeRequestReceiver.accept(sqlDeleteRequest()
         .table(NOTES_TABLE)
         .where(MODIFY_NOTE_WHERE)
         .arguments(String.valueOf(note.getId()))
         .compile());
+    return true;
   }
 
   public void updateNote(@NonNull final Note note, @NonNull final String noteText) {

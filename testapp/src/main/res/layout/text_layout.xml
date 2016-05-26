@@ -14,13 +14,23 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginLeft="10dp"
-    android:layout_marginRight="10dp"
-    android:layout_marginTop="10dp"
-    android:padding="8dp"
-    android:background="#F7E4EE"
-    android:elevation="2dp"
-    android:textSize="20sp"/>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+  <data>
+    <variable name="note" type="com.google.android.agera.testapp.Note"/>
+    <variable name="click" type="com.google.android.agera.Receiver"/>
+    <variable name="longClick" type="com.google.android.agera.Predicate"/>
+  </data>
+  <TextView
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginLeft="10dp"
+      android:layout_marginRight="10dp"
+      android:layout_marginTop="10dp"
+      android:background="#F7E4EE"
+      android:elevation="2dp"
+      android:onClick="@{(view) -> click.accept(note)}"
+      android:onLongClick="@{(view) -> longClick.apply(note)}"
+      android:padding="8dp"
+      android:text="@{note.note}"
+      android:textSize="20sp"/>
+</layout>
