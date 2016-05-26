@@ -26,6 +26,7 @@ import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.WorkerHandler.workerHandler;
 import static com.google.android.agera.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
+import static com.google.android.agera.test.matchers.UpdatableUpdated.wasNotUpdated;
 import static com.google.android.agera.test.matchers.UpdatableUpdated.wasUpdated;
 import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -133,6 +134,45 @@ public final class ObservablesTest {
     secondUpdateDispatcher.update();
 
     assertThat(updatable, wasUpdated());
+  }
+
+  @Test
+  public void shouldUpdateAllUpdatablesInCompositeObservable() {
+    updatable.addToObservable(compositeObservableOfMany);
+    secondUpdatable.addToObservable(compositeObservableOfMany);
+
+    firstUpdateDispatcher.update();
+
+    assertThat(updatable, wasUpdated());
+    assertThat(secondUpdatable, wasUpdated());
+
+    updatable.removeFromObservables();
+    secondUpdatable.removeFromObservables();
+  }
+
+  @Test
+  public void shouldUpdateAllUpdatablesInCompositeObservableWithOneRemovedUpdatable() {
+    updatable.addToObservable(compositeObservableOfMany);
+    updatable.removeFromObservables();
+    secondUpdatable.addToObservable(compositeObservableOfMany);
+
+    firstUpdateDispatcher.update();
+
+    assertThat(updatable, wasNotUpdated());
+    assertThat(secondUpdatable, wasUpdated());
+
+    secondUpdatable.removeFromObservables();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionWhenRemovingNonAddedUpdatableToCompositeObservable() {
+    compositeObservableOfMany.removeUpdatable(updatable);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void shouldThrowExceptionWhenAddingUpdatableToCompositeObservableTwice() {
+    updatable.addToObservable(compositeObservableOfMany);
+    updatable.addToObservable(compositeObservableOfMany);
   }
 
   @Test

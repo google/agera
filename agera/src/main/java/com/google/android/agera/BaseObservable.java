@@ -125,24 +125,22 @@ public abstract class BaseObservable implements Observable {
     }
 
     private void add(@NonNull final Updatable updatable, @NonNull final Handler handler) {
-      boolean added = false;
+      int indexToAdd = -1;
       for (int index = 0; index < updatablesAndHandlers.length; index += 2) {
         if (updatablesAndHandlers[index] == updatable) {
           throw new IllegalStateException("Updatable already added, cannot add.");
         }
-        if (updatablesAndHandlers[index] == null && !added) {
-          updatablesAndHandlers[index] = updatable;
-          updatablesAndHandlers[index + 1] = handler;
-          added = true;
+        if (updatablesAndHandlers[index] == null) {
+          indexToAdd = index;
         }
       }
-      if (!added) {
-        final int newIndex = updatablesAndHandlers.length;
+      if (indexToAdd == -1) {
+        indexToAdd = updatablesAndHandlers.length;
         updatablesAndHandlers = Arrays.copyOf(updatablesAndHandlers,
-            Math.max(newIndex * 2, newIndex + 2));
-        updatablesAndHandlers[newIndex] = updatable;
-        updatablesAndHandlers[newIndex + 1] = handler;
+            indexToAdd < 2 ? 2 : indexToAdd * 2);
       }
+      updatablesAndHandlers[indexToAdd] = updatable;
+      updatablesAndHandlers[indexToAdd + 1] = handler;
       size++;
     }
 
