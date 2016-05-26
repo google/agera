@@ -26,9 +26,11 @@ import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.net.HttpFunctions.httpFunction;
 import static com.google.android.agera.net.HttpRequests.httpGetRequest;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
+import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
 import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
+import com.google.android.agera.Binder;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.Updatable;
@@ -38,11 +40,14 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.concurrent.Executor;
 
@@ -85,7 +90,28 @@ public final class NotesActivity extends Activity {
 
     // Create a repository adapter, wiring up the notes repository from the store with a presenter
     adapter = repositoryAdapter()
-        .add(notesStore.getNotesRepository(), new NotePresenter(notesStore))
+        .add(notesStore.getNotesRepository(), repositoryPresenterOf(Note.class)
+            .layout(R.layout.text_layout)
+            .bindWith((note, view) -> {
+              final TextView textView = (TextView) view;
+              textView.setText(note.getNote());
+              view.setOnClickListener(v -> {
+                final EditText editText = new EditText(v.getContext());
+                editText.setId(R.id.edit);
+                editText.setText(note.getNote());
+                new AlertDialog.Builder(v.getContext())
+                    .setTitle(R.string.edit_note)
+                    .setView(editText)
+                    .setPositiveButton(R.string.edit,
+                        (d, i) -> notesStore.updateNote(note, editText.getText().toString()))
+                    .create().show();
+              });
+              view.setOnLongClickListener(v -> {
+                notesStore.deleteNote(note);
+                return true;
+              });
+            })
+            .forList())
         .build();
 
     // Setup the recycler view using the repository adapter
