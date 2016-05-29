@@ -74,7 +74,7 @@ public final class Repositories {
 
     @Override
     public synchronized void accept(@NonNull final T reference) {
-      if (this.reference.equals(checkNotNull(reference))) {
+      if (reference.equals(this.reference)) {
         // Keep the old reference to have a slight performance edge if GC is generational.
         return;
       }
