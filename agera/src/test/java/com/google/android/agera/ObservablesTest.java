@@ -251,6 +251,15 @@ public final class ObservablesTest {
     verify(supplier).get();
   }
 
+  @Test(expected = NullPointerException.class)
+  public void shouldThrowNullPointerExceptionForAddNullUpdatable() {
+    updateDispatcher.addUpdatable(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void shouldThrowNullPointerExceptionForRemoveNullUpdatable() {
+    updateDispatcher.removeUpdatable(null);
+  }
 
   @Test
   public void shouldOnlyUpdateOncePerLooper() {

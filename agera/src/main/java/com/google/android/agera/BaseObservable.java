@@ -16,6 +16,7 @@
 package com.google.android.agera;
 
 import static android.os.SystemClock.elapsedRealtime;
+import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
 import static com.google.android.agera.WorkerHandler.MSG_LAST_REMOVED;
 import static com.google.android.agera.WorkerHandler.MSG_UPDATE;
@@ -64,6 +65,7 @@ public abstract class BaseObservable implements Observable {
   @Override
   public synchronized final void addUpdatable(@NonNull final Updatable updatable) {
     checkState(Looper.myLooper() != null, "Can only be added on a Looper thread");
+    checkNotNull(updatable);
     add(updatable, workerHandler());
     if (size == 1) {
       if (handler.hasMessages(MSG_LAST_REMOVED, this)) {
@@ -77,6 +79,7 @@ public abstract class BaseObservable implements Observable {
   @Override
   public synchronized final void removeUpdatable(@NonNull final Updatable updatable) {
     checkState(Looper.myLooper() != null, "Can only be removed on a Looper thread");
+    checkNotNull(updatable);
     remove(updatable);
     if (size == 0) {
       handler.obtainMessage(MSG_LAST_REMOVED, this).sendToTarget();
