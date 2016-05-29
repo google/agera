@@ -43,6 +43,8 @@ public abstract class BaseObservable implements Observable {
   private static final Object[] NO_UPDATABLES_OR_HANDLERS = new Object[0];
   @NonNull
   private final WorkerHandler handler;
+  @NonNull
+  private final Object lock = new Object();
   private final int shortestUpdateWindowMillis;
 
   @NonNull
@@ -63,27 +65,31 @@ public abstract class BaseObservable implements Observable {
   }
 
   @Override
-  public synchronized final void addUpdatable(@NonNull final Updatable updatable) {
+  public final void addUpdatable(@NonNull final Updatable updatable) {
     checkState(Looper.myLooper() != null, "Can only be added on a Looper thread");
     checkNotNull(updatable);
-    add(updatable, workerHandler());
-    if (size == 1) {
-      if (handler.hasMessages(MSG_LAST_REMOVED, this)) {
-        handler.removeMessages(MSG_LAST_REMOVED, this);
-      } else {
-        handler.obtainMessage(WorkerHandler.MSG_FIRST_ADDED, this).sendToTarget();
+    synchronized (lock) {
+      add(updatable, workerHandler());
+      if (size == 1) {
+        if (handler.hasMessages(MSG_LAST_REMOVED, this)) {
+          handler.removeMessages(MSG_LAST_REMOVED, this);
+        } else {
+          handler.obtainMessage(WorkerHandler.MSG_FIRST_ADDED, this).sendToTarget();
+        }
       }
     }
   }
 
   @Override
-  public synchronized final void removeUpdatable(@NonNull final Updatable updatable) {
+  public final void removeUpdatable(@NonNull final Updatable updatable) {
     checkState(Looper.myLooper() != null, "Can only be removed on a Looper thread");
     checkNotNull(updatable);
-    remove(updatable);
-    if (size == 0) {
-      handler.obtainMessage(MSG_LAST_REMOVED, this).sendToTarget();
-      handler.removeMessages(MSG_UPDATE, this);
+    synchronized (lock) {
+      remove(updatable);
+      if (size == 0) {
+        handler.obtainMessage(MSG_LAST_REMOVED, this).sendToTarget();
+        handler.removeMessages(MSG_UPDATE, this);
+      }
     }
   }
 
@@ -131,13 +137,19 @@ public abstract class BaseObservable implements Observable {
     throw new IllegalStateException("Updatable not added, cannot remove.");
   }
 
-  synchronized void sendUpdate() {
-    handler.removeMessages(WorkerHandler.MSG_UPDATE, this);
-    final long elapsedRealtimeMillis =
-        shortestUpdateWindowMillis > 0 ? elapsedRealtime() : 0;
-    final long timeFromLastUpdate = elapsedRealtimeMillis - lastUpdateTimestamp;
-    if (timeFromLastUpdate >= shortestUpdateWindowMillis) {
-      lastUpdateTimestamp = elapsedRealtimeMillis;
+  void sendUpdate() {
+    synchronized (lock) {
+      handler.removeMessages(WorkerHandler.MSG_UPDATE, this);
+      if (shortestUpdateWindowMillis > 0) {
+        final long elapsedRealtimeMillis = elapsedRealtime();
+        final long timeFromLastUpdate = elapsedRealtimeMillis - lastUpdateTimestamp;
+        if (timeFromLastUpdate  < shortestUpdateWindowMillis) {
+          handler.sendMessageDelayed(handler.obtainMessage(WorkerHandler.MSG_UPDATE, this),
+              shortestUpdateWindowMillis - timeFromLastUpdate);
+          return;
+        }
+        lastUpdateTimestamp = elapsedRealtimeMillis;
+      }
       for (int index = 0; index < updatablesAndHandlers.length; index = index + 2) {
         final Updatable updatable = (Updatable) updatablesAndHandlers[index];
         final WorkerHandler handler =
@@ -151,9 +163,6 @@ public abstract class BaseObservable implements Observable {
           }
         }
       }
-    } else {
-      handler.sendMessageDelayed(handler.obtainMessage(WorkerHandler.MSG_UPDATE, this),
-          shortestUpdateWindowMillis - timeFromLastUpdate);
     }
   }
 
