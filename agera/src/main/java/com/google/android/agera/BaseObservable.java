@@ -68,15 +68,21 @@ public abstract class BaseObservable implements Observable {
   public final void addUpdatable(@NonNull final Updatable updatable) {
     checkState(Looper.myLooper() != null, "Can only be added on a Looper thread");
     checkNotNull(updatable);
+    boolean activateNow = false;
     synchronized (token) {
       add(updatable, workerHandler());
       if (size == 1) {
         if (handler.hasMessages(MSG_LAST_REMOVED, this)) {
           handler.removeMessages(MSG_LAST_REMOVED, this);
+        } else if (Looper.myLooper() == handler.getLooper()) {
+          activateNow = true;
         } else {
           handler.obtainMessage(WorkerHandler.MSG_FIRST_ADDED, this).sendToTarget();
         }
       }
+    }
+    if (activateNow) {
+      observableActivated();
     }
   }
 
@@ -148,7 +154,7 @@ public abstract class BaseObservable implements Observable {
       if (shortestUpdateWindowMillis > 0) {
         final long elapsedRealtimeMillis = elapsedRealtime();
         final long timeFromLastUpdate = elapsedRealtimeMillis - lastUpdateTimestamp;
-        if (timeFromLastUpdate  < shortestUpdateWindowMillis) {
+        if (timeFromLastUpdate < shortestUpdateWindowMillis) {
           handler.sendMessageDelayed(handler.obtainMessage(WorkerHandler.MSG_UPDATE, this),
               shortestUpdateWindowMillis - timeFromLastUpdate);
           pendingUpdate = true;
