@@ -21,6 +21,9 @@ import android.support.annotation.NonNull;
  * Precondition checks.
  */
 public final class Preconditions {
+
+  private Preconditions() {}
+
   public static void checkState(final boolean expression, @NonNull final String errorMessage) {
     if (!expression) {
       throw new IllegalStateException(errorMessage);
@@ -42,5 +45,4 @@ public final class Preconditions {
     return object;
   }
 
-  private Preconditions() {}
 }

@@ -33,6 +33,8 @@ import java.util.List;
  */
 public final class Functions {
 
+  private Functions() {}
+
   /**
    * Returns a {@link Function} that returns {@code object} as the result of each
    * {@link Function#apply} function call.
@@ -110,5 +112,4 @@ public final class Functions {
     }
   }
 
-  private Functions() {}
 }
