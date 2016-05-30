@@ -26,6 +26,7 @@ public final class Mergers {
 
   private static final ObjectsUnequalMerger OBJECTS_UNEQUAL_MERGER = new ObjectsUnequalMerger();
 
+  private Mergers() {}
   /**
    * Returns a {@link Merger} that outputs the given {@code value} regardless of the input values.
    */
@@ -52,5 +53,4 @@ public final class Mergers {
     }
   }
 
-  private Mergers() {}
 }

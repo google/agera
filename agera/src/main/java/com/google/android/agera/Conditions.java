@@ -26,6 +26,7 @@ import android.support.annotation.NonNull;
  */
 public final class Conditions {
 
+  private Conditions() {}
   /**
    * Returns a {@link Condition} that always returns {@code true}.
    */
@@ -181,5 +182,5 @@ public final class Conditions {
     }
   }
 
-  private Conditions() {}
+
 }

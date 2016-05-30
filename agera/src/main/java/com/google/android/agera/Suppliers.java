@@ -26,6 +26,8 @@ import android.support.annotation.NonNull;
  */
 public final class Suppliers {
 
+  private Suppliers() {}
+
   /**
    * Returns a {@link Supplier} that always supplies the given {@code object} when its
    * {@link Supplier#get()} is called.
@@ -64,5 +66,4 @@ public final class Suppliers {
     }
   }
 
-  private Suppliers() {}
 }

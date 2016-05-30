@@ -27,6 +27,8 @@ import android.support.annotation.NonNull;
 public final class Predicates {
   private static final Predicate<CharSequence> EMPTY_STRING_PREDICATE = new EmptyStringPredicate();
 
+  private Predicates() {}
+
   /**
    * Returns a {@link Predicate} from a {@link Condition}.
    *
@@ -238,5 +240,4 @@ public final class Predicates {
     }
   }
 
-  private Predicates() {}
 }

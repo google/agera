@@ -49,6 +49,31 @@ final class RepositoryCompiler implements
     RepositoryCompilerStates.RConfig {
 
   private static final ThreadLocal<RepositoryCompiler> compilers = new ThreadLocal<>();
+  private static final int NOTHING = 0;
+  private static final int FIRST_EVENT_SOURCE = 1;
+  private static final int FREQUENCY_OR_MORE_EVENT_SOURCE = 2;
+  private static final int FLOW = 3;
+  private static final int TERMINATE_THEN_FLOW = 4;
+  private static final int TERMINATE_THEN_END = 5;
+  private static final int CONFIG = 6;
+
+  private Object initialValue;
+  private final ArrayList<Observable> eventSources = new ArrayList<>();
+  private int frequency;
+  private final ArrayList<Object> directives = new ArrayList<>();
+  // 2x fields below: store caseExtractor and casePredicate for check(caseExtractor, casePredicate)
+  // for use in terminate(); if null then terminate() is terminating an attempt directive.
+  private Function caseExtractor;
+  private Predicate casePredicate;
+  private boolean goLazyUsed;
+  private Merger notifyChecker = objectsUnequal();
+  @RepositoryConfig
+  private int deactivationConfig;
+  @RepositoryConfig
+  private int concurrentUpdateConfig;
+
+  @Expect
+  private int expect;
 
   @NonNull
   static <TVal> RepositoryCompilerStates.REventSource<TVal, TVal> repositoryWithInitialValue(
@@ -76,31 +101,7 @@ final class RepositoryCompiler implements
       TERMINATE_THEN_FLOW, TERMINATE_THEN_END, CONFIG})
   private @interface Expect {}
 
-  private static final int NOTHING = 0;
-  private static final int FIRST_EVENT_SOURCE = 1;
-  private static final int FREQUENCY_OR_MORE_EVENT_SOURCE = 2;
-  private static final int FLOW = 3;
-  private static final int TERMINATE_THEN_FLOW = 4;
-  private static final int TERMINATE_THEN_END = 5;
-  private static final int CONFIG = 6;
 
-  private Object initialValue;
-  private final ArrayList<Observable> eventSources = new ArrayList<>();
-  private int frequency;
-  private final ArrayList<Object> directives = new ArrayList<>();
-  // 2x fields below: store caseExtractor and casePredicate for check(caseExtractor, casePredicate)
-  // for use in terminate(); if null then terminate() is terminating an attempt directive.
-  private Function caseExtractor;
-  private Predicate casePredicate;
-  private boolean goLazyUsed;
-  private Merger notifyChecker = objectsUnequal();
-  @RepositoryConfig
-  private int deactivationConfig;
-  @RepositoryConfig
-  private int concurrentUpdateConfig;
-
-  @Expect
-  private int expect;
 
   private RepositoryCompiler() {}
 

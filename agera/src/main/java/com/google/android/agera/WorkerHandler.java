@@ -18,6 +18,8 @@ final class WorkerHandler extends Handler {
   static final int MSG_CALL_ACKNOWLEDGE_CANCEL = 5;
   private static final ThreadLocal<WeakReference<WorkerHandler>> handlers = new ThreadLocal<>();
 
+  private WorkerHandler() {}
+
   @NonNull
   static WorkerHandler workerHandler() {
     final WeakReference<WorkerHandler> handlerReference = handlers.get();
@@ -29,7 +31,6 @@ final class WorkerHandler extends Handler {
     return handler;
   }
 
-  private WorkerHandler() {}
 
   @Override
   public void handleMessage(final Message message) {

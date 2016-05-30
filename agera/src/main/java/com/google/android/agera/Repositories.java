@@ -31,6 +31,8 @@ import android.support.annotation.NonNull;
  */
 public final class Repositories {
 
+  private Repositories() {}
+
   /**
    * Returns a static {@link Repository} of the given {@code object}.
    */
@@ -95,5 +97,4 @@ public final class Repositories {
     }
   }
 
-  private Repositories() {}
 }

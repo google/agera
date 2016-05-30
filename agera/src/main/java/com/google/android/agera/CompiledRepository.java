@@ -40,6 +40,53 @@ import java.util.concurrent.Executor;
 final class CompiledRepository extends BaseObservable
     implements Repository, Updatable, Runnable {
 
+    private static final int IDLE = 0;
+    private static final int RUNNING = 1;
+    private static final int CANCEL_REQUESTED = 2;
+    private static final int PAUSED_AT_GO_TO = 3;
+    private static final int PAUSED_AT_GO_LAZY = 4;
+    private static final int RUNNING_LAZILY = 5;
+    private static final int END = 0;
+    private static final int GET_FROM = 1;
+    private static final int MERGE_IN = 2;
+    private static final int TRANSFORM = 3;
+    private static final int CHECK = 4;
+    private static final int GO_TO = 5;
+    private static final int GO_LAZY = 6;
+    private static final int SEND_TO = 7;
+    private static final int BIND = 8;
+    private static final int FILTER_SUCCESS = 9;
+    @NonNull
+    private final Object initialValue;
+    @NonNull
+    private final Observable eventSource;
+    @NonNull
+    private final Object[] directives;
+    @NonNull
+    private final Merger<Object, Object, Boolean> notifyChecker;
+    @RepositoryConfig
+    private final int deactivationConfig;
+    @RepositoryConfig
+    private final int concurrentUpdateConfig;
+    @NonNull
+    private final WorkerHandler workerHandler;
+
+
+    @RunState
+    private int runState = IDLE;
+    private boolean restartNeeded;
+    /** Index of the last goTo()/goLazy() directive, for resuming, or -1 for other directives. */
+    private int lastDirectiveIndex = -1;
+    /** The current value to be exposed through the repository's get method. */
+    @NonNull
+    private Object currentValue;
+    /** The intermediate value computed by the executed part of the flow. */
+    @NonNull
+    private Object intermediateValue;
+    /** The thread currently running a directive that can be interrupted. */
+    @Nullable
+    private Thread currentThread;
+
   @NonNull
   static Repository compiledRepository(
       @NonNull final Object initialValue,
@@ -55,22 +102,7 @@ final class CompiledRepository extends BaseObservable
         directiveArray, notifyChecker, deactivationConfig, concurrentUpdateConfig);
   }
 
-  //region Invariants
 
-  @NonNull
-  private final Object initialValue;
-  @NonNull
-  private final Observable eventSource;
-  @NonNull
-  private final Object[] directives;
-  @NonNull
-  private final Merger<Object, Object, Boolean> notifyChecker;
-  @RepositoryConfig
-  private final int deactivationConfig;
-  @RepositoryConfig
-  private final int concurrentUpdateConfig;
-  @NonNull
-  private final WorkerHandler workerHandler;
 
   CompiledRepository(
       @NonNull final Object initialValue,
@@ -89,6 +121,7 @@ final class CompiledRepository extends BaseObservable
     this.concurrentUpdateConfig = concurrentUpdateConfig;
     this.workerHandler = workerHandler();
   }
+    //region invariants
 
   //endregion Invariants
 
@@ -98,27 +131,7 @@ final class CompiledRepository extends BaseObservable
   @IntDef({IDLE, RUNNING, CANCEL_REQUESTED, PAUSED_AT_GO_TO, PAUSED_AT_GO_LAZY, RUNNING_LAZILY})
   private @interface RunState {}
 
-  private static final int IDLE = 0;
-  private static final int RUNNING = 1;
-  private static final int CANCEL_REQUESTED = 2;
-  private static final int PAUSED_AT_GO_TO = 3;
-  private static final int PAUSED_AT_GO_LAZY = 4;
-  private static final int RUNNING_LAZILY = 5;
 
-  @RunState
-  private int runState = IDLE;
-  private boolean restartNeeded;
-  /** Index of the last goTo()/goLazy() directive, for resuming, or -1 for other directives. */
-  private int lastDirectiveIndex = -1;
-  /** The current value to be exposed through the repository's get method. */
-  @NonNull
-  private Object currentValue;
-  /** The intermediate value computed by the executed part of the flow. */
-  @NonNull
-  private Object intermediateValue;
-  /** The thread currently running a directive that can be interrupted. */
-  @Nullable
-  private Thread currentThread;
 
   //endregion Data processing flow states
 
@@ -247,16 +260,7 @@ final class CompiledRepository extends BaseObservable
   //region Running directives
   // The directive creation methods are interleaved here so the index-to-operator relation is clear.
 
-  private static final int END = 0;
-  private static final int GET_FROM = 1;
-  private static final int MERGE_IN = 2;
-  private static final int TRANSFORM = 3;
-  private static final int CHECK = 4;
-  private static final int GO_TO = 5;
-  private static final int GO_LAZY = 6;
-  private static final int SEND_TO = 7;
-  private static final int BIND = 8;
-  private static final int FILTER_SUCCESS = 9;
+
 
   /**
    * @param asynchronously Whether this flow is run asynchronously. True after the first goTo and

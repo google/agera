@@ -34,6 +34,8 @@ import java.util.Queue;
  */
 public final class Reservoirs {
 
+  private Reservoirs() {}
+
   /**
    * Returns a {@link Reservoir} for the given value type.
    *
@@ -131,5 +133,4 @@ public final class Reservoirs {
     }
   }
 
-  private Reservoirs() {}
 }

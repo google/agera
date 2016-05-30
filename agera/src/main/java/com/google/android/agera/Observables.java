@@ -37,6 +37,8 @@ import java.util.List;
  */
 public final class Observables {
 
+  private Observables() {}
+
   /**
    * Returns an {@link Observable} that notifies added {@link Updatable}s that any of the
    * {@code observables} have changed.
@@ -232,5 +234,4 @@ public final class Observables {
     }
   }
 
-  private Observables() {}
 }
