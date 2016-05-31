@@ -151,7 +151,6 @@ public abstract class BaseObservable implements Observable {
         if (timeFromLastUpdate  < shortestUpdateWindowMillis) {
           handler.sendMessageDelayed(handler.obtainMessage(WorkerHandler.MSG_UPDATE, this),
               shortestUpdateWindowMillis - timeFromLastUpdate);
-          pendingUpdate = true;
           return;
         }
         lastUpdateTimestamp = elapsedRealtimeMillis;
