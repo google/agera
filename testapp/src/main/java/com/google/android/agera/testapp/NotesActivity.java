@@ -35,16 +35,15 @@ import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.Updatable;
-import com.google.android.agera.rvadapter.RepositoryAdapter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.Adapter;
+import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.DisplayMetrics;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -55,7 +54,6 @@ public final class NotesActivity extends Activity {
   private static final Executor networkExecutor = newSingleThreadExecutor();
   private static final Executor calculationExecutor = newSingleThreadExecutor();
 
-  private RepositoryAdapter adapter;
   private Repository<Result<Bitmap>> backgroundRepository;
   private Updatable updatable;
 
@@ -88,7 +86,7 @@ public final class NotesActivity extends Activity {
           .create().show();
     });
 
-    adapter = repositoryAdapter()
+    final Adapter<ViewHolder> adapter = repositoryAdapter()
         .add(notesStore.getNotesRepository(), dataBindingRepositoryPresenterOf(Note.class)
             .layout(R.layout.text_layout)
             .itemId(com.google.android.agera.testapp.BR.note)
@@ -107,7 +105,7 @@ public final class NotesActivity extends Activity {
             .handler(com.google.android.agera.testapp.BR.longClick,
                 (Predicate<Note>) notesStore::deleteNote)
             .forList())
-        .build();
+        .whileStarted(this);
 
     // Setup the recycler view using the repository adapter
     final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.result);
@@ -140,16 +138,12 @@ public final class NotesActivity extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
-    // The adapter is dormant before start observing is called
-    adapter.startObserving();
     backgroundRepository.addUpdatable(updatable);
   }
 
   @Override
   protected void onPause() {
     super.onPause();
-    // Start observing needs to be paired with stop observing
-    adapter.stopObserving();
     backgroundRepository.removeUpdatable(updatable);
   }
 }

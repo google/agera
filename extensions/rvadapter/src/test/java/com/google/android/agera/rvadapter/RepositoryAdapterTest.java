@@ -22,6 +22,7 @@ import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAda
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.never;
@@ -36,9 +37,13 @@ import com.google.android.agera.MutableRepository;
 import com.google.android.agera.Repository;
 import com.google.android.agera.UpdateDispatcher;
 
+import android.app.Activity;
+import android.app.Application;
+import android.app.Application.ActivityLifecycleCallbacks;
 import android.content.Context;
 import android.support.annotation.LayoutRes;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.AdapterDataObserver;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,6 +51,7 @@ import android.view.ViewGroup;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
@@ -75,11 +81,17 @@ public final class RepositoryAdapterTest {
   @Mock
   private View view;
   @Mock
+  private Activity activity;
+  @Mock
+  private Application application;
+  @Mock
   private AdapterDataObserver observer;
   private UpdateDispatcher updateDispatcher;
   private MutableRepository repository;
   private Repository secondRepository;
   private RepositoryAdapter repositoryAdapter;
+  private Adapter repositoryAdapterWhileResumed;
+  private Adapter repositoryAdapterWhileStarted;
 
   @Before
   public void setUp() {
@@ -88,6 +100,7 @@ public final class RepositoryAdapterTest {
     repository = mutableRepository(REPOSITORY_ITEM);
     secondRepository = repository(REPOSITORY_LIST);
 
+    when(activity.getApplication()).thenReturn(application);
     when(viewGroup.getContext()).thenReturn(context);
     when(context.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).thenReturn(layoutInflater);
     when(layoutInflater.inflate(LAYOUT_ID, viewGroup, false)).thenReturn(view);
@@ -198,5 +211,123 @@ public final class RepositoryAdapterTest {
     repositoryAdapter.onBindViewHolder(viewHolder, 0);
 
     verify(repositoryPresenter).bind(REPOSITORY_ITEM, 0, viewHolder);
+  }
+
+  @Test
+  public void shouldUpdateOnChangingRepositoryWhenStarted() {
+    repositoryAdapterWhileStarted = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileStarted(activity);
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+    repositoryAdapterWhileStarted.getItemCount(); //Trigger a refresh
+
+    setActivityToVisible();
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToInvisible();
+
+    repositoryAdapterWhileStarted.onBindViewHolder(viewHolder, 0);
+
+    verify(repositoryPresenter).bind(ALTERNATIVE_REPOSITORY_ITEM, 0, viewHolder);
+  }
+
+  @Test
+  public void shouldNotUpdateOnChangingRepositoryWhenNotStarted() {
+    repositoryAdapterWhileStarted = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileStarted(activity);
+    repositoryAdapterWhileStarted.getItemCount(); //Trigger a refresh
+
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+
+    repositoryAdapterWhileStarted.onBindViewHolder(viewHolder, 0);
+
+    verify(repositoryPresenter).bind(REPOSITORY_ITEM, 0, viewHolder);
+  }
+
+  @Test
+  public void shouldUpdateOnChangingRepositoryWhenResumed() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileResumed(activity);
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+    repositoryAdapterWhileResumed.getItemCount(); //Trigger a refresh
+
+    setActivityToActive();
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToInactive();
+
+    repositoryAdapterWhileResumed.onBindViewHolder(viewHolder, 0);
+
+    verify(repositoryPresenter).bind(ALTERNATIVE_REPOSITORY_ITEM, 0, viewHolder);
+  }
+
+  @Test
+  public void shouldNotUpdateOnChangingRepositoryWhenNotResumed() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileResumed(activity);
+    repositoryAdapterWhileResumed.getItemCount(); //Trigger a refresh
+
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+
+    repositoryAdapterWhileResumed.onBindViewHolder(viewHolder, 0);
+
+    verify(repositoryPresenter).bind(REPOSITORY_ITEM, 0, viewHolder);
+  }
+
+    private void setActivityToActive() {
+      final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
+          forClass(ActivityLifecycleCallbacks.class);
+
+     verify(application).registerActivityLifecycleCallbacks(captor.capture());
+
+    final ActivityLifecycleCallbacks callbacks = captor.getValue();
+
+    callbacks.onActivityResumed(activity);
+  }
+
+  private void setActivityToInactive() {
+    final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
+        forClass(ActivityLifecycleCallbacks.class);
+
+    verify(application).registerActivityLifecycleCallbacks(captor.capture());
+
+    final ActivityLifecycleCallbacks callbacks = captor.getValue();
+
+    callbacks.onActivityPaused(activity);
+  }
+
+  private void setActivityToVisible() {
+    final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
+        forClass(ActivityLifecycleCallbacks.class);
+
+    verify(application).registerActivityLifecycleCallbacks(captor.capture());
+
+    final ActivityLifecycleCallbacks callbacks = captor.getValue();
+
+    callbacks.onActivityStarted(activity);
+  }
+
+  private void setActivityToInvisible() {
+    final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
+        forClass(ActivityLifecycleCallbacks.class);
+
+    verify(application).registerActivityLifecycleCallbacks(captor.capture());
+
+    final ActivityLifecycleCallbacks callbacks = captor.getValue();
+
+    callbacks.onActivityStopped(activity);
   }
 }
