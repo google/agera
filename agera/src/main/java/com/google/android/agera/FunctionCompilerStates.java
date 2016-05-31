@@ -119,7 +119,7 @@ public interface FunctionCompilerStates {
      * @param comparator the comparator to sort the items
      */
     @NonNull
-    FList<TPrev, TPrevList, TFrom> sort(Comparator<TPrev> comparator);
+    FList<TPrev, TPrevList, TFrom> sort(@NonNull Comparator<TPrev> comparator);
 
     /**
      * Adds a {@link Predicate} to the end of the behavior chain to filter out items.
@@ -143,6 +143,6 @@ public interface FunctionCompilerStates {
      * @param comparator the comparator to sort the items
      */
     @NonNull
-    Function<TFrom, TPrevList> thenSort(Comparator<TPrev> comparator);
+    Function<TFrom, TPrevList> thenSort(@NonNull Comparator<TPrev> comparator);
   }
 }

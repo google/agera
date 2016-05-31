@@ -96,7 +96,7 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
 
   @NonNull
   @Override
-  public FunctionCompilerStates.FList sort(Comparator comparator) {
+  public FunctionCompilerStates.FList sort(@NonNull final Comparator comparator) {
     addFunction(new SortFunction(comparator));
     return this;
   }
@@ -230,8 +230,8 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
     @NonNull
     private final Comparator comparator;
 
-    public SortFunction(Comparator comparator) {
-      this.comparator = comparator;
+    SortFunction(@NonNull final Comparator comparator) {
+      this.comparator = checkNotNull(comparator);
     }
 
     @NonNull
