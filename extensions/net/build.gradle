@@ -23,6 +23,9 @@ dependencies {
 }
 
 android {
+    defaultConfig {
+        minSdkVersion gradle.minSdkVersion
+    }
     compileOptions {
         sourceCompatibility gradle.javaVersion
         targetCompatibility gradle.javaVersion

@@ -24,6 +24,7 @@ android {
         enabled = true
     }
     defaultConfig {
+        minSdkVersion 14
         applicationId "com.google.android.agera.testapp"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
