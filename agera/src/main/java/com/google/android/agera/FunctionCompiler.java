@@ -23,6 +23,8 @@ import static java.util.Collections.emptyList;
 import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
@@ -94,6 +96,13 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
 
   @NonNull
   @Override
+  public FunctionCompilerStates.FList sort(@NonNull final Comparator comparator) {
+    addFunction(new SortFunction(comparator));
+    return this;
+  }
+
+  @NonNull
+  @Override
   public FunctionCompilerStates.FList map(@NonNull final Function function) {
     if (function != IDENTITY_FUNCTION) {
       addFunction(new MapFunction(function));
@@ -119,6 +128,13 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
   @Override
   public Function thenLimit(final int limit) {
     limit(limit);
+    return createFunction();
+  }
+
+  @NonNull
+  @Override
+  public Function thenSort(@NonNull final Comparator comparator) {
+    sort(comparator);
     return createFunction();
   }
 
@@ -207,6 +223,22 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
         }
       }
       return result;
+    }
+  }
+
+  private static final class SortFunction<T> implements Function<List<T>, List<T>> {
+    @NonNull
+    private final Comparator comparator;
+
+    SortFunction(@NonNull final Comparator comparator) {
+      this.comparator = checkNotNull(comparator);
+    }
+
+    @NonNull
+    @Override
+    public List<T> apply(@NonNull final List<T> input) {
+      Collections.sort(input, comparator);
+      return input;
     }
   }
 }
