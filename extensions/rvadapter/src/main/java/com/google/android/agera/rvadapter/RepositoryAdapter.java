@@ -138,6 +138,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
      * observes the repositories as well as any additional observables while the provided
      * {@link Activity} is resumed (between {@link Activity#onResume()} and
      * {@link Activity#onPause()}).
+     * <p>
+     * Note: Can only be called from {@link Activity#onCreate} ()}
      */
     @TargetApi(14)
     @NonNull
@@ -153,6 +155,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
      * observes the repositories as well as any additional observables while the provided
      * {@link Activity} is started (between (between {@link Activity#onStart()} and
      * {@link Activity#onStop()}).
+     * <p>
+     * Note: Can only be called from {@link Activity#onCreate} ()}
      */
     @TargetApi(14)
     @NonNull
