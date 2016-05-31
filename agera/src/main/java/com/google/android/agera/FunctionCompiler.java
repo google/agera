@@ -236,7 +236,7 @@ final class FunctionCompiler implements FunctionCompilerStates.FList, FunctionCo
 
     @NonNull
     @Override
-    public List<T> apply(@NonNull List<T> input) {
+    public List<T> apply(@NonNull final List<T> input) {
       Collections.sort(input, comparator);
       return input;
     }
