@@ -43,12 +43,14 @@ public abstract class BaseObservable implements Observable {
   private static final Object[] NO_UPDATABLES_OR_HANDLERS = new Object[0];
   @NonNull
   private final WorkerHandler handler;
+  @NonNull
+  private final Object token = new Object();
   private final int shortestUpdateWindowMillis;
-
   @NonNull
   private Object[] updatablesAndHandlers;
   private int size;
   private long lastUpdateTimestamp;
+  private boolean pendingUpdate = false;
 
   protected BaseObservable() {
     this(0);
@@ -63,27 +65,32 @@ public abstract class BaseObservable implements Observable {
   }
 
   @Override
-  public synchronized final void addUpdatable(@NonNull final Updatable updatable) {
+  public final void addUpdatable(@NonNull final Updatable updatable) {
     checkState(Looper.myLooper() != null, "Can only be added on a Looper thread");
     checkNotNull(updatable);
-    add(updatable, workerHandler());
-    if (size == 1) {
-      if (handler.hasMessages(MSG_LAST_REMOVED, this)) {
-        handler.removeMessages(MSG_LAST_REMOVED, this);
-      } else {
-        handler.obtainMessage(WorkerHandler.MSG_FIRST_ADDED, this).sendToTarget();
+    synchronized (token) {
+      add(updatable, workerHandler());
+      if (size == 1) {
+        if (handler.hasMessages(MSG_LAST_REMOVED, this)) {
+          handler.removeMessages(MSG_LAST_REMOVED, this);
+        } else {
+          handler.obtainMessage(WorkerHandler.MSG_FIRST_ADDED, this).sendToTarget();
+        }
       }
     }
   }
 
   @Override
-  public synchronized final void removeUpdatable(@NonNull final Updatable updatable) {
+  public final void removeUpdatable(@NonNull final Updatable updatable) {
     checkState(Looper.myLooper() != null, "Can only be removed on a Looper thread");
     checkNotNull(updatable);
-    remove(updatable);
-    if (size == 0) {
-      handler.obtainMessage(MSG_LAST_REMOVED, this).sendToTarget();
-      handler.removeMessages(MSG_UPDATE, this);
+    synchronized (token) {
+      remove(updatable);
+      if (size == 0) {
+        handler.obtainMessage(MSG_LAST_REMOVED, this).sendToTarget();
+        handler.removeMessages(MSG_UPDATE, this);
+        pendingUpdate = false;
+      }
     }
   }
 
@@ -91,11 +98,13 @@ public abstract class BaseObservable implements Observable {
    * Notifies all registered {@link Updatable}s.
    */
   protected final void dispatchUpdate() {
-    if (!handler.hasMessages(MSG_UPDATE, this)) {
-      handler.obtainMessage(MSG_UPDATE, this).sendToTarget();
+    synchronized (token) {
+      if (!pendingUpdate) {
+        pendingUpdate = true;
+        handler.obtainMessage(MSG_UPDATE, this).sendToTarget();
+      }
     }
   }
-
 
   private void add(@NonNull final Updatable updatable, @NonNull final Handler handler) {
     int indexToAdd = -1;
@@ -120,8 +129,8 @@ public abstract class BaseObservable implements Observable {
   private void remove(@NonNull final Updatable updatable) {
     for (int index = 0; index < updatablesAndHandlers.length; index += 2) {
       if (updatablesAndHandlers[index] == updatable) {
-        ((WorkerHandler) updatablesAndHandlers[index + 1]).removeMessages(
-            WorkerHandler.MSG_CALL_UPDATABLE, updatable);
+        WorkerHandler handler = (WorkerHandler) updatablesAndHandlers[index + 1];
+        handler.removeUpdatable(updatable, token);
         updatablesAndHandlers[index] = null;
         updatablesAndHandlers[index + 1] = null;
         size--;
@@ -131,29 +140,31 @@ public abstract class BaseObservable implements Observable {
     throw new IllegalStateException("Updatable not added, cannot remove.");
   }
 
-  synchronized void sendUpdate() {
-    handler.removeMessages(WorkerHandler.MSG_UPDATE, this);
-    final long elapsedRealtimeMillis =
-        shortestUpdateWindowMillis > 0 ? elapsedRealtime() : 0;
-    final long timeFromLastUpdate = elapsedRealtimeMillis - lastUpdateTimestamp;
-    if (timeFromLastUpdate >= shortestUpdateWindowMillis) {
-      lastUpdateTimestamp = elapsedRealtimeMillis;
+  void sendUpdate() {
+    synchronized (token) {
+      if (!pendingUpdate) {
+        return;
+      }
+      if (shortestUpdateWindowMillis > 0) {
+        final long elapsedRealtimeMillis = elapsedRealtime();
+        final long timeFromLastUpdate = elapsedRealtimeMillis - lastUpdateTimestamp;
+        if (timeFromLastUpdate  < shortestUpdateWindowMillis) {
+          handler.sendMessageDelayed(handler.obtainMessage(WorkerHandler.MSG_UPDATE, this),
+              shortestUpdateWindowMillis - timeFromLastUpdate);
+          pendingUpdate = true;
+          return;
+        }
+        lastUpdateTimestamp = elapsedRealtimeMillis;
+      }
+      pendingUpdate = false;
       for (int index = 0; index < updatablesAndHandlers.length; index = index + 2) {
         final Updatable updatable = (Updatable) updatablesAndHandlers[index];
         final WorkerHandler handler =
             (WorkerHandler) updatablesAndHandlers[index + 1];
         if (updatable != null) {
-          if (handler.getLooper() == Looper.myLooper()) {
-            handler.removeMessages(WorkerHandler.MSG_CALL_UPDATABLE, updatable);
-            updatable.update();
-          } else if (!handler.hasMessages(WorkerHandler.MSG_CALL_UPDATABLE, updatable)) {
-            handler.obtainMessage(WorkerHandler.MSG_CALL_UPDATABLE, updatable).sendToTarget();
-          }
+          handler.update(updatable, token);
         }
       }
-    } else {
-      handler.sendMessageDelayed(handler.obtainMessage(WorkerHandler.MSG_UPDATE, this),
-          shortestUpdateWindowMillis - timeFromLastUpdate);
     }
   }
 
