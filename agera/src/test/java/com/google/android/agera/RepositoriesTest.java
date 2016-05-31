@@ -490,7 +490,8 @@ public final class RepositoriesTest {
   private static class SyncExecutor implements Executor {
     @Override
     public void execute(@NonNull final Runnable command) {
-      command.run();
+      Thread cmdThread = new Thread(command);
+      cmdThread.start();
     }
   }
 }

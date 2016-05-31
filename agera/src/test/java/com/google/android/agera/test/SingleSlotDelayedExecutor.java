@@ -45,6 +45,7 @@ public final class SingleSlotDelayedExecutor implements Executor {
         runnable, is(notNullValue()));
     this.runnable = null;
     //noinspection ConstantConditions
-    runnable.run();
+    Thread myThread = new Thread(runnable);
+    myThread.start();
   }
 }
