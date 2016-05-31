@@ -44,6 +44,7 @@ import org.mockito.Mock;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public final class FunctionsTest {
@@ -171,6 +172,20 @@ public final class FunctionsTest {
         .thenMap(new StringLength());
 
     assertThat(function.apply(INPUT_LIST), contains(4, 7, 3));
+  }
+
+  @Test
+  public void shouldCreateFunctionFromListToSortedList() {
+    final Function<List<String>, List<Integer>> function = functionFromListOf(String.class)
+            .map(new StringLength())
+            .thenSort(new Comparator<Integer>() {
+              @Override
+              public int compare(Integer lhs, Integer rhs) {
+                return lhs.compareTo(rhs);
+              }
+            });
+
+    assertThat(function.apply(INPUT_LIST), contains(3, 4, 7, 7));
   }
 
   @Test
