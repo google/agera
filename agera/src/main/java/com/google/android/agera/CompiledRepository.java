@@ -265,11 +265,11 @@ final class CompiledRepository extends BaseObservable
    *     cannot be delivered here.
    */
   private void runFlowFrom(final int index, final boolean asynchronously) {
-    final Object[] directives = this.directives;
-    final int length = directives.length;
+    final Object[] directivesLocal = this.directives;
+    final int length = directivesLocal.length;
     int i = index;
     while (0 <= i && i < length) {
-      final int directiveType = (Integer) directives[i];
+      final int directiveType = (Integer) directivesLocal[i];
       if (asynchronously || directiveType == GO_TO || directiveType == GO_LAZY) {
         // Check cancellation before running the next directive. This needs to be done while locked.
         // For goTo and goLazy, because they need to change the states and suspend the flow, they
@@ -293,31 +293,31 @@ final class CompiledRepository extends BaseObservable
       // performance comparing to a full-fledged double-dispatch pattern with subclasses.
       switch (directiveType) {
         case GET_FROM:
-          i = runGetFrom(directives, i);
+          i = runGetFrom(directivesLocal, i);
           break;
         case MERGE_IN:
-          i = runMergeIn(directives, i);
+          i = runMergeIn(directivesLocal, i);
           break;
         case TRANSFORM:
-          i = runTransform(directives, i);
+          i = runTransform(directivesLocal, i);
           break;
         case CHECK:
-          i = runCheck(directives, i);
+          i = runCheck(directivesLocal, i);
           break;
         case GO_TO:
-          i = runGoTo(directives, i);
+          i = runGoTo(directivesLocal, i);
           break;
         case SEND_TO:
-          i = runSendTo(directives, i);
+          i = runSendTo(directivesLocal, i);
           break;
         case BIND:
-          i = runBindWith(directives, i);
+          i = runBindWith(directivesLocal, i);
           break;
         case FILTER_SUCCESS:
-          i = runFilterSuccess(directives, i);
+          i = runFilterSuccess(directivesLocal, i);
           break;
         case END:
-          i = runEnd(directives, i);
+          i = runEnd(directivesLocal, i);
           break;
         // Missing GO_LAZY but it has already been dealt with in the synchronized block above.
       }
