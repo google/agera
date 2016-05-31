@@ -140,14 +140,14 @@ public abstract class BaseObservable implements Observable {
       lastUpdateTimestamp = elapsedRealtimeMillis;
       for (int index = 0; index < updatablesAndHandlers.length; index = index + 2) {
         final Updatable updatable = (Updatable) updatablesAndHandlers[index];
-        final WorkerHandler handler =
+        final WorkerHandler handlerLocal =
             (WorkerHandler) updatablesAndHandlers[index + 1];
         if (updatable != null) {
-          if (handler.getLooper() == Looper.myLooper()) {
-            handler.removeMessages(WorkerHandler.MSG_CALL_UPDATABLE, updatable);
+          if (handlerLocal.getLooper() == Looper.myLooper()) {
+            handlerLocal.removeMessages(WorkerHandler.MSG_CALL_UPDATABLE, updatable);
             updatable.update();
-          } else if (!handler.hasMessages(WorkerHandler.MSG_CALL_UPDATABLE, updatable)) {
-            handler.obtainMessage(WorkerHandler.MSG_CALL_UPDATABLE, updatable).sendToTarget();
+          } else if (!handlerLocal.hasMessages(WorkerHandler.MSG_CALL_UPDATABLE, updatable)) {
+            handlerLocal.obtainMessage(WorkerHandler.MSG_CALL_UPDATABLE, updatable).sendToTarget();
           }
         }
       }
