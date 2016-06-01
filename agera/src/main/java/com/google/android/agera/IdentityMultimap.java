@@ -4,21 +4,12 @@ import android.support.annotation.NonNull;
 
 import java.util.Arrays;
 
-final class IdentityMultiMap<K, V> {
+final class IdentityMultimap<K, V> {
   @NonNull
   private static final Object[] NO_KEY_VALUES = new Object[0];
 
   @NonNull
-  private Object[] keysValues;
-
-  IdentityMultiMap() {
-    this.keysValues = NO_KEY_VALUES;
-  }
-
-  @NonNull
-  Object[] getKeysValues() {
-    return keysValues;
-  }
+  private Object[] keysValues = NO_KEY_VALUES;
 
   synchronized boolean addKeyValuePair(@NonNull final K key, @NonNull final V value) {
     int size = 0;
@@ -50,7 +41,7 @@ final class IdentityMultiMap<K, V> {
 
   synchronized void removeKeyValuePair(@NonNull final K key, @NonNull final V value) {
     for (int index = 0; index < keysValues.length; index += 2) {
-      if (keysValues[index] == keysValues && keysValues[index + 1] == value) {
+      if (keysValues[index] == key && keysValues[index + 1] == value) {
         keysValues[index] = null;
         keysValues[index + 1] = null;
       }

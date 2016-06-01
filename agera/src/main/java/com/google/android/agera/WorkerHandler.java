@@ -18,7 +18,7 @@ final class WorkerHandler extends Handler {
   static final int MSG_CALL_ACKNOWLEDGE_CANCEL = 5;
   private static final ThreadLocal<WeakReference<WorkerHandler>> handlers = new ThreadLocal<>();
   @NonNull
-  private final IdentityMultiMap<Updatable, Object> updatableObservable;
+  private final IdentityMultimap<Updatable, Object> scheduledUpdatables;
 
   @NonNull
   static WorkerHandler workerHandler() {
@@ -32,16 +32,16 @@ final class WorkerHandler extends Handler {
   }
 
   private WorkerHandler() {
-    this.updatableObservable = new IdentityMultiMap<>();
+    this.scheduledUpdatables = new IdentityMultimap<>();
   }
 
   synchronized void removeUpdatable(@NonNull final Updatable updatable,
       @NonNull final Object token) {
-    updatableObservable.removeKeyValuePair(updatable, token);
+    scheduledUpdatables.removeKeyValuePair(updatable, token);
   }
 
   synchronized void update(@NonNull final Updatable updatable, @NonNull final Object token) {
-    if (updatableObservable.addKeyValuePair(updatable, token)) {
+    if (scheduledUpdatables.addKeyValuePair(updatable, token)) {
       obtainMessage(WorkerHandler.MSG_CALL_UPDATABLE, updatable).sendToTarget();
     }
   }
@@ -60,8 +60,9 @@ final class WorkerHandler extends Handler {
         break;
       case MSG_CALL_UPDATABLE:
         final Updatable updatable = (Updatable) message.obj;
-        updatableObservable.removeKey(updatable);
-        updatable.update();
+        if (scheduledUpdatables.removeKey(updatable)) {
+          updatable.update();
+        }
         break;
       case MSG_CALL_MAYBE_START_FLOW:
         ((CompiledRepository) message.obj).maybeStartFlow();

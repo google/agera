@@ -343,13 +343,6 @@ public final class ObservablesTest {
   }
 
   @Test
-  public void shouldCallMessageObjUpdateForMsgCallUpdatableMessage() {
-    workerHandler().obtainMessage(WorkerHandler.MSG_CALL_UPDATABLE, updatable).sendToTarget();
-
-    assertThat(updatable, wasUpdated());
-  }
-
-  @Test
   public void shouldIgnoreUnknownMessage() {
     workerHandler().obtainMessage(-1).sendToTarget();
   }
