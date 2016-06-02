@@ -155,6 +155,9 @@ final class CompiledRepository extends BaseObservable
         lastDirectiveIndex = -1; // this could be pointing at the goLazy directive
         restartNeeded = false;
       } else {
+        if (runState == CANCEL_REQUESTED) {
+          restartNeeded = true;
+        }
         return; // flow already running, do not continue.
       }
     }
