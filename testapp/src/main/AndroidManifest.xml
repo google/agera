@@ -20,7 +20,7 @@
   <application>
     <activity android:name="com.google.android.agera.testapp.NotesActivity"
         android:label="@string/agera"
-        android:theme="@android:style/Theme.Material.Light">
+        android:theme="@style/Theme.Note">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
