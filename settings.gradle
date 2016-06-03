@@ -22,10 +22,10 @@ include ':extensions:net'
 include ':testapp'
 
 gradle.ext.versionCode = 10100
-gradle.ext.versionName = '1.1.0-SNAPSHOT'
+gradle.ext.versionName = '1.1.0-beta1'
 
 gradle.ext.bintrayRepo = 'Agera'
-gradle.ext.bintrayName = 'Agera'
+gradle.ext.bintrayName = 'agera'
 gradle.ext.bintrayUser = 'ernstsson'
 
 gradle.ext.description = 'Reactive Programming for Android'
