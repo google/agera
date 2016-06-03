@@ -156,9 +156,11 @@ final class CompiledRepository extends BaseObservable
         restartNeeded = false;
       } else {
         if (runState == CANCEL_REQUESTED) {
+          // flow may still be processing the previous deactivation;
+          // make sure to restart
           restartNeeded = true;
         }
-        return; // flow already running, do not continue.
+        return; // flow already running or scheduled to restart, do not continue
       }
     }
     intermediateValue = currentValue;
