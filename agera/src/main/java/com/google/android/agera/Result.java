@@ -69,7 +69,8 @@ public final class Result<T> {
    */
   @NonNull
   public static <T> Result<T> failure(@NonNull final Throwable failure) {
-    return new Result<>(null, checkNotNull(failure));
+    return failure == ABSENT_THROWABLE
+        ? Result.<T>absent() : new Result<T>(null, checkNotNull(failure));
   }
 
   /**
