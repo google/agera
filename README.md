@@ -45,6 +45,13 @@ To add dependencies to these using Gradle:
   compile 'com.google.android.agera:rvdatabinding:1.1.0-beta1'
 ```
 
+Maybe you are using Retrofit, then you might like [retrofit agera call adapter](https://github.com/drakeet/retrofit-agera-call-adapter):
+
+```groovy
+  compile 'me.drakeet.retrofit2:adapter-agera:2.0.2'
+```
+
+
 FAQ: What's the relation with RxJava?
 -----
 See [this issue](https://github.com/google/agera/issues/20).
