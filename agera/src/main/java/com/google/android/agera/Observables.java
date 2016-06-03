@@ -50,22 +50,24 @@ public final class Observables {
   static Observable compositeObservable(final int shortestUpdateWindowMillis,
       @NonNull final Observable... observables) {
     if (observables.length == 0) {
-      return new CompositeObservable(0);
+      return new CompositeObservable(shortestUpdateWindowMillis);
     }
 
     if (observables.length == 1) {
       final Observable singleObservable = observables[0];
-      if (singleObservable instanceof CompositeObservable) {
-        return new CompositeObservable(0,
+      if (singleObservable instanceof CompositeObservable
+          && ((CompositeObservable) singleObservable).shortestUpdateWindowMillis == 0) {
+        return new CompositeObservable(shortestUpdateWindowMillis,
             ((CompositeObservable) singleObservable).observables);
       } else {
-        return new CompositeObservable(0, singleObservable);
+        return new CompositeObservable(shortestUpdateWindowMillis, singleObservable);
       }
     }
 
     final List<Observable> flattenedDedupedObservables = new ArrayList<>();
     for (final Observable observable : observables) {
-      if (observable instanceof CompositeObservable) {
+      if (observable instanceof CompositeObservable
+          && ((CompositeObservable) observable).shortestUpdateWindowMillis == 0) {
         for (Observable subObservable : ((CompositeObservable) observable).observables) {
           if (!flattenedDedupedObservables.contains(subObservable)) {
             flattenedDedupedObservables.add(subObservable);
@@ -77,7 +79,7 @@ public final class Observables {
         }
       }
     }
-    return new CompositeObservable(0,
+    return new CompositeObservable(shortestUpdateWindowMillis,
         flattenedDedupedObservables.toArray(new Observable[flattenedDedupedObservables.size()]));
   }
 

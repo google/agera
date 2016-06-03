@@ -45,7 +45,7 @@ public abstract class BaseObservable implements Observable {
   private final WorkerHandler handler;
   @NonNull
   private final Object token = new Object();
-  private final int shortestUpdateWindowMillis;
+  final int shortestUpdateWindowMillis;
   @NonNull
   private Object[] updatablesAndHandlers;
   private int size;
