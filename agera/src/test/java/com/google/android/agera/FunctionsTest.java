@@ -185,7 +185,23 @@ public final class FunctionsTest {
               }
             });
 
-    assertThat(function.apply(INPUT_LIST), contains(3, 4, 7, 7));
+    final List<String> inputList = new ArrayList<>(INPUT_LIST);
+    assertThat(function.apply(inputList), contains(3, 4, 7, 7));
+  }
+
+  @Test
+  public void shouldNotMutateInputListWhenSorting() {
+    final Function<List<String>, List<String>> function = functionFromListOf(String.class)
+        .thenSort(new Comparator<String>() {
+          @Override
+          public int compare(String lhs, String rhs) {
+            return lhs.compareTo(rhs);
+          }
+        });
+
+    final List<String> inputList = new ArrayList<>(INPUT_LIST);
+    assertThat(function.apply(inputList), contains("for", "some", "strings", "testing"));
+    assertThat(inputList, is(INPUT_LIST));
   }
 
   @Test
