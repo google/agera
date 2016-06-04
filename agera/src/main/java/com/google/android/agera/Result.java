@@ -37,13 +37,20 @@ import android.support.annotation.Nullable;
  */
 public final class Result<T> {
   @NonNull
-  private static final Result<Object> FAILURE =
-      new Result<>(null, new Throwable("Attempt failed"));
-  @SuppressWarnings("ThrowableInstanceNeverThrown")
+  private static final Result<Object> ABSENT;
   @NonNull
-  private static final Throwable ABSENT_THROWABLE = new NullPointerException("Value is absent");
+  private static final Result<Object> FAILURE;
   @NonNull
-  private static final Result<Object> ABSENT = new Result<>(null, ABSENT_THROWABLE);
+  private static final Throwable ABSENT_THROWABLE;
+
+  static {
+    final Throwable failureThrowable = new Throwable("Attempt failed");
+    failureThrowable.setStackTrace(new StackTraceElement[0]);
+    FAILURE = new Result<>(null, failureThrowable);
+    ABSENT_THROWABLE = new NullPointerException("Value is absent");
+    ABSENT_THROWABLE.setStackTrace(new StackTraceElement[0]);
+    ABSENT = new Result<>(null, ABSENT_THROWABLE);
+  }
 
   @Nullable
   private final T value;
