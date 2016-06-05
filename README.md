@@ -16,7 +16,7 @@ Usage
 To add a dependency using Gradle:
 
 ```
-  compile 'com.google.android.agera:agera:1.1.0-beta1'
+  compile 'com.google.android.agera:agera:1.1.0-beta2'
 ```
 
 Learn about Agera
@@ -38,11 +38,11 @@ A few experimental sample extension libraries for Agera are also provided. These
 To add dependencies to these using Gradle:
 
 ```
-  compile 'com.google.android.agera:content:1.1.0-beta1'
-  compile 'com.google.android.agera:database:1.1.0-beta1'
-  compile 'com.google.android.agera:net:1.1.0-beta1'
-  compile 'com.google.android.agera:rvadapter:1.1.0-beta1'
-  compile 'com.google.android.agera:rvdatabinding:1.1.0-beta1'
+  compile 'com.google.android.agera:content:1.1.0-beta2'
+  compile 'com.google.android.agera:database:1.1.0-beta2'
+  compile 'com.google.android.agera:net:1.1.0-beta2'
+  compile 'com.google.android.agera:rvadapter:1.1.0-beta2'
+  compile 'com.google.android.agera:rvdatabinding:1.1.0-beta2'
 ```
 
 FAQ: What's the relation with RxJava?
