@@ -54,3 +54,8 @@ Links
 
 - [GitHub project](https://github.com/google/agera)
 - [Issue tracker](https://github.com/google/agera/issues/new)
+
+### (Unofficial) wiki translations
+
+- [Chinese](https://github.com/captain-miao/AndroidAgeraTutorial/wiki)
+- [Korean](https://github.com/ZeroBrain/agera-wiki-kr/wiki)
