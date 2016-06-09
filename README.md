@@ -59,3 +59,7 @@ Links
 
 - [Chinese](https://github.com/captain-miao/AndroidAgeraTutorial/wiki)
 - [Korean](https://github.com/ZeroBrain/agera-wiki-kr/wiki)
+
+### (Unofficial) Extensions
+
+- [retrofit-agera-call-adapter](https://github.com/drakeet/retrofit-agera-call-adapter)
