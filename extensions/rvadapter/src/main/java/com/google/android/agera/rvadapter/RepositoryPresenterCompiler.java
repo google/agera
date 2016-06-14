@@ -17,12 +17,12 @@ package com.google.android.agera.rvadapter;
 
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Preconditions.checkNotNull;
-import static com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderCompile;
 
 import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderCompile;
 
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
@@ -31,7 +31,7 @@ import android.view.View;
 
 import java.util.List;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked, rawtypes"})
 final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderCompile {
   @NonNull
   private static final NullBinder NULL_BINDER = new NullBinder();

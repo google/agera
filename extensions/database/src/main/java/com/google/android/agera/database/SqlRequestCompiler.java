@@ -21,11 +21,11 @@ import static android.database.sqlite.SQLiteDatabase.CONFLICT_NONE;
 import static android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
-import static com.google.android.agera.database.SqlRequestCompilerStates.DBColumnConflictCompile;
-import static com.google.android.agera.database.SqlRequestCompilerStates.DBColumnWhereConflictCompile;
 
 import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentConflictCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnConflictCompile;
+import com.google.android.agera.database.SqlRequestCompilerStates.DBColumnWhereConflictCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBSql;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBTable;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBWhereCompile;
@@ -33,6 +33,7 @@ import com.google.android.agera.database.SqlRequestCompilerStates.DBWhereCompile
 import android.content.ContentValues;
 import android.support.annotation.NonNull;
 
+@SuppressWarnings({"unchecked, rawtypes"})
 final class SqlRequestCompiler
     implements DBTable, DBSql, DBArgumentCompile, DBColumnConflictCompile, DBWhereCompile,
     DBColumnWhereConflictCompile, DBArgumentConflictCompile {
