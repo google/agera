@@ -38,7 +38,7 @@ gradle.ext.licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
 gradle.ext.minSdkVersion = 9
 gradle.ext.compileSdkVersion = 23
 gradle.ext.buildToolsVersion = '23.0.3'
-gradle.ext.supportLibraryVersion = '23.3.0'
+gradle.ext.supportLibraryVersion = '23.4.0'
 gradle.ext.javaVersion = JavaVersion.VERSION_1_7
 
 gradle.allprojects {
