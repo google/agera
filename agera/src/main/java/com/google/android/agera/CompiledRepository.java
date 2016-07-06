@@ -19,7 +19,6 @@ import static com.google.android.agera.WorkerHandler.MSG_CALL_ACKNOWLEDGE_CANCEL
 import static com.google.android.agera.WorkerHandler.MSG_CALL_MAYBE_START_FLOW;
 import static com.google.android.agera.WorkerHandler.workerHandler;
 import static com.google.android.agera.Observables.compositeObservable;
-import static com.google.android.agera.Observables.perMillisecondObservable;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
 import static com.google.android.agera.RepositoryConfig.CANCEL_FLOW;
@@ -50,8 +49,7 @@ final class CompiledRepository extends BaseObservable
       @RepositoryConfig final int concurrentUpdateConfig,
       @RepositoryConfig final int deactivationConfig) {
     final Object[] directiveArray = directives.toArray();
-    return new CompiledRepository(initialValue, compositeObservable(frequency,
-        eventSources.toArray(new Observable[eventSources.size()])),
+    return new CompiledRepository(initialValue, compositeObservable(frequency, eventSources),
         directiveArray, notifyChecker, deactivationConfig, concurrentUpdateConfig);
   }
 
