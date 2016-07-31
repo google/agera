@@ -15,6 +15,7 @@
  */
 package com.google.android.agera;
 
+import static com.google.android.agera.Functions.identityFunction;
 import static com.google.android.agera.WorkerHandler.MSG_CALL_ACKNOWLEDGE_CANCEL;
 import static com.google.android.agera.WorkerHandler.MSG_CALL_MAYBE_START_FLOW;
 import static com.google.android.agera.WorkerHandler.workerHandler;
@@ -262,6 +263,7 @@ final class CompiledRepository extends BaseObservable
   private static final int SEND_TO = 7;
   private static final int BIND = 8;
   private static final int FILTER_SUCCESS = 9;
+  private static final int FILTER_FAILURE = 10;
 
   /**
    * @param asynchronously Whether this flow is run asynchronously. True after the first goTo and
@@ -320,6 +322,9 @@ final class CompiledRepository extends BaseObservable
           break;
         case FILTER_SUCCESS:
           i = runFilterSuccess(directives, i);
+          break;
+        case FILTER_FAILURE:
+          i = runFilterFailure(directives, i);
           break;
         case END:
           i = runEnd(directives, i);
@@ -456,6 +461,21 @@ final class CompiledRepository extends BaseObservable
     } else {
       runTerminate(tryValue.getFailure(), terminatingValueFunction);
       return -1;
+    }
+  }
+
+  static void addFilterFailure(@NonNull final List<Object> directives) {
+    directives.add(FILTER_FAILURE);
+  }
+
+  private int runFilterFailure(@NonNull final Object[] directives, final int index) {
+    final Result tryValue = (Result) intermediateValue;
+    if (tryValue.succeeded()) {
+      runTerminate(tryValue.get(), identityFunction());
+      return -1;
+    } else {
+      intermediateValue = tryValue.getFailure();
+      return index + 1;
     }
   }
 
