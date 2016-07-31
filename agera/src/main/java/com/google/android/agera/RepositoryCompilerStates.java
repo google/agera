@@ -123,6 +123,12 @@ public interface RepositoryCompilerStates {
 
     @NonNull
     @Override
+    RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+        RFlow<TVal, Throwable, ?>> thenAttemptGetFrom(
+            @NonNull Supplier<? extends Result<? extends TVal>> attemptSupplier);
+
+    @NonNull
+    @Override
     <TAdd, TCur> RFlow<TVal, TCur, ?> mergeIn(@NonNull Supplier<TAdd> supplier,
         @NonNull Merger<? super TPre, ? super TAdd, TCur> merger);
 
@@ -134,12 +140,26 @@ public interface RepositoryCompilerStates {
 
     @NonNull
     @Override
+    <TAdd> RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+        RFlow<TVal, Throwable, ?>> thenAttemptMergeIn(
+            @NonNull Supplier<TAdd> supplier,
+            @NonNull Merger<? super TPre, ? super TAdd,
+                ? extends Result<? extends TVal>> attemptMerger);
+
+    @NonNull
+    @Override
     <TCur> RFlow<TVal, TCur, ?> transform(@NonNull Function<? super TPre, TCur> function);
 
     @NonNull
     @Override
     <TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, ?>> attemptTransform(
         @NonNull Function<? super TPre, Result<TCur>> attemptFunction);
+
+    @NonNull
+    @Override
+    RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+        RFlow<TVal, Throwable, ?>> thenAttemptTransform(
+            @NonNull Function<? super TPre, ? extends Result<? extends TVal>> attemptFunction);
 
     // Asynchronous directives:
 
@@ -305,10 +325,13 @@ public interface RepositoryCompilerStates {
 
     /**
      * Perform the {@link #attemptGetFrom} directive and use the successful output value as the new
-     * value of the compiled repository, with notification if necessary.
+     * value of the compiled repository, with notification if necessary. If the attempt fails,
+     * either terminate the data processing flow, or continue onto the next directive for recovery,
+     * depending on the clause that follows.
      */
     @NonNull
-    RTermination<TVal, Throwable, RConfig<TVal>> thenAttemptGetFrom(
+    RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+        ? extends RSyncFlow<TVal, Throwable, ?>> thenAttemptGetFrom(
             @NonNull Supplier<? extends Result<? extends TVal>> attemptSupplier);
 
     /**
@@ -321,10 +344,13 @@ public interface RepositoryCompilerStates {
 
     /**
      * Perform the {@link #attemptMergeIn} directive and use the successful output value as the new
-     * value of the compiled repository, with notification if necessary.
+     * value of the compiled repository, with notification if necessary. If the attempt fails,
+     * either terminate the data processing flow, or continue onto the next directive for recovery,
+     * depending on the clause that follows.
      */
     @NonNull
-    <TAdd> RTermination<TVal, Throwable, RConfig<TVal>> thenAttemptMergeIn(
+    <TAdd> RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+        ? extends RSyncFlow<TVal, Throwable, ?>> thenAttemptMergeIn(
             @NonNull Supplier<TAdd> supplier,
             @NonNull Merger<? super TPre, ? super TAdd,
                 ? extends Result<? extends TVal>> attemptMerger);
@@ -339,10 +365,13 @@ public interface RepositoryCompilerStates {
 
     /**
      * Perform the {@link #attemptTransform} directive and use the successful output value as the
-     * new value of the compiled repository, with notification if necessary.
+     * new value of the compiled repository, with notification if necessary. If the attempt fails,
+     * either terminate the data processing flow, or continue onto the next directive for recovery,
+     * depending on the clause that follows.
      */
     @NonNull
-    RTermination<TVal, Throwable, RConfig<TVal>> thenAttemptTransform(
+    RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+        ? extends RSyncFlow<TVal, Throwable, ?>> thenAttemptTransform(
             @NonNull Function<? super TPre, ? extends Result<? extends TVal>> attemptFunction);
   }
 
@@ -369,6 +398,29 @@ public interface RepositoryCompilerStates {
      */
     @NonNull
     TRet orEnd(@NonNull Function<? super TTerm, ? extends TVal> valueFunction);
+  }
+
+  /**
+   * Compiler state allowing to terminate or continue the data processing flow following a failed
+   * attempt to produce the new value of the repository.
+   *
+   * @param <TVal> Value type of the repository.
+   * @param <TTerm> Value type from which to terminate the flow.
+   * @param <TRet> Compiler state to return to if the flow is terminated.
+   * @param <TCon> Compiler state to return to if the flow is to continue.
+   */
+
+  interface RTerminationOrContinue<TVal, TTerm, TRet, TCon>
+      extends RTermination<TVal, TTerm, TRet> {
+
+    /**
+     * If the previous attempt failed, continue with the rest of the data processing flow, using the
+     * {@linkplain Result#getFailure() failure} as the input value to the next directive. Otherwise,
+     * end the data processing flow and use the successful output value from the attempt as the new
+     * value of the compiled repository, with notification if necessary.
+     */
+    @NonNull
+    TCon orContinue();
   }
 
   /**
