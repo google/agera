@@ -17,6 +17,7 @@ package com.google.android.agera;
 
 import android.support.annotation.NonNull;
 
+import java.io.Closeable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -467,6 +468,33 @@ public interface RepositoryCompilerStates {
      */
     @NonNull
     RConfig<TVal> onConcurrentUpdate(@RepositoryConfig int concurrentUpdateConfig);
+
+    /**
+     * Specifies a {@code disposer} to handle any intermediate values discarded from the data
+     * processing flow. Intermediate values may be discarded due to the rest of the flow being
+     * skipped by a skip directive or a termination clause ({@code thenSkip()}, {@code orSkip()} and
+     * {@code orEnd()}), or cancelled in compliance with the deactivation or concurrent update
+     * configuration. The disposer may want to check if the values should be disposed of in a proper
+     * way, such as calling {@link Closeable#close()} on all {@link Closeable} values.
+     *
+     * <p>In each occasion where an intermediate value is discarded, the disposer will receive the
+     * value computed by the last completed directive. If the last directive was an attempt that
+     * failed, the disposer will receive the failed {@link Result}.
+     *
+     * <p>The compiled repository will only avoid sending the current repository value (accessible
+     * from the {@link Repository#get()} method) to the disposer, if it happens to be {@code ==}
+     * (reference-equal) to the intermediate value being discarded. This ensures that the value,
+     * still exposed through {@link Repository#get()}, is not incorrectly disposed. However, no
+     * similar attempt will be made for the repository's initial value. If the initial value is
+     * disposable and {@link RepositoryConfig#RESET_TO_INITIAL_VALUE} is used, this may lead to
+     * incorrect disposal of the initial value. The disposer should take care of this case
+     * explicitly, or the repository should be designed to only publish values that need not be
+     * disposed of.
+     *
+     * @param disposer The {@link Receiver} to receive the discarded intermediate values.
+     */
+    @NonNull
+    RConfig<TVal> sendDiscardedValuesTo(@NonNull Receiver<Object> disposer);
 
     /**
      * Compiles a {@link Repository} that exhibits the previously defined behaviors.

@@ -15,6 +15,7 @@
  */
 package com.google.android.agera;
 
+import static com.google.android.agera.Common.NULL_OPERATOR;
 import static com.google.android.agera.CompiledRepository.addBindWith;
 import static com.google.android.agera.CompiledRepository.addCheck;
 import static com.google.android.agera.CompiledRepository.addEnd;
@@ -99,6 +100,8 @@ final class RepositoryCompiler implements
   private int deactivationConfig;
   @RepositoryConfig
   private int concurrentUpdateConfig;
+  @NonNull
+  private Receiver discardedValueDisposer = NULL_OPERATOR;
 
   @Expect
   private int expect;
@@ -403,6 +406,14 @@ final class RepositoryCompiler implements
 
   @NonNull
   @Override
+  public RepositoryCompiler sendDiscardedValuesTo(@NonNull final Receiver disposer) {
+    checkExpect(CONFIG);
+    discardedValueDisposer = checkNotNull(disposer);
+    return this;
+  }
+
+  @NonNull
+  @Override
   public Repository compile() {
     Repository repository = compileRepositoryAndReset();
     recycle(this);
@@ -422,7 +433,7 @@ final class RepositoryCompiler implements
   private Repository compileRepositoryAndReset() {
     checkExpect(CONFIG);
     Repository repository = compiledRepository(initialValue, eventSources, frequency, directives,
-        notifyChecker, concurrentUpdateConfig, deactivationConfig);
+        notifyChecker, concurrentUpdateConfig, deactivationConfig, discardedValueDisposer);
     expect = NOTHING;
     initialValue = null;
     eventSources.clear();
@@ -432,6 +443,7 @@ final class RepositoryCompiler implements
     notifyChecker = objectsUnequal();
     deactivationConfig = RepositoryConfig.CONTINUE_FLOW;
     concurrentUpdateConfig = RepositoryConfig.CONTINUE_FLOW;
+    discardedValueDisposer = NULL_OPERATOR;
     return repository;
   }
 
