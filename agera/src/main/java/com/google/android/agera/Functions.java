@@ -17,6 +17,7 @@ package com.google.android.agera;
 
 import static com.google.android.agera.Common.FAILED_RESULT;
 import static com.google.android.agera.Common.IDENTITY_FUNCTION;
+import static com.google.android.agera.FunctionCompiler.functionCompiler;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
 import com.google.android.agera.Common.StaticProducer;
@@ -70,7 +71,7 @@ public final class Functions {
   @NonNull
   @SuppressWarnings({"unchecked", "UnusedParameters"})
   public static <F> FItem<F, F> functionFrom(@Nullable Class<F> from) {
-    return new FunctionCompiler();
+    return functionCompiler();
   }
 
   /**
@@ -82,7 +83,7 @@ public final class Functions {
   @SuppressWarnings({"unchecked", "UnusedParameters"})
   public static <F> FList<F, List<F>, List<F>> functionFromListOf(
       @Nullable final Class<F> from) {
-    return new FunctionCompiler();
+    return functionCompiler();
   }
 
   /**

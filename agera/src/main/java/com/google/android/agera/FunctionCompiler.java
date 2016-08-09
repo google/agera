@@ -32,16 +32,45 @@ import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
 final class FunctionCompiler implements FList, FItem {
+  private static final ThreadLocal<FunctionCompiler> compilers = new ThreadLocal<>();
+
   @NonNull
-  private final List<Function> functions;
+  static FunctionCompiler functionCompiler() {
+    FunctionCompiler compiler = compilers.get();
+    if (compiler == null) {
+      compiler = new FunctionCompiler();
+    } else {
+      // Remove compiler from the ThreadLocal to prevent reuse in the middle of a compilation.
+      // recycle(), called by compile(), will return the compiler here. ThreadLocal.set(null) keeps
+      // the entry (with a null value) whereas remove() removes the entry; because we expect the
+      // return of the compiler, don't use the heavier remove().
+      compilers.set(null);
+    }
+    return compiler;
+  }
+
+  private static void recycle(@NonNull final FunctionCompiler compiler) {
+    compiler.directives.clear();
+    compilers.set(compiler);
+  }
+
+  private static final Integer APPLY = 0;
+  private static final Integer FILTER = 1;
+  private static final Integer LIMIT = 2;
+  private static final Integer SORT = 3;
+  private static final Integer MAP = 4;
+
+  @NonNull
+  private final List<Object> directives;
 
   FunctionCompiler() {
-    this.functions = new ArrayList<>();
+    this.directives = new ArrayList<>();
   }
 
   private void addFunction(@NonNull final Function function) {
     if (function != IDENTITY_FUNCTION) {
-      functions.add(function);
+      directives.add(APPLY);
+      directives.add(function);
     }
   }
 
@@ -54,10 +83,12 @@ final class FunctionCompiler implements FList, FItem {
 
   @NonNull
   private Function createFunction() {
-    if (functions.isEmpty()) {
+    if (directives.isEmpty()) {
       return IDENTITY_FUNCTION;
     }
-    return new ChainFunction(functions.toArray(new Function[functions.size()]));
+    final Object[] newDirectives = directives.toArray(new Object[directives.size()]);
+    recycle(this);
+    return new CompiledFunction(newDirectives);
   }
 
   @NonNull
@@ -76,7 +107,7 @@ final class FunctionCompiler implements FList, FItem {
 
   @NonNull
   @Override
-  public FList morph(@NonNull Function function) {
+  public FList morph(@NonNull final Function function) {
     addFunction(function);
     return this;
   }
@@ -85,7 +116,8 @@ final class FunctionCompiler implements FList, FItem {
   @Override
   public FList filter(@NonNull final Predicate filter) {
     if (filter != TRUE_CONDICATE) {
-      addFunction(new FilterFunction(filter));
+      directives.add(FILTER);
+      directives.add(checkNotNull(filter));
     }
     return this;
   }
@@ -93,14 +125,24 @@ final class FunctionCompiler implements FList, FItem {
   @NonNull
   @Override
   public FList limit(final int limit) {
-    addFunction(new LimitFunction(limit));
+    directives.add(LIMIT);
+    directives.add(limit);
     return this;
   }
 
   @NonNull
   @Override
   public FList sort(@NonNull final Comparator comparator) {
-    addFunction(new SortFunction(comparator));
+    directives.add(SORT);
+    directives.add(checkNotNull(comparator));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public FList sort() {
+    directives.add(SORT);
+    directives.add(null);
     return this;
   }
 
@@ -108,7 +150,8 @@ final class FunctionCompiler implements FList, FItem {
   @Override
   public FList map(@NonNull final Function function) {
     if (function != IDENTITY_FUNCTION) {
-      addFunction(new MapFunction(function));
+      directives.add(MAP);
+      directives.add(checkNotNull(function));
     }
     return this;
   }
@@ -141,55 +184,19 @@ final class FunctionCompiler implements FList, FItem {
     return createFunction();
   }
 
-  private static final class LimitFunction<T> implements Function<List<T>, List<T>> {
-    private final int limit;
-
-    LimitFunction(final int limit) {
-      this.limit = limit;
-    }
-
-    @NonNull
-    @Override
-    public List<T> apply(@NonNull final List<T> input) {
-      if (input.size() < limit) {
-        return input;
-      }
-      if (limit <= 0) {
-        return emptyList();
-      }
-      return new ArrayList<>(input.subList(0, limit));
-    }
+  @NonNull
+  @Override
+  public Function thenSort() {
+    sort();
+    return createFunction();
   }
 
-  private static final class MapFunction<F, T> implements Function<List<F>, List<T>> {
+  private static final class CompiledFunction implements Function {
     @NonNull
-    private final Function<F, T> function;
+    private final Object[] directives;
 
-    MapFunction(@NonNull final Function<F, T> function) {
-      this.function = checkNotNull(function);
-    }
-
-    @NonNull
-    @Override
-    @SuppressWarnings("unchecked")
-    public List<T> apply(@NonNull final List<F> input) {
-      if (input.isEmpty()) {
-        return emptyList();
-      }
-      final List<T> result = new ArrayList(input.size());
-      for (final F item : input) {
-        result.add(function.apply(item));
-      }
-      return result;
-    }
-  }
-
-  private static final class ChainFunction implements Function {
-    @NonNull
-    private final Function[] functions;
-
-    ChainFunction(@NonNull final Function[] functions) {
-      this.functions = checkNotNull(functions);
+    CompiledFunction(@NonNull final Object[] directives) {
+      this.directives = checkNotNull(directives);
     }
 
     @NonNull
@@ -197,52 +204,109 @@ final class FunctionCompiler implements FList, FItem {
     @SuppressWarnings("unchecked")
     public Object apply(@NonNull final Object input) {
       Object item = input;
-      for (final Function function : functions) {
-        item = function.apply(item);
+      int i = 0;
+      final int length = directives.length;
+      while (i < length) {
+        final Object type = directives[i++];
+        final Object command = directives[i++];
+        if (type == APPLY) {
+          item = ((Function) command).apply(item);
+        } else if (type == MAP) {
+          final List list = (List) item;
+          final int size = list.size();
+          if (size <= 0) {
+            item = emptyList();
+          } else if (list instanceof FunctionCompilerList) {
+            final Function function = (Function) command;
+            for (int j = 0; j < size; j++) {
+              list.set(j, function.apply(list.get(j)));
+            }
+          } else {
+            final Function function = (Function) command;
+            final List result = new FunctionCompilerList(size);
+            for (int j = 0; j < size; j++) {
+              result.add(function.apply(list.get(j)));
+            }
+            item = result;
+          }
+        } else if (type == FILTER) {
+          final List list = (List) item;
+          int size = list.size();
+          if (size <= 0) {
+            item = emptyList();
+          } else if (list instanceof FunctionCompilerList) {
+            final Predicate predicate = (Predicate) command;
+            int from = 0;
+            int to = 0;
+
+            for (; from < size; from++) {
+              final Object listItem = list.get(from);
+              if (predicate.apply(listItem)) {
+                if (from > to) {
+                  list.set(to, listItem);
+                }
+                to++;
+              }
+            }
+            ((FunctionCompilerList) list).removeRange(to, size);
+          } else {
+            final Predicate predicate = (Predicate) command;
+            final List result = new FunctionCompilerList(size);
+            for (int j = 0; j < size; j++) {
+              final Object listItem = list.get(j);
+              if (predicate.apply(listItem)) {
+                result.add(listItem);
+              }
+            }
+            item = result;
+          }
+        } else if (type == LIMIT) {
+          final List list = (List) item;
+          final int limit = (int) command;
+          if (limit <= 0) {
+            item = emptyList();
+          } else {
+            final int size = list.size();
+            if (size < limit) {
+              item = input;
+            } else if (list instanceof FunctionCompilerList) {
+              ((FunctionCompilerList) list).removeRange(limit, size);
+            } else {
+              final List newList = new FunctionCompilerList(limit);
+              for (int copied = 0; copied < limit; copied++) {
+                newList.add(list.get(copied));
+              }
+              item = newList;
+            }
+          }
+        } else if (type == SORT) {
+          List list = (List) item;
+          final List output = list instanceof FunctionCompilerList
+              ? ((List) item) : new FunctionCompilerList(list);
+          if (command != null) {
+            Collections.sort(output, (Comparator) command);
+          } else {
+            Collections.sort(output);
+          }
+          item = output;
+        }
       }
       return item;
     }
-  }
 
-  private static final class FilterFunction<T> implements Function<List<T>, List<T>> {
-    @NonNull
-    private final Predicate filter;
-
-    FilterFunction(@NonNull final Predicate filter) {
-      this.filter = checkNotNull(filter);
-    }
-
-    @NonNull
-    @Override
-    @SuppressWarnings("unchecked")
-    public List<T> apply(@NonNull final List<T> input) {
-      if (input.isEmpty()) {
-        return emptyList();
+    private static final class FunctionCompilerList<E> extends ArrayList<E> {
+      FunctionCompilerList(@NonNull final List<E> list) {
+        super(list);
       }
-      final List<T> result = new ArrayList(input.size());
-      for (final T item : input) {
-        if (filter.apply(item)) {
-          result.add(item);
-        }
+
+      FunctionCompilerList(final int size) {
+        super(size);
       }
-      return result;
-    }
-  }
 
-  private static final class SortFunction<T> implements Function<List<T>, List<T>> {
-    @NonNull
-    private final Comparator comparator;
-
-    SortFunction(@NonNull final Comparator comparator) {
-      this.comparator = checkNotNull(comparator);
-    }
-
-    @NonNull
-    @Override
-    public List<T> apply(@NonNull final List<T> input) {
-      final List<T> output = new ArrayList<>(input);
-      Collections.sort(output, comparator);
-      return output;
+      @Override
+      public void removeRange(final int fromIndex, final int toIndex) {
+        super.removeRange(fromIndex, toIndex);
+      }
     }
   }
 }
