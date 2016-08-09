@@ -20,6 +20,7 @@ import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
 import com.google.android.agera.ActivationHandler;
+import com.google.android.agera.BaseObservable;
 import com.google.android.agera.Observable;
 import com.google.android.agera.Updatable;
 import com.google.android.agera.UpdateDispatcher;
@@ -70,10 +71,9 @@ public final class ContentObservables {
     return new SharedPreferencesObservable(preferences, keys);
   }
 
-  private static final class BroadcastObservable extends BroadcastReceiver
-      implements ActivationHandler, Observable {
+  private static final class BroadcastObservable extends BaseObservable {
     @NonNull
-    private final UpdateDispatcher updateDispatcher;
+    private final BroadcastReceiver broadcastReceiver;
     @NonNull
     private final Context context;
     @NonNull
@@ -82,7 +82,12 @@ public final class ContentObservables {
     BroadcastObservable(@NonNull final Context applicationContext,
         @NonNull final String... actions) {
       this.context = checkNotNull(applicationContext);
-      this.updateDispatcher = updateDispatcher(this);
+      this.broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+          dispatchUpdate();
+        }
+      };
       this.filter = new IntentFilter();
       for (final String action : actions) {
         this.filter.addAction(action);
@@ -90,35 +95,18 @@ public final class ContentObservables {
     }
 
     @Override
-    public void observableActivated(@NonNull final UpdateDispatcher caller) {
-      context.registerReceiver(this, filter);
+    public void observableActivated() {
+      context.registerReceiver(broadcastReceiver, filter);
     }
 
     @Override
-    public void observableDeactivated(@NonNull final UpdateDispatcher caller) {
-      context.unregisterReceiver(this);
-    }
-
-    @Override
-    public void onReceive(final Context context, final Intent intent) {
-      updateDispatcher.update();
-    }
-
-    @Override
-    public void addUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.addUpdatable(updatable);
-    }
-
-    @Override
-    public void removeUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.removeUpdatable(updatable);
+    public void observableDeactivated() {
+      context.unregisterReceiver(broadcastReceiver);
     }
   }
 
-  private static final class SharedPreferencesObservable implements
-      OnSharedPreferenceChangeListener, Observable, ActivationHandler {
-    @NonNull
-    private final UpdateDispatcher updateDispatcher;
+  private static final class SharedPreferencesObservable extends BaseObservable implements
+      OnSharedPreferenceChangeListener {
     @NonNull
     private final SharedPreferences preferences;
     @NonNull
@@ -128,34 +116,23 @@ public final class ContentObservables {
         @NonNull final String... keys) {
       this.keys = new HashSet<>(Arrays.asList(keys));
       this.preferences = checkNotNull(preferences);
-      this.updateDispatcher = updateDispatcher(this);
     }
 
     @Override
-    public void observableActivated(@NonNull final UpdateDispatcher caller) {
+    public void observableActivated() {
       preferences.registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
-    public void observableDeactivated(@NonNull final UpdateDispatcher caller) {
+    public void observableDeactivated() {
       preferences.unregisterOnSharedPreferenceChangeListener(this);
-    }
-
-    @Override
-    public void addUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.addUpdatable(updatable);
-    }
-
-    @Override
-    public void removeUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.removeUpdatable(updatable);
     }
 
     @Override
     public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences,
         final String key) {
       if (keys.contains(key)) {
-        updateDispatcher.update();
+        dispatchUpdate();
       }
     }
   }
