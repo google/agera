@@ -55,14 +55,12 @@ public final class Repositories {
     return new SimpleRepository<>(object);
   }
 
-  private static final class SimpleRepository<T> implements MutableRepository<T> {
-    @NonNull
-    private final UpdateDispatcher updateDispatcher;
+  private static final class SimpleRepository<T> extends BaseObservable
+      implements MutableRepository<T> {
     @NonNull
     private T reference;
 
     SimpleRepository(@NonNull final T reference) {
-      this.updateDispatcher = updateDispatcher();
       this.reference = checkNotNull(reference);
     }
 
@@ -81,17 +79,7 @@ public final class Repositories {
         }
         this.reference = reference;
       }
-      updateDispatcher.update();
-    }
-
-    @Override
-    public void addUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.addUpdatable(updatable);
-    }
-
-    @Override
-    public void removeUpdatable(@NonNull final Updatable updatable) {
-      updateDispatcher.removeUpdatable(updatable);
+      dispatchUpdate();
     }
   }
 
