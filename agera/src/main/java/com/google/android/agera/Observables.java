@@ -210,7 +210,7 @@ public final class Observables {
     @Nullable
     private final ActivationHandler activationHandler;
 
-    private AsyncUpdateDispatcher(@Nullable ActivationHandler activationHandler) {
+    private AsyncUpdateDispatcher(@Nullable final ActivationHandler activationHandler) {
       this.activationHandler = activationHandler;
     }
 
