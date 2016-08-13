@@ -22,6 +22,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -42,8 +43,24 @@ public final class Observables {
    * {@code observables} have changed.
    */
   @NonNull
+  public static Observable compositeObservable(@NonNull final Collection<Observable> observables) {
+    return compositeObservable(observables.toArray(new Observable[observables.size()]));
+  }
+
+  /**
+   * Returns an {@link Observable} that notifies added {@link Updatable}s that any of the
+   * {@code observables} have changed.
+   */
+  @NonNull
   public static Observable compositeObservable(@NonNull final Observable... observables) {
     return compositeObservable(0, observables);
+  }
+
+  @NonNull
+  static Observable compositeObservable(final int shortestUpdateWindowMillis,
+      @NonNull Collection<Observable> observables) {
+    return compositeObservable(shortestUpdateWindowMillis,
+            observables.toArray(new Observable[observables.size()]));
   }
 
   @NonNull

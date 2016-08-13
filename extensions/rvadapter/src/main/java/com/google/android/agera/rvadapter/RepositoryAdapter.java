@@ -292,13 +292,11 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     final RepositoryPresenter<Object>[] presenters = builder.presenters.toArray(
         (RepositoryPresenter<Object>[]) new RepositoryPresenter[count]);
 
-    final Observable[] observables =
-        builder.observables.toArray(new Observable[builder.observables.size()]);
     this.data = new Object[count];
     this.repositoryCount = count;
     this.repositories = repositories;
     this.presenters = presenters;
-    this.observable = compositeObservable(observables);
+    this.observable = compositeObservable(builder.observables);
     this.endPositions = new int[count];
     this.dataInvalid = true;
   }
