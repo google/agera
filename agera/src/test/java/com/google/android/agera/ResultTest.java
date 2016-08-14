@@ -166,6 +166,11 @@ public final class ResultTest {
   }
 
   @Test
+  public void shouldReturnAbsentForFailureWithAbsentFailure() {
+    assertThat(Result.<Integer>failure(ABSENT.getFailure()), sameInstance(ABSENT));
+  }
+
+  @Test
   public void shouldReturnAbsentForOfNullableWithNull() {
     assertThat(Result.<Integer>absentIfNull(null), sameInstance(ABSENT));
   }

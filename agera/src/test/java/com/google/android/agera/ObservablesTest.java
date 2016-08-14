@@ -325,6 +325,32 @@ public final class ObservablesTest {
   }
 
   @Test
+  public void shouldUpdateCompositeOfPerMillisecondObservable() {
+    final long expectedDelayedTime = scheduler.getCurrentTime() + FILTER_TIME;
+    updatable.addToObservable(compositeObservable(perMillisecondObservable(
+        FILTER_TIME, updateDispatcher), updateDispatcher()));
+
+    updateDispatcher.update();
+    idleMainLooper(FILTER_TIME);
+
+    assertThat(updatable, wasUpdated());
+    assertThat(scheduler.getCurrentTime(), greaterThanOrEqualTo(expectedDelayedTime));
+  }
+
+  @Test
+  public void shouldUpdateCompositeOfSinglePerMillisecondObservable() {
+    final long expectedDelayedTime = scheduler.getCurrentTime() + FILTER_TIME;
+    updatable.addToObservable(compositeObservable(perMillisecondObservable(
+        FILTER_TIME, updateDispatcher)));
+
+    updateDispatcher.update();
+    idleMainLooper(FILTER_TIME);
+
+    assertThat(updatable, wasUpdated());
+    assertThat(scheduler.getCurrentTime(), greaterThanOrEqualTo(expectedDelayedTime));
+  }
+
+  @Test
   public void shouldHandleManyObservables() {
     final int numberOfObservables = 10;
     for (int passes = 0; passes < 3; passes++) {
