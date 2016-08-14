@@ -72,10 +72,58 @@ public interface SqlRequestCompilerStates {
   interface DBColumn<T> {
 
     /**
-     * Adds a {@code column} with a {@code value}.
+     * Adds a {@code column} with a {@link String} {@code value}.
      */
     @NonNull
     T column(@NonNull String column, @NonNull String value);
+
+    /**
+     * Adds a {@code column} with a {@link Byte} {@code value}.
+     */
+    @NonNull
+    T column(@NonNull String column, @NonNull Byte value);
+
+    /**
+     * Adds a {@code column} with a {@link Short} {@code value}.
+     */
+    @NonNull
+    T column(@NonNull String column, @NonNull Short value);
+
+    /**
+     * Adds a {@code column} with a {@link Integer} {@code value}.
+     */
+    @NonNull
+    T column(@NonNull String column, @NonNull Integer value);
+
+    /**
+     * Adds a {@code column} with a {@link Long} {@code value}.
+     */
+    @NonNull
+    T column(@NonNull String column, @NonNull Long value);
+
+    /**
+     * Adds a {@code column} with a {@link Float} {@code value}.
+     */
+    @NonNull
+    T column(@NonNull String column, @NonNull Float value);
+
+    /**
+     * Adds a {@code column} with a {@link Double} {@code value}.
+     */
+    @NonNull
+    T column(@NonNull String column, @NonNull Double value);
+
+    /**
+     * Adds a {@code column} with a {@link Boolean} {@code value}.
+     */
+    @NonNull
+    T column(@NonNull String column, @NonNull Boolean value);
+
+    /**
+     * Adds a {@code column} with a {@code byte} array {@code value}.
+     */
+    @NonNull
+    T column(@NonNull String column, @NonNull byte[] value);
 
     /**
      * Adds an empty {@code column}.
