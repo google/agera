@@ -68,6 +68,7 @@ public final class SqlDatabaseFunctionsTest {
   private static final Supplier<Result<SQLiteDatabase>> FAILURE =
       staticSupplier(Result.<SQLiteDatabase>failure(new Exception()));
   private static final CursorStringFunction CURSOR_STRING_FUNCTION = new CursorStringFunction();
+  public static final String COLUMN = "column";
 
   private SQLiteDatabase database;
   private Supplier<Result<SQLiteDatabase>> databaseSupplier;
@@ -333,6 +334,96 @@ public final class SqlDatabaseFunctionsTest {
                 .column("column", "value")
                 .compile()).failed(),
         is(true));
+  }
+
+  @Test
+  public void shouldAddBooleanColumnForInsert() {
+    final boolean value = true;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, value)
+            .compile().contentValues.getAsBoolean(COLUMN),
+        is(value));
+  }
+
+  @Test
+  public void shouldAddStringColumnForInsert() {
+    final String value = "string";
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, value)
+            .compile().contentValues.getAsString(COLUMN),
+        is(value));
+  }
+
+  @Test
+  public void shouldAddByteColumnForInsert() {
+    final byte value = 2;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, value)
+            .compile().contentValues.getAsByte(COLUMN),
+        is(value));
+  }
+
+  @Test
+  public void shouldAddIntegerColumnForInsert() {
+    final int value = 2;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, value)
+            .compile().contentValues.getAsInteger(COLUMN),
+        is(value));
+  }
+
+  @Test
+  public void shouldAddShortColumnForInsert() {
+    final short value = 2;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, value)
+            .compile().contentValues.getAsShort(COLUMN),
+        is(value));
+  }
+
+  @Test
+  public void shouldAddDoubleColumnForInsert() {
+    final double value = 2;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, value)
+            .compile().contentValues.getAsDouble(COLUMN),
+        is(value));
+  }
+
+  @Test
+  public void shouldAddFloatColumnForInsert() {
+    final float value = 2;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, value)
+            .compile().contentValues.getAsFloat(COLUMN),
+        is(value));
+  }
+
+  @Test
+  public void shouldAddLongColumnForInsert() {
+    final long value = 2;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, value)
+            .compile().contentValues.getAsLong(COLUMN),
+        is(value));
+  }
+
+  @Test
+  public void shouldAddByteArrayColumnForInsert() {
+    final byte[] value = "value".getBytes();
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, value)
+            .compile().contentValues.getAsByteArray(COLUMN),
+        is(value));
   }
 
   @Test

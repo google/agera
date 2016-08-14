@@ -98,6 +98,70 @@ final class SqlRequestCompiler
 
   @NonNull
   @Override
+  public Object column(@NonNull final String column, @NonNull final Byte value) {
+    checkState(!compiled, ERROR_MESSAGE);
+    contentValues.put(checkNotNull(column), checkNotNull(value));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object column(@NonNull final String column, @NonNull final Short value) {
+    checkState(!compiled, ERROR_MESSAGE);
+    contentValues.put(checkNotNull(column), checkNotNull(value));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object column(@NonNull final String column, @NonNull final Integer value) {
+    checkState(!compiled, ERROR_MESSAGE);
+    contentValues.put(checkNotNull(column), checkNotNull(value));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object column(@NonNull final String column, @NonNull final Long value) {
+    checkState(!compiled, ERROR_MESSAGE);
+    contentValues.put(checkNotNull(column), checkNotNull(value));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object column(@NonNull final String column, @NonNull final Float value) {
+    checkState(!compiled, ERROR_MESSAGE);
+    contentValues.put(checkNotNull(column), checkNotNull(value));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object column(@NonNull final String column, @NonNull final Double value) {
+    checkState(!compiled, ERROR_MESSAGE);
+    contentValues.put(checkNotNull(column), checkNotNull(value));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object column(@NonNull final String column, @NonNull final Boolean value) {
+    checkState(!compiled, ERROR_MESSAGE);
+    contentValues.put(checkNotNull(column), checkNotNull(value));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object column(@NonNull final String column, @NonNull final byte[] value) {
+    checkState(!compiled, ERROR_MESSAGE);
+    contentValues.put(checkNotNull(column), checkNotNull(value));
+    return this;
+  }
+
+  @NonNull
+  @Override
   public Object emptyColumn(@NonNull final String column) {
     checkState(!compiled, ERROR_MESSAGE);
     contentValues.putNull(checkNotNull(column));
