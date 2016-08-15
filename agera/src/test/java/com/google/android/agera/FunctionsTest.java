@@ -156,6 +156,16 @@ public final class FunctionsTest {
   }
 
   @Test
+  public void shouldCreateFunctionFromItemToListWithThenFilterOfFirstItem() {
+    final Function<String, List<Character>> function = functionFrom(String.class)
+        .unpack(new StringToListChar())
+        .limit(5)
+        .thenFilter(new CharacterFilter('i'));
+
+    assertThat(function.apply("ininin"), contains('i', 'i', 'i'));
+  }
+
+  @Test
   public void shouldCreateFunctionFromItemToListWithThenFilter() {
     final Function<String, List<Character>> function = functionFrom(String.class)
         .apply(new DoubleString())
@@ -175,6 +185,21 @@ public final class FunctionsTest {
   }
 
   @Test
+  public void shouldCreateFunctionFromListViaCompiledLimit() {
+    final Function<List<String>, List<Integer>> function = functionFromListOf(String.class)
+        .filter(new Predicate<String>() {
+          @Override
+          public boolean apply(@NonNull final String value) {
+            return true;
+          }
+        })
+        .limit(3)
+        .thenMap(new StringLength());
+
+    assertThat(function.apply(INPUT_LIST), contains(4, 7, 3));
+  }
+
+  @Test
   public void shouldCreateFunctionFromListToSortedList() {
     final Function<List<String>, List<Integer>> function = functionFromListOf(String.class)
             .map(new StringLength())
@@ -184,6 +209,16 @@ public final class FunctionsTest {
                 return lhs.compareTo(rhs);
               }
             });
+
+    final List<String> inputList = new ArrayList<>(INPUT_LIST);
+    assertThat(function.apply(inputList), contains(3, 4, 7, 7));
+  }
+
+  @Test
+  public void shouldCreateFunctionFromListToNaturalSortedList() {
+    final Function<List<String>, List<Integer>> function = functionFromListOf(String.class)
+        .map(new StringLength())
+        .thenSort();
 
     final List<String> inputList = new ArrayList<>(INPUT_LIST);
     assertThat(function.apply(inputList), contains(3, 4, 7, 7));

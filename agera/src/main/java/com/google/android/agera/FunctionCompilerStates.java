@@ -122,6 +122,13 @@ public interface FunctionCompilerStates {
     FList<TPrev, TPrevList, TFrom> sort(@NonNull Comparator<TPrev> comparator);
 
     /**
+     * Adds a sort in ascending order, according to the natural ordering of its elements, to the
+     * behavior chain.
+     */
+    @NonNull
+    FList<TPrev, TPrevList, TFrom> sort();
+
+    /**
      * Adds a {@link Predicate} to the end of the behavior chain to filter out items.
      *
      * @param filter the predicate to filter by
@@ -144,5 +151,12 @@ public interface FunctionCompilerStates {
      */
     @NonNull
     Function<TFrom, TPrevList> thenSort(@NonNull Comparator<TPrev> comparator);
+
+    /**
+     * Adds a sort in ascending order, according to the natural ordering of its elements, to the
+     * behavior chain.
+     */
+    @NonNull
+    Function<TFrom, TPrevList> thenSort();
   }
 }
