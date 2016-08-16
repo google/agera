@@ -22,16 +22,19 @@ import android.support.annotation.NonNull;
 
 final class Common {
   static final Function<Throwable, ? extends Result<?>> FAILED_RESULT = new FailedResult<>();
-  static final Function IDENTITY_FUNCTION = new IdentityFunction();
+  static final NullOperator NULL_OPERATOR = new NullOperator();
   static final StaticCondicate TRUE_CONDICATE = new StaticCondicate(true);
   static final StaticCondicate FALSE_CONDICATE = new StaticCondicate(false);
 
-  private static final class IdentityFunction implements Function {
+  private static final class NullOperator implements Function, Receiver {
     @NonNull
     @Override
     public Object apply(@NonNull final Object from) {
       return from;
     }
+
+    @Override
+    public void accept(@NonNull final Object value) {}
   }
 
   private static final class StaticCondicate implements Condition, Predicate {

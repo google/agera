@@ -49,11 +49,13 @@ final class CompiledRepository extends BaseObservable
       @NonNull final List<Object> directives,
       @NonNull final Merger<Object, Object, Boolean> notifyChecker,
       @RepositoryConfig final int concurrentUpdateConfig,
-      @RepositoryConfig final int deactivationConfig) {
+      @RepositoryConfig final int deactivationConfig,
+      @NonNull final Receiver discardedValuesDisposer) {
     final Object[] directiveArray = directives.toArray();
     return new CompiledRepository(initialValue, compositeObservable(frequency,
         eventSources.toArray(new Observable[eventSources.size()])),
-        directiveArray, notifyChecker, deactivationConfig, concurrentUpdateConfig);
+        directiveArray, notifyChecker, deactivationConfig, concurrentUpdateConfig,
+        discardedValuesDisposer);
   }
 
   //region Invariants
@@ -71,6 +73,8 @@ final class CompiledRepository extends BaseObservable
   @RepositoryConfig
   private final int concurrentUpdateConfig;
   @NonNull
+  private final Receiver discardedValuesDisposer;
+  @NonNull
   private final WorkerHandler workerHandler;
 
   CompiledRepository(
@@ -79,7 +83,8 @@ final class CompiledRepository extends BaseObservable
       @NonNull final Object[] directives,
       @NonNull final Merger<Object, Object, Boolean> notifyChecker,
       @RepositoryConfig final int deactivationConfig,
-      @RepositoryConfig final int concurrentUpdateConfig) {
+      @RepositoryConfig final int concurrentUpdateConfig,
+      @NonNull final Receiver discardedValuesDisposer) {
     this.initialValue = initialValue;
     this.currentValue = initialValue;
     this.intermediateValue = initialValue; // non-final field but with @NonNull requirement
@@ -88,6 +93,7 @@ final class CompiledRepository extends BaseObservable
     this.notifyChecker = notifyChecker;
     this.deactivationConfig = deactivationConfig;
     this.concurrentUpdateConfig = concurrentUpdateConfig;
+    this.discardedValuesDisposer = discardedValuesDisposer;
     this.workerHandler = workerHandler();
   }
 
@@ -225,12 +231,19 @@ final class CompiledRepository extends BaseObservable
    */
   void acknowledgeCancel() {
     boolean shouldStartFlow = false;
+    Object discardedIntermediateValue = null;
     synchronized (this) {
       if (runState == CANCEL_REQUESTED) {
         runState = IDLE;
-        intermediateValue = initialValue; // GC the intermediate value but keep field non-null.
+        if (intermediateValue != currentValue) {
+          discardedIntermediateValue = intermediateValue;
+          intermediateValue = currentValue; // GC the intermediate value but keep field non-null.
+        }
         shouldStartFlow = restartNeeded;
       }
+    }
+    if (discardedIntermediateValue != null) {
+      discardedValuesDisposer.accept(discardedIntermediateValue);
     }
     if (shouldStartFlow) {
       maybeStartFlow();
@@ -507,22 +520,40 @@ final class CompiledRepository extends BaseObservable
 
   //region Completing, pausing and resuming flow
 
-  private synchronized void skipAndEndFlow() {
-    runState = IDLE;
-    intermediateValue = initialValue; // GC the intermediate value but field must be kept non-null.
-    checkRestartLocked();
+  private void skipAndEndFlow() {
+    Object discardedIntermediateValue = null;
+    synchronized (this) {
+      runState = IDLE;
+      if (intermediateValue != currentValue) {
+        discardedIntermediateValue = intermediateValue;
+        intermediateValue = currentValue; // GC the intermediate value but keep field non-null.
+      }
+      checkRestartLocked();
+    }
+    if (discardedIntermediateValue != null) {
+      discardedValuesDisposer.accept(discardedIntermediateValue);
+    }
   }
 
   private synchronized void setNewValueAndEndFlow(@NonNull final Object newValue) {
-    final boolean wasRunningLazily = runState == RUNNING_LAZILY;
-    runState = IDLE;
-    intermediateValue = initialValue; // GC the intermediate value but field must be kept non-null.
-    if (wasRunningLazily) {
-      currentValue = newValue; // Don't notify if this new value is produced lazily
-    } else {
-      setNewValueLocked(newValue); // May notify otherwise
+    Object discardedIntermediateValue = null;
+    synchronized (this) {
+      final boolean wasRunningLazily = runState == RUNNING_LAZILY;
+      runState = IDLE;
+      if (intermediateValue != newValue) {
+        discardedIntermediateValue = intermediateValue;
+        intermediateValue = newValue; // GC the intermediate value but keep field non-null.
+      }
+      if (wasRunningLazily) {
+        currentValue = newValue; // Don't notify if this new value is produced lazily
+      } else {
+        setNewValueLocked(newValue); // May notify otherwise
+      }
+      checkRestartLocked();
     }
-    checkRestartLocked();
+    if (discardedIntermediateValue != null) {
+      discardedValuesDisposer.accept(discardedIntermediateValue);
+    }
   }
 
   private void setNewValueLocked(@NonNull final Object newValue) {

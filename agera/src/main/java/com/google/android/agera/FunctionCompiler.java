@@ -15,7 +15,7 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Common.IDENTITY_FUNCTION;
+import static com.google.android.agera.Common.NULL_OPERATOR;
 import static com.google.android.agera.Common.TRUE_CONDICATE;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
@@ -40,7 +40,7 @@ final class FunctionCompiler implements FList, FItem {
   }
 
   private void addFunction(@NonNull final Function function) {
-    if (function != IDENTITY_FUNCTION) {
+    if (function != NULL_OPERATOR) {
       functions.add(function);
     }
   }
@@ -55,7 +55,7 @@ final class FunctionCompiler implements FList, FItem {
   @NonNull
   private Function createFunction() {
     if (functions.isEmpty()) {
-      return IDENTITY_FUNCTION;
+      return NULL_OPERATOR;
     }
     return new ChainFunction(functions.toArray(new Function[functions.size()]));
   }
@@ -107,7 +107,7 @@ final class FunctionCompiler implements FList, FItem {
   @NonNull
   @Override
   public FList map(@NonNull final Function function) {
-    if (function != IDENTITY_FUNCTION) {
+    if (function != NULL_OPERATOR) {
       addFunction(new MapFunction(function));
     }
     return this;

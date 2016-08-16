@@ -16,7 +16,7 @@
 package com.google.android.agera;
 
 import static com.google.android.agera.Common.FAILED_RESULT;
-import static com.google.android.agera.Common.IDENTITY_FUNCTION;
+import static com.google.android.agera.Common.NULL_OPERATOR;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
 import com.google.android.agera.Common.StaticProducer;
@@ -58,7 +58,7 @@ public final class Functions {
   @NonNull
   public static <T> Function<T, T> identityFunction() {
     @SuppressWarnings("unchecked")
-    final Function<T, T> identityFunction = (Function<T, T>) IDENTITY_FUNCTION;
+    final Function<T, T> identityFunction = (Function<T, T>) NULL_OPERATOR;
     return identityFunction;
   }
 
