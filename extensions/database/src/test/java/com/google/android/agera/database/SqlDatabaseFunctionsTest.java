@@ -347,6 +347,16 @@ public final class SqlDatabaseFunctionsTest {
   }
 
   @Test
+  public void shouldAddNullBooleanColumnForInsert() {
+    final Boolean nullValue = null;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, nullValue)
+            .compile().contentValues.getAsBoolean(COLUMN),
+        is(nullValue));
+  }
+
+  @Test
   public void shouldAddStringColumnForInsert() {
     final String value = "string";
     assertThat(sqlInsertRequest()
@@ -354,6 +364,16 @@ public final class SqlDatabaseFunctionsTest {
             .column(COLUMN, value)
             .compile().contentValues.getAsString(COLUMN),
         is(value));
+  }
+
+  @Test
+  public void shouldAddNullStringColumnForInsert() {
+    final String nullValue = null;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, nullValue)
+            .compile().contentValues.getAsString(COLUMN),
+        is(nullValue));
   }
 
   @Test
@@ -367,6 +387,16 @@ public final class SqlDatabaseFunctionsTest {
   }
 
   @Test
+  public void shouldAddNullByteColumnForInsert() {
+    final Byte nullValue = null;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, nullValue)
+            .compile().contentValues.getAsByte(COLUMN),
+        is(nullValue));
+  }
+
+  @Test
   public void shouldAddIntegerColumnForInsert() {
     final int value = 2;
     assertThat(sqlInsertRequest()
@@ -374,6 +404,16 @@ public final class SqlDatabaseFunctionsTest {
             .column(COLUMN, value)
             .compile().contentValues.getAsInteger(COLUMN),
         is(value));
+  }
+
+  @Test
+  public void shouldAddNullIntegerColumnForInsert() {
+    final Integer nullValue = null;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, nullValue)
+            .compile().contentValues.getAsInteger(COLUMN),
+        is(nullValue));
   }
 
   @Test
@@ -387,6 +427,16 @@ public final class SqlDatabaseFunctionsTest {
   }
 
   @Test
+  public void shouldAddNullShortColumnForInsert() {
+    final Short nullValue = null;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, nullValue)
+            .compile().contentValues.getAsShort(COLUMN),
+        is(nullValue));
+  }
+
+  @Test
   public void shouldAddDoubleColumnForInsert() {
     final double value = 2;
     assertThat(sqlInsertRequest()
@@ -394,6 +444,16 @@ public final class SqlDatabaseFunctionsTest {
             .column(COLUMN, value)
             .compile().contentValues.getAsDouble(COLUMN),
         is(value));
+  }
+
+  @Test
+  public void shouldAddNullDoubleColumnForInsert() {
+    final Double nullValue = null;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, nullValue)
+            .compile().contentValues.getAsDouble(COLUMN),
+        is(nullValue));
   }
 
   @Test
@@ -407,6 +467,16 @@ public final class SqlDatabaseFunctionsTest {
   }
 
   @Test
+  public void shouldAddNullFloatColumnForInsert() {
+    final Float nullValue = null;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, nullValue)
+            .compile().contentValues.getAsFloat(COLUMN),
+        is(nullValue));
+  }
+
+  @Test
   public void shouldAddLongColumnForInsert() {
     final long value = 2;
     assertThat(sqlInsertRequest()
@@ -417,6 +487,16 @@ public final class SqlDatabaseFunctionsTest {
   }
 
   @Test
+  public void shouldAddNullLongColumnForInsert() {
+    final Long nullValue = null;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, nullValue)
+            .compile().contentValues.getAsLong(COLUMN),
+        is(nullValue));
+  }
+
+  @Test
   public void shouldAddByteArrayColumnForInsert() {
     final byte[] value = "value".getBytes();
     assertThat(sqlInsertRequest()
@@ -424,6 +504,16 @@ public final class SqlDatabaseFunctionsTest {
             .column(COLUMN, value)
             .compile().contentValues.getAsByteArray(COLUMN),
         is(value));
+  }
+
+  @Test
+  public void shouldAddNullByteArrayColumnForInsert() {
+    final byte[] nullValue = null;
+    assertThat(sqlInsertRequest()
+            .table(TABLE)
+            .column(COLUMN, nullValue)
+            .compile().contentValues.getAsByteArray(COLUMN),
+        is(nullValue));
   }
 
   @Test

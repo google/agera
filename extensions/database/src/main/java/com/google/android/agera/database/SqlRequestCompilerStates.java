@@ -16,6 +16,7 @@
 package com.google.android.agera.database;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 /**
  * Container of the compiler state interfaces supporting the creation of sql requests.
@@ -75,55 +76,55 @@ public interface SqlRequestCompilerStates {
      * Adds a {@code column} with a {@link String} {@code value}.
      */
     @NonNull
-    T column(@NonNull String column, @NonNull String value);
+    T column(@NonNull String column, @Nullable String value);
 
     /**
      * Adds a {@code column} with a {@link Byte} {@code value}.
      */
     @NonNull
-    T column(@NonNull String column, @NonNull Byte value);
+    T column(@NonNull String column, @Nullable Byte value);
 
     /**
      * Adds a {@code column} with a {@link Short} {@code value}.
      */
     @NonNull
-    T column(@NonNull String column, @NonNull Short value);
+    T column(@NonNull String column, @Nullable Short value);
 
     /**
      * Adds a {@code column} with a {@link Integer} {@code value}.
      */
     @NonNull
-    T column(@NonNull String column, @NonNull Integer value);
+    T column(@NonNull String column, @Nullable Integer value);
 
     /**
      * Adds a {@code column} with a {@link Long} {@code value}.
      */
     @NonNull
-    T column(@NonNull String column, @NonNull Long value);
+    T column(@NonNull String column, @Nullable Long value);
 
     /**
      * Adds a {@code column} with a {@link Float} {@code value}.
      */
     @NonNull
-    T column(@NonNull String column, @NonNull Float value);
+    T column(@NonNull String column, @Nullable Float value);
 
     /**
      * Adds a {@code column} with a {@link Double} {@code value}.
      */
     @NonNull
-    T column(@NonNull String column, @NonNull Double value);
+    T column(@NonNull String column, @Nullable Double value);
 
     /**
      * Adds a {@code column} with a {@link Boolean} {@code value}.
      */
     @NonNull
-    T column(@NonNull String column, @NonNull Boolean value);
+    T column(@NonNull String column, @Nullable Boolean value);
 
     /**
      * Adds a {@code column} with a {@code byte} array {@code value}.
      */
     @NonNull
-    T column(@NonNull String column, @NonNull byte[] value);
+    T column(@NonNull String column, @Nullable byte[] value);
 
     /**
      * Adds an empty {@code column}.

@@ -32,6 +32,7 @@ import com.google.android.agera.database.SqlRequestCompilerStates.DBWhereCompile
 
 import android.content.ContentValues;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 @SuppressWarnings({"unchecked, rawtypes"})
 final class SqlRequestCompiler
@@ -90,73 +91,73 @@ final class SqlRequestCompiler
 
   @NonNull
   @Override
-  public Object column(@NonNull final String column, @NonNull final String value) {
+  public Object column(@NonNull final String column, @Nullable final String value) {
     checkState(!compiled, ERROR_MESSAGE);
-    contentValues.put(checkNotNull(column), checkNotNull(value));
+    contentValues.put(checkNotNull(column), value);
     return this;
   }
 
   @NonNull
   @Override
-  public Object column(@NonNull final String column, @NonNull final Byte value) {
+  public Object column(@NonNull final String column, @Nullable final Byte value) {
     checkState(!compiled, ERROR_MESSAGE);
-    contentValues.put(checkNotNull(column), checkNotNull(value));
+    contentValues.put(checkNotNull(column), value);
     return this;
   }
 
   @NonNull
   @Override
-  public Object column(@NonNull final String column, @NonNull final Short value) {
+  public Object column(@NonNull final String column, @Nullable final Short value) {
     checkState(!compiled, ERROR_MESSAGE);
-    contentValues.put(checkNotNull(column), checkNotNull(value));
+    contentValues.put(checkNotNull(column), value);
     return this;
   }
 
   @NonNull
   @Override
-  public Object column(@NonNull final String column, @NonNull final Integer value) {
+  public Object column(@NonNull final String column, @Nullable final Integer value) {
     checkState(!compiled, ERROR_MESSAGE);
-    contentValues.put(checkNotNull(column), checkNotNull(value));
+    contentValues.put(checkNotNull(column), value);
     return this;
   }
 
   @NonNull
   @Override
-  public Object column(@NonNull final String column, @NonNull final Long value) {
+  public Object column(@NonNull final String column, @Nullable final Long value) {
     checkState(!compiled, ERROR_MESSAGE);
-    contentValues.put(checkNotNull(column), checkNotNull(value));
+    contentValues.put(checkNotNull(column), value);
     return this;
   }
 
   @NonNull
   @Override
-  public Object column(@NonNull final String column, @NonNull final Float value) {
+  public Object column(@NonNull final String column, @Nullable final Float value) {
     checkState(!compiled, ERROR_MESSAGE);
-    contentValues.put(checkNotNull(column), checkNotNull(value));
+    contentValues.put(checkNotNull(column), value);
     return this;
   }
 
   @NonNull
   @Override
-  public Object column(@NonNull final String column, @NonNull final Double value) {
+  public Object column(@NonNull final String column, @Nullable final Double value) {
     checkState(!compiled, ERROR_MESSAGE);
-    contentValues.put(checkNotNull(column), checkNotNull(value));
+    contentValues.put(checkNotNull(column), value);
     return this;
   }
 
   @NonNull
   @Override
-  public Object column(@NonNull final String column, @NonNull final Boolean value) {
+  public Object column(@NonNull final String column, @Nullable final Boolean value) {
     checkState(!compiled, ERROR_MESSAGE);
-    contentValues.put(checkNotNull(column), checkNotNull(value));
+    contentValues.put(checkNotNull(column), value);
     return this;
   }
 
   @NonNull
   @Override
-  public Object column(@NonNull final String column, @NonNull final byte[] value) {
+  public Object column(@NonNull final String column, @Nullable final byte[] value) {
     checkState(!compiled, ERROR_MESSAGE);
-    contentValues.put(checkNotNull(column), checkNotNull(value));
+    contentValues.put(checkNotNull(column), value);
     return this;
   }
 
