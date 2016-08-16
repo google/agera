@@ -32,6 +32,28 @@ import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
 final class FunctionCompiler implements FList, FItem {
+  private static final ThreadLocal<FunctionCompiler> compilers = new ThreadLocal<>();
+
+  @NonNull
+  static FunctionCompiler functionCompiler() {
+    FunctionCompiler compiler = compilers.get();
+    if (compiler == null) {
+      compiler = new FunctionCompiler();
+    } else {
+      // Remove compiler from the ThreadLocal to prevent reuse in the middle of a compilation.
+      // recycle(), called by compile(), will return the compiler here. ThreadLocal.set(null) keeps
+      // the entry (with a null value) whereas remove() removes the entry; because we expect the
+      // return of the compiler, don't use the heavier remove().
+      compilers.set(null);
+    }
+    return compiler;
+  }
+
+  private static void recycle(@NonNull final FunctionCompiler compiler) {
+    compiler.functions.clear();
+    compilers.set(compiler);
+  }
+
   @NonNull
   private final List<Function> functions;
 
@@ -57,7 +79,9 @@ final class FunctionCompiler implements FList, FItem {
     if (functions.isEmpty()) {
       return NULL_OPERATOR;
     }
-    return new ChainFunction(functions.toArray(new Function[functions.size()]));
+    final Function[] newFunctions = functions.toArray(new Function[functions.size()]);
+    recycle(this);
+    return new ChainFunction(newFunctions);
   }
 
   @NonNull
@@ -76,7 +100,7 @@ final class FunctionCompiler implements FList, FItem {
 
   @NonNull
   @Override
-  public FList morph(@NonNull Function function) {
+  public FList morph(@NonNull final Function function) {
     addFunction(function);
     return this;
   }
