@@ -82,16 +82,18 @@ public final class ContentObservables {
     BroadcastObservable(@NonNull final Context applicationContext,
         @NonNull final String... actions) {
       this.context = checkNotNull(applicationContext);
-      this.broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(final Context context, final Intent intent) {
-          dispatchUpdate();
-        }
-      };
       this.filter = new IntentFilter();
       for (final String action : actions) {
         this.filter.addAction(action);
       }
+      this.broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+          if (filter.hasAction(intent.getAction())) {
+            dispatchUpdate();
+          }
+        }
+      };
     }
 
     @Override
