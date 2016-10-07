@@ -100,7 +100,6 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
       final RepositoryPresenter<Object> untypedPresenter =
           (RepositoryPresenter<Object>) checkNotNull(presenter);
       presenters.add(untypedPresenter);
-      observables.add(untypedRepository);
       return this;
     }
 
@@ -262,6 +261,19 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     }
   }
 
+  private static final class UpdateAllUpdatable implements Updatable {
+    @NonNull
+    private final RepositoryAdapter repositoryAdapter;
+
+    private UpdateAllUpdatable(@NonNull final RepositoryAdapter repositoryAdapter) {
+      this.repositoryAdapter = repositoryAdapter;
+    }
+
+    public void update() {
+      repositoryAdapter.updateAll();
+    }
+  }
+
   private final int repositoryCount;
   @NonNull
   private final Repository<Object>[] repositories;
@@ -271,6 +283,10 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   private final RepositoryPresenter<Object>[] presenters;
   @NonNull
   private final Observable observable;
+  @NonNull
+  private final Observable updateAllObservable;
+  @NonNull
+  private final Updatable updateAllUpdatable;
   @NonNull
   private final int[] endPositions;
 
@@ -298,7 +314,9 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     this.repositoryCount = count;
     this.repositories = repositories;
     this.presenters = presenters;
-    this.observable = compositeObservable(observables);
+    this.observable = compositeObservable(repositories);
+    this.updateAllObservable = compositeObservable(observables);
+    this.updateAllUpdatable = new UpdateAllUpdatable(this);
     this.endPositions = new int[count];
     this.dataInvalid = true;
   }
@@ -308,8 +326,9 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
    * to {@link #stopObserving()}.
    */
   public final void startObserving() {
+    updateAllObservable.addUpdatable(updateAllUpdatable);
     observable.addUpdatable(this);
-    update();
+    updateAll();
   }
 
   /**
@@ -318,13 +337,51 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
    */
   public final void stopObserving() {
     observable.removeUpdatable(this);
+    updateAllObservable.removeUpdatable(updateAllUpdatable);
+  }
+
+  /**
+   * Invalidates the data set so {@link RecyclerView} will schedule rebinds of changed data.
+   */
+  @Override
+  public final void update() {
+    if (dataInvalid) {
+      return;
+    }
+
+    int totalItemsAddedCount = 0;
+    for (int i = 0; i < repositoryCount; i++) {
+      endPositions[i] += totalItemsAddedCount;
+
+      final Object newData = repositories[i].get();
+      if (!newData.equals(data[i])) {
+        data[i] = newData;
+        final int itemCount = presenters[i].getItemCount(data[i]);
+        final int startPosition = i > 0 ? endPositions[i-1] : 0;
+        final int endPosition = startPosition + itemCount;
+        final int itemsAddedCount = endPosition - endPositions[i];
+        if (itemsAddedCount == 0) {
+          notifyItemRangeChanged(startPosition, itemCount);
+        } else {
+          totalItemsAddedCount += itemsAddedCount;
+          endPositions[i] += itemsAddedCount;
+
+          if (itemsAddedCount > 0) {
+            notifyItemRangeChanged(startPosition, itemCount - itemsAddedCount);
+            notifyItemRangeInserted(endPosition - itemsAddedCount, itemsAddedCount);
+          } else {
+            notifyItemRangeChanged(startPosition, itemCount);
+            notifyItemRangeRemoved(startPosition + itemCount, -itemsAddedCount);
+          }
+        }
+      }
+    }
   }
 
   /**
    * Invalidates the data set so {@link RecyclerView} will schedule a rebind of all data.
    */
-  @Override
-  public final void update() {
+  public final void updateAll() {
     dataInvalid = true;
     notifyDataSetChanged();
   }
