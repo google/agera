@@ -26,11 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class MockUpdatable implements Updatable {
-  private final List<Observable> observables = new ArrayList<>();
+  private final List<Observable> observables;
 
-  private boolean updated = false;
+  private boolean updated;
 
-  private MockUpdatable() {}
+  private MockUpdatable() {
+    this.observables = new ArrayList<>();
+    this.updated = false;
+  }
 
   @NonNull
   public static MockUpdatable mockUpdatable() {

@@ -46,6 +46,7 @@ public abstract class BaseObservable implements Observable {
   @NonNull
   private final Object token = new Object();
   final int shortestUpdateWindowMillis;
+  // Pairs of updatables and their associated handlers. Always of even length.
   @NonNull
   private Object[] updatablesAndHandlers;
   private int size;
