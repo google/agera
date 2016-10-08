@@ -25,8 +25,8 @@ import android.support.annotation.NonNull;
  * <p>Typically an {@link Observable} service implemented using a {@link UpdateDispatcher} only
  * needs to be updated if it has clients of its own. By starting to listen to updates from its
  * clients on {@link #observableActivated} and stopping on {@link #observableDeactivated}, the
- * service of the service can implement an <i>active</i>/<i>inactive</i> lifecycle,
- * saving memory and execution time when not needed.
+ * service can implement an <i>active</i>/<i>inactive</i> lifecycle, saving memory and execution
+ * time when not needed.
  */
 public interface ActivationHandler {
 
