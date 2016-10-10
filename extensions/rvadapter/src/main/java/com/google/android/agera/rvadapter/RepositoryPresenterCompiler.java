@@ -22,7 +22,7 @@ import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderCompile;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderStableIdCompile;
 
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
@@ -32,29 +32,31 @@ import android.view.View;
 import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
-final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderCompile {
+final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderStableIdCompile {
   @NonNull
   private static final NullBinder NULL_BINDER = new NullBinder();
   private Function<Object, Integer> layoutForItem;
   @NonNull
   private Binder binder = NULL_BINDER;
+  @NonNull
+  private Function<Object, Long> stableIdForItem = staticFunction(RecyclerView.NO_ID);
 
   @NonNull
   @Override
   public RepositoryPresenter<List> forList() {
-    return new ListBasicRepositoryPresenter(layoutForItem, binder);
+    return new ListBasicRepositoryPresenter(layoutForItem, binder, stableIdForItem);
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result> forResult() {
-    return new SingleResultRepositoryPresenter(layoutForItem, binder);
+    return new SingleResultRepositoryPresenter(layoutForItem, binder, stableIdForItem);
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result<List>> forResultList() {
-    return new ListResultRepositoryPresenter(layoutForItem, binder);
+    return new ListResultRepositoryPresenter(layoutForItem, binder, stableIdForItem);
   }
 
   @NonNull
@@ -78,6 +80,13 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderCompile
     return this;
   }
 
+  @NonNull
+  @Override
+  public Object stableIdForItem(@NonNull final Function stableIdForItem) {
+    this.stableIdForItem = stableIdForItem;
+    return this;
+  }
+
   private static final class NullBinder implements Binder {
     @Override
     public void bind(@NonNull Object o, @NonNull Object o2) {}
@@ -89,11 +98,15 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderCompile
     private final Function<Object, Integer> layoutId;
     @NonNull
     private final Binder<TVal, View> binder;
+    @NonNull
+    private final Function<TVal, Long> stableIdForItem;
 
     BasicRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<TVal, View> binder) {
+        @NonNull final Binder<TVal, View> binder,
+        @NonNull final Function<TVal, Long> stableIdForItem) {
       this.layoutId = checkNotNull(layoutId);
       this.binder = checkNotNull(binder);
+      this.stableIdForItem = stableIdForItem;
     }
 
     @NonNull
@@ -102,6 +115,11 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderCompile
     @Override
     public final int getLayoutResId(@NonNull final T data, final int index) {
       return layoutId.apply(getValue(data, index));
+    }
+
+    @Override
+    public long getItemId(@NonNull T data, int index) {
+      return stableIdForItem.apply(getValue(data, index));
     }
 
     @SuppressWarnings("unchecked")
@@ -116,8 +134,8 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderCompile
       extends BasicRepositoryPresenter<T, List<T>> {
 
     public ListBasicRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<T, View> binder) {
-      super(layoutId, binder);
+        @NonNull final Binder<T, View> binder, Function<T, Long> stableIdForItem) {
+      super(layoutId, binder, stableIdForItem);
     }
 
     @Override
@@ -136,8 +154,8 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderCompile
       extends BasicRepositoryPresenter<TVal, Result<T>> {
 
     ResultRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<TVal, View> binder) {
-      super(layoutId, binder);
+        @NonNull final Binder<TVal, View> binder, Function<TVal, Long> stableIdForItem) {
+      super(layoutId, binder, stableIdForItem);
     }
 
     @NonNull
@@ -160,8 +178,8 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderCompile
   private static final class SingleResultRepositoryPresenter<T>
       extends ResultRepositoryPresenter<T, T> {
     public SingleResultRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<T, View> binder) {
-      super(layoutId, binder);
+        @NonNull final Binder<T, View> binder, Function stableIdForItem) {
+      super(layoutId, binder, stableIdForItem);
     }
 
     @Override
@@ -180,8 +198,8 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderCompile
       extends ResultRepositoryPresenter<T, List<T>> {
 
     public ListResultRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<T, View> binder) {
-      super(layoutId, binder);
+        @NonNull final Binder<T, View> binder, Function stableIdForItem) {
+      super(layoutId, binder, stableIdForItem);
     }
 
     @Override

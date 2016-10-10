@@ -64,7 +64,7 @@ final class NotesStore {
   private static final String MODIFY_NOTE_WHERE = NOTES_NOTE_ID_COLUMN + "=?";
   private static final String GET_NOTES_FROM_TABLE =
       "SELECT " + NOTES_NOTE_ID_COLUMN + ", " + NOTES_NOTE_COLUMN + " FROM " + NOTES_TABLE
-          + " ORDER BY " + NOTES_NOTE_ID_COLUMN;
+          + " ORDER BY " + NOTES_NOTE_COLUMN;
   private static final int ID_COLUMN_INDEX = 0;
   private static final int NOTE_COLUMN_INDEX = 1;
   private static final List<Note> INITIAL_VALUE = emptyList();
