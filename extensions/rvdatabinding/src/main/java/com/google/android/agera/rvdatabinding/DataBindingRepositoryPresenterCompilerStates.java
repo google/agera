@@ -17,6 +17,7 @@ package com.google.android.agera.rvdatabinding;
 
 import com.google.android.agera.Function;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCompile;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPStableId;
 
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
@@ -36,5 +37,6 @@ public interface DataBindingRepositoryPresenterCompilerStates {
   }
 
   interface DBRPHandlerBindingCompile<TVal>
-      extends RPCompile<TVal>, DBRPHandlerBinding<DBRPHandlerBindingCompile<TVal>> {}
+      extends RPCompile<TVal>, DBRPHandlerBinding<DBRPHandlerBindingCompile<TVal>>,
+      RPStableId<TVal, DBRPHandlerBindingCompile<TVal>> {}
 }

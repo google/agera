@@ -13,6 +13,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
+import com.google.android.agera.Functions;
 import com.google.android.agera.Result;
 
 import android.support.v7.widget.RecyclerView;
@@ -39,6 +40,7 @@ public class RepositoryPresentersTest {
   private static final Result<List<String>> LIST_FAILURE = Result.<List<String>>failure();
   private static final int LAYOUT_ID = 0;
   private static final int DYNAMIC_LAYOUT_ID = 1;
+  private static final long STABLE_ID = 2;
   @Mock
   private Binder<String, View> binder;
   @Mock
@@ -161,5 +163,46 @@ public class RepositoryPresentersTest {
   @Test
   public void shouldHavePrivateConstructor() {
     assertThat(RepositoryPresenters.class, hasPrivateConstructor());
+  }
+
+  @Test
+  public void shouldReturnStableIdForRepositoryPresenterOfResult() {
+    final RepositoryPresenter<Result<String>> resultRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
+            .forResult();
+    assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
+  }
+
+  @Test
+  public void shouldReturnStableIdForRepositoryPresenterOfResultList() {
+    final RepositoryPresenter<Result<List<String>>> resultListRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
+            .forResultList();
+    assertThat(resultListRepositoryPresenter.getItemId(STRING_LIST_RESULT, 1), is(STABLE_ID));
+  }
+
+  @Test
+  public void shouldReturnStableIdForRepositoryPresenterOfList() {
+    final RepositoryPresenter<List<String>> listRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
+            .forList();
+    assertThat(listRepositoryPresenter.getItemId(STRING_LIST, 1), is(STABLE_ID));
+  }
+
+  @Test
+  public void shouldReturnStableIdForRepositoryPresenterOfListWithBinder() {
+    final RepositoryPresenter<List<String>> resultRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
+            .bindWith(binder)
+            .forList();
+    assertThat(resultRepositoryPresenter.getItemId(STRING_LIST, 1), is(STABLE_ID));
   }
 }

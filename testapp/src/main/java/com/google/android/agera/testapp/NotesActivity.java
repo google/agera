@@ -90,6 +90,7 @@ public final class NotesActivity extends Activity {
         .add(notesStore.getNotesRepository(), dataBindingRepositoryPresenterOf(Note.class)
             .layout(R.layout.text_layout)
             .itemId(com.google.android.agera.testapp.BR.note)
+            .stableIdForItem(input -> (long) input.getId())
             .handler(com.google.android.agera.testapp.BR.click,
                 (Receiver<Note>) note -> {
                   final EditText editText = new EditText(this);
@@ -106,6 +107,7 @@ public final class NotesActivity extends Activity {
                 (Predicate<Note>) notesStore::deleteNote)
             .forList())
         .whileStarted(this);
+    adapter.setHasStableIds(true);
 
     // Setup the recycler view using the repository adapter
     final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.result);

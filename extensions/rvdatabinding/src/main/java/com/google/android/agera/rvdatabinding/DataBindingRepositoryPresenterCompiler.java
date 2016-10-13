@@ -34,6 +34,7 @@ import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.support.v4.util.Pair;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -46,6 +47,8 @@ final class DataBindingRepositoryPresenterCompiler
   private final List<Pair<Integer, Object>> handlers;
   private Function<Object, Integer> layoutFactory;
   private Function itemId;
+  @NonNull
+  private Function<Object, Long> stableIdForItem = staticFunction(RecyclerView.NO_ID);
 
   DataBindingRepositoryPresenterCompiler() {
     this.handlers = new ArrayList<>();
@@ -77,6 +80,7 @@ final class DataBindingRepositoryPresenterCompiler
   public RepositoryPresenter<List<Object>> forList() {
     return repositoryPresenterOf(null)
         .layoutForItem(layoutFactory)
+        .stableIdForItem(stableIdForItem)
         .bindWith(new ViewBinder(itemId, new ArrayList<>(handlers)))
         .forList();
   }
@@ -86,6 +90,7 @@ final class DataBindingRepositoryPresenterCompiler
   public RepositoryPresenter<Result<Object>> forResult() {
     return repositoryPresenterOf(Object.class)
         .layoutForItem(layoutFactory)
+        .stableIdForItem(stableIdForItem)
         .bindWith(new ViewBinder(itemId, new ArrayList<>(handlers)))
         .forResult();
   }
@@ -95,6 +100,7 @@ final class DataBindingRepositoryPresenterCompiler
   public RepositoryPresenter<Result<List<Object>>> forResultList() {
     return repositoryPresenterOf(null)
         .layoutForItem(layoutFactory)
+        .stableIdForItem(stableIdForItem)
         .bindWith(new ViewBinder(itemId, new ArrayList<>(handlers)))
         .forResultList();
   }
@@ -110,6 +116,13 @@ final class DataBindingRepositoryPresenterCompiler
   @Override
   public Object layoutForItem(@NonNull Function layoutForItem) {
     this.layoutFactory = checkNotNull(layoutForItem);
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object stableIdForItem(@NonNull final Function stableIdForItem) {
+    this.stableIdForItem = stableIdForItem;
     return this;
   }
 

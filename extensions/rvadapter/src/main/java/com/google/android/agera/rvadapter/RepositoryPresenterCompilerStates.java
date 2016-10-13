@@ -69,6 +69,25 @@ public interface RepositoryPresenterCompilerStates {
   }
 
   /**
+   * Compiler state to specify how to generate stable IDs when
+   * {@link android.support.v7.widget.RecyclerView.Adapter#setHasStableIds(boolean)} is true.
+   */
+  interface RPStableId<TVal, TRet> {
+
+    /**
+     * Specifies a {@link Function} providing a stable id for the given item.
+     * Called only if stable IDs are enabled with {@link RepositoryAdapter#setHasStableIds
+     * RepositoryAdapter.setHasStableIds(true)}, and therefore this method is optional with a
+     * default implementation of returning {@link RecyclerView#NO_ID}. If stable IDs are enabled,
+     * the returned ID and the layout returned by {@link RPLayout#layoutForItem(Function)} or
+     * {@link RPLayout#layout(int)} for the given item should together uniquely identify this item
+     * in the whole {@link RecyclerView} throughout all changes.
+     */
+    @NonNull
+    TRet stableIdForItem(@NonNull Function<TVal, Long> stableIdForItem);
+  }
+
+  /**
    * Compiler state to create the @{link RepositoryPresenter}.
    */
   interface RPCompile<TVal> {
@@ -99,6 +118,11 @@ public interface RepositoryPresenterCompilerStates {
   /**
    * Compiler state allowing to specify view binder, view recycler or compile.
    */
-  interface RPViewBinderCompile<TVal>
-      extends RPViewBinder<TVal, RPCompile<TVal>>, RPCompile<TVal> {}
+  interface RPViewBinderCompile<TVal> extends RPViewBinder<TVal, RPCompile<TVal>>,
+      RPCompile<TVal> {}
+  /**
+   * Compiler state allowing to specify view binder, view recycler, stable id function or compile.
+   */
+  interface RPViewBinderStableIdCompile<TVal> extends RPViewBinderCompile<TVal>,
+      RPStableId<TVal, RPViewBinderCompile<TVal>> {}
 }
