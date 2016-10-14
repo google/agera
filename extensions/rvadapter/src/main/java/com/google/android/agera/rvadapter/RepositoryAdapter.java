@@ -78,6 +78,22 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     @NonNull
     final List<Observable> observables = new ArrayList<>();
 
+    boolean useMutlipleUpdates = false;
+
+    /**
+     * Specifies that the {@link RepositoryAdapter} being built should use a sequence of items
+     * inserted, items removed, and items changed notifications to rebind items from repositories
+     * with new data instead of using a single notifyDataSetChanged. Uses {@code equals} to
+     * determine if the data is new.
+     *
+     * @return This instance, for chaining.
+     */
+    @NonNull
+    public Builder useMultipleUpdates() {
+      this.useMutlipleUpdates = true;
+      return this;
+    }
+
     /**
      * Specifies that the {@link RepositoryAdapter} being built should present the given
      * {@code repository} next (after all previously added repositories), using the given
@@ -261,16 +277,16 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     }
   }
 
-  private static final class UpdateAllUpdatable implements Updatable {
+  private static final class UpdateChangesUpdatable implements Updatable {
     @NonNull
     private final RepositoryAdapter repositoryAdapter;
 
-    private UpdateAllUpdatable(@NonNull final RepositoryAdapter repositoryAdapter) {
+    private UpdateChangesUpdatable(@NonNull final RepositoryAdapter repositoryAdapter) {
       this.repositoryAdapter = repositoryAdapter;
     }
 
     public void update() {
-      repositoryAdapter.updateAll();
+      repositoryAdapter.updateChanges();
     }
   }
 
@@ -282,11 +298,11 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   @NonNull
   private final RepositoryPresenter<Object>[] presenters;
   @NonNull
-  private final Observable observable;
-  @NonNull
   private final Observable updateAllObservable;
   @NonNull
-  private final Updatable updateAllUpdatable;
+  private final Observable updateChangesObservable;
+  @NonNull
+  private final Updatable updateChangesUpdatable;
   @NonNull
   private final int[] endPositions;
 
@@ -314,9 +330,10 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     this.repositoryCount = count;
     this.repositories = repositories;
     this.presenters = presenters;
-    this.observable = compositeObservable(repositories);
     this.updateAllObservable = compositeObservable(observables);
-    this.updateAllUpdatable = new UpdateAllUpdatable(this);
+    this.updateChangesObservable = compositeObservable(repositories);
+    this.updateChangesUpdatable =
+        builder.useMutlipleUpdates ? new UpdateChangesUpdatable(this) : this;
     this.endPositions = new int[count];
     this.dataInvalid = true;
   }
@@ -326,9 +343,9 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
    * to {@link #stopObserving()}.
    */
   public final void startObserving() {
-    updateAllObservable.addUpdatable(updateAllUpdatable);
-    observable.addUpdatable(this);
-    updateAll();
+    updateAllObservable.addUpdatable(this);
+    updateChangesObservable.addUpdatable(updateChangesUpdatable);
+    update();
   }
 
   /**
@@ -336,15 +353,14 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
    * {@link #startObserving()}.
    */
   public final void stopObserving() {
-    observable.removeUpdatable(this);
-    updateAllObservable.removeUpdatable(updateAllUpdatable);
+    updateChangesObservable.removeUpdatable(updateChangesUpdatable);
+    updateAllObservable.removeUpdatable(this);
   }
 
   /**
    * Invalidates the data set so {@link RecyclerView} will schedule rebinds of changed data.
    */
-  @Override
-  public final void update() {
+  private void updateChanges() {
     if (dataInvalid) {
       return;
     }
@@ -367,10 +383,14 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
           endPositions[i] += itemsAddedCount;
 
           if (itemsAddedCount > 0) {
-            notifyItemRangeChanged(startPosition, itemCount - itemsAddedCount);
+            if (itemCount != itemsAddedCount) {
+              notifyItemRangeChanged(startPosition, itemCount - itemsAddedCount);
+            }
             notifyItemRangeInserted(endPosition - itemsAddedCount, itemsAddedCount);
           } else {
-            notifyItemRangeChanged(startPosition, itemCount);
+            if (itemCount > 0) {
+              notifyItemRangeChanged(startPosition, itemCount);
+            }
             notifyItemRangeRemoved(startPosition + itemCount, -itemsAddedCount);
           }
         }
@@ -381,7 +401,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   /**
    * Invalidates the data set so {@link RecyclerView} will schedule a rebind of all data.
    */
-  public final void updateAll() {
+  @Override
+  public final void update() {
     dataInvalid = true;
     notifyDataSetChanged();
   }

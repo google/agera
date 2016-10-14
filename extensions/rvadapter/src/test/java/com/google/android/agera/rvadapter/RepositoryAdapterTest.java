@@ -28,6 +28,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
@@ -90,6 +91,7 @@ public final class RepositoryAdapterTest {
   private MutableRepository repository;
   private Repository secondRepository;
   private RepositoryAdapter repositoryAdapter;
+  private RepositoryAdapter repositoryAdapterMultipleUpdates;
   private Adapter repositoryAdapterWhileResumed;
   private Adapter repositoryAdapterWhileStarted;
 
@@ -108,6 +110,13 @@ public final class RepositoryAdapterTest {
     when(secondRepositoryPresenter.getItemCount(REPOSITORY_LIST)).thenReturn(3);
 
     repositoryAdapter = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .build();
+
+    repositoryAdapterMultipleUpdates = repositoryAdapter()
+        .useMultipleUpdates()
         .add(repository, repositoryPresenter)
         .add(secondRepository, secondRepositoryPresenter)
         .addAdditionalObservable(updateDispatcher)
@@ -285,6 +294,97 @@ public final class RepositoryAdapterTest {
     repositoryAdapterWhileResumed.onBindViewHolder(viewHolder, 0);
 
     verify(repositoryPresenter).bind(REPOSITORY_ITEM, 0, viewHolder);
+  }
+
+  @Test
+  public void shouldNotifyDataSetChangedOnAdditionalObservablesWhenObserving() {
+    repositoryAdapterMultipleUpdates.startObserving();
+    repositoryAdapterMultipleUpdates.registerAdapterDataObserver(observer);
+    updateDispatcher.update();
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapterMultipleUpdates.stopObserving();
+
+    verify(observer).onChanged();
+    verifyNoMoreInteractions(observer);
+  }
+
+  @Test
+  public void shouldNotifyItemChangedOnChangingRepositoryWhenObserving() {
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+
+    repositoryAdapterMultipleUpdates.startObserving();
+    repositoryAdapterMultipleUpdates.getItemCount(); //Trigger a refresh
+    repositoryAdapterMultipleUpdates.registerAdapterDataObserver(observer);
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapterMultipleUpdates.stopObserving();
+
+    verify(observer).onItemRangeChanged(0, 1, null);
+    verifyNoMoreInteractions(observer);
+  }
+
+  @Test
+  public void shouldNotifyItemInsertedOnChangingRepositoryWhenObserving() {
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(2);
+
+    repositoryAdapterMultipleUpdates.startObserving();
+    repositoryAdapterMultipleUpdates.getItemCount(); //Trigger a refresh
+    repositoryAdapterMultipleUpdates.registerAdapterDataObserver(observer);
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapterMultipleUpdates.stopObserving();
+
+    verify(observer).onItemRangeChanged(0, 1, null);
+    verify(observer).onItemRangeInserted(1, 1);
+    verifyNoMoreInteractions(observer);
+  }
+
+  @Test
+  public void shouldNotifyAllItemsInsertedOnChangingRepositoryWhenObserving() {
+    when(repositoryPresenter.getItemCount(REPOSITORY_ITEM)).thenReturn(0);
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(2);
+
+    repositoryAdapterMultipleUpdates.startObserving();
+    repositoryAdapterMultipleUpdates.getItemCount(); //Trigger a refresh
+    repositoryAdapterMultipleUpdates.registerAdapterDataObserver(observer);
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapterMultipleUpdates.stopObserving();
+
+    verify(observer).onItemRangeInserted(0, 2);
+    verifyNoMoreInteractions(observer);
+  }
+
+  @Test
+  public void shouldNotifyItemRemovedOnChangingRepositoryWhenObserving() {
+    when(repositoryPresenter.getItemCount(REPOSITORY_ITEM)).thenReturn(2);
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+
+    repositoryAdapterMultipleUpdates.startObserving();
+    repositoryAdapterMultipleUpdates.getItemCount(); //Trigger a refresh
+    repositoryAdapterMultipleUpdates.registerAdapterDataObserver(observer);
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapterMultipleUpdates.stopObserving();
+
+    verify(observer).onItemRangeChanged(0, 1, null);
+    verify(observer).onItemRangeRemoved(1, 1);
+    verifyNoMoreInteractions(observer);
+  }
+
+  @Test
+  public void shouldNotifyAllItemsRemovedOnChangingRepositoryWhenObserving() {
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(0);
+
+    repositoryAdapterMultipleUpdates.startObserving();
+    repositoryAdapterMultipleUpdates.getItemCount(); //Trigger a refresh
+    repositoryAdapterMultipleUpdates.registerAdapterDataObserver(observer);
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapterMultipleUpdates.stopObserving();
+
+    verify(observer).onItemRangeRemoved(0, 1);
+    verifyNoMoreInteractions(observer);
   }
 
     private void setActivityToActive() {
