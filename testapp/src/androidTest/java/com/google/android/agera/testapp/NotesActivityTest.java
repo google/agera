@@ -52,7 +52,6 @@ public class NotesActivityTest {
     onView(withId(R.id.edit)).perform(clearText(), typeText(THIRD_TEXT));
     onView(withText(R.string.edit)).inRoot(isDialog()).perform(click());
     onView(withText(SECOND_TEXT)).perform(longClick());
-    onView(withText(THIRD_TEXT)).perform(longClick());
     onView(withId(R.id.clear)).perform(click());
   }
 }
