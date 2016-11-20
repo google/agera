@@ -19,6 +19,7 @@ import static com.google.android.agera.Common.NULL_OPERATOR;
 import static com.google.android.agera.CompiledRepository.addBindWith;
 import static com.google.android.agera.CompiledRepository.addCheck;
 import static com.google.android.agera.CompiledRepository.addEnd;
+import static com.google.android.agera.CompiledRepository.addFilterFailedCheck;
 import static com.google.android.agera.CompiledRepository.addFilterFailure;
 import static com.google.android.agera.CompiledRepository.addFilterSuccess;
 import static com.google.android.agera.CompiledRepository.addGetFrom;
@@ -48,7 +49,7 @@ final class RepositoryCompiler implements
     RepositoryCompilerStates.RFrequency,
     RepositoryCompilerStates.RFlow,
     RepositoryCompilerStates.RTerminationOrContinue,
-    RepositoryCompilerStates.RConfig {
+    RepositoryCompilerStates.RThenCheckOrConfig {
 
   private static final ThreadLocal<RepositoryCompiler> compilers = new ThreadLocal<>();
 
@@ -75,7 +76,7 @@ final class RepositoryCompiler implements
 
   @Retention(RetentionPolicy.SOURCE)
   @IntDef({NOTHING, FIRST_EVENT_SOURCE, FREQUENCY_OR_MORE_EVENT_SOURCE, FLOW,
-      TERMINATE_THEN_FLOW, TERMINATE_THEN_END, CONFIG})
+      TERMINATE_THEN_FLOW, TERMINATE_THEN_END, THEN_CHECK_OR_CONFIG, CONFIG})
   private @interface Expect {}
 
   private static final int NOTHING = 0;
@@ -84,7 +85,8 @@ final class RepositoryCompiler implements
   private static final int FLOW = 3;
   private static final int TERMINATE_THEN_FLOW = 4;
   private static final int TERMINATE_THEN_END = 5;
-  private static final int CONFIG = 6;
+  private static final int THEN_CHECK_OR_CONFIG = 6;
+  private static final int CONFIG = 7;
 
   private Object initialValue;
   private final ArrayList<Observable> eventSources = new ArrayList<>();
@@ -95,6 +97,7 @@ final class RepositoryCompiler implements
   private Function caseExtractor;
   private Predicate casePredicate;
   private boolean goLazyUsed;
+  private boolean inThenCheckTerminationClause;
   private Merger notifyChecker = objectsUnequal();
   @RepositoryConfig
   private int deactivationConfig;
@@ -126,6 +129,20 @@ final class RepositoryCompiler implements
 
   private void checkGoLazyUnused() {
     checkState(!goLazyUsed, "Unexpected occurrence of async directive after goLazy()");
+  }
+
+  private void checkExpectConfigAndEnsureEndFlow() {
+    if (expect == THEN_CHECK_OR_CONFIG) {
+      endFlow(false);
+      expect = CONFIG;
+    } else {
+      checkExpect(CONFIG);
+    }
+  }
+
+  private void endFlow(final boolean skip) {
+    addEnd(skip, directives);
+    expect = CONFIG;
   }
 
   //region REventSource
@@ -226,6 +243,7 @@ final class RepositoryCompiler implements
   @NonNull
   @Override
   public RepositoryCompiler thenSkip() {
+    checkExpect(FLOW);
     endFlow(true);
     return this;
   }
@@ -234,7 +252,7 @@ final class RepositoryCompiler implements
   @Override
   public RepositoryCompiler thenGetFrom(@NonNull final Supplier supplier) {
     getFrom(supplier);
-    endFlow(false);
+    expect = THEN_CHECK_OR_CONFIG;
     return this;
   }
 
@@ -243,7 +261,7 @@ final class RepositoryCompiler implements
   public RepositoryCompiler thenMergeIn(
       @NonNull final Supplier supplier, @NonNull final Merger merger) {
     mergeIn(supplier, merger);
-    endFlow(false);
+    expect = THEN_CHECK_OR_CONFIG;
     return this;
   }
 
@@ -251,13 +269,8 @@ final class RepositoryCompiler implements
   @Override
   public RepositoryCompiler thenTransform(@NonNull final Function function) {
     transform(function);
-    endFlow(false);
+    expect = THEN_CHECK_OR_CONFIG;
     return this;
-  }
-
-  private void endFlow(final boolean skip) {
-    addEnd(skip, directives);
-    expect = CONFIG;
   }
 
   @NonNull
@@ -335,7 +348,7 @@ final class RepositoryCompiler implements
 
   //endregion RFlow
 
-  //region RTermination
+  //region RTerminationOrContinue
 
   @NonNull
   @Override
@@ -360,10 +373,12 @@ final class RepositoryCompiler implements
     }
     caseExtractor = null;
     casePredicate = null;
-    if (expect == TERMINATE_THEN_END) {
+    if (expect == TERMINATE_THEN_FLOW) {
+      expect = FLOW;
+    } else if (inThenCheckTerminationClause) {
       endFlow(false);
     } else {
-      expect = FLOW;
+      expect = THEN_CHECK_OR_CONFIG;
     }
   }
 
@@ -371,19 +386,44 @@ final class RepositoryCompiler implements
   @Override
   public RepositoryCompiler orContinue() {
     checkExpect(TERMINATE_THEN_END);
-    addFilterFailure(directives);
+    if (inThenCheckTerminationClause) {
+      addFilterFailedCheck(caseExtractor, casePredicate, directives);
+      caseExtractor = null;
+      casePredicate = null;
+      inThenCheckTerminationClause = false;
+    } else {
+      addFilterFailure(directives);
+    }
     expect = FLOW;
     return this;
   }
 
-  //endregion RTermination
+  //endregion RTerminationOrContinue
 
-  //region RConfig
+  //region RThenCheckOrConfig
+
+  @NonNull
+  @Override
+  public RepositoryCompiler thenCheck(@NonNull final Predicate predicate) {
+    return thenCheck(identityFunction(), predicate);
+  }
+
+  @NonNull
+  @Override
+  public RepositoryCompiler thenCheck(
+          @NonNull final Function function, @NonNull final Predicate predicate) {
+    checkExpect(THEN_CHECK_OR_CONFIG);
+    caseExtractor = checkNotNull(function);
+    casePredicate = checkNotNull(predicate);
+    expect = TERMINATE_THEN_END;
+    inThenCheckTerminationClause = true;
+    return this;
+  }
 
   @NonNull
   @Override
   public RepositoryCompiler notifyIf(@NonNull final Merger notifyChecker) {
-    checkExpect(CONFIG);
+    checkExpectConfigAndEnsureEndFlow();
     this.notifyChecker = checkNotNull(notifyChecker);
     return this;
   }
@@ -391,7 +431,7 @@ final class RepositoryCompiler implements
   @NonNull
   @Override
   public RepositoryCompiler onDeactivation(@RepositoryConfig final int deactivationConfig) {
-    checkExpect(CONFIG);
+    checkExpectConfigAndEnsureEndFlow();
     this.deactivationConfig = deactivationConfig;
     return this;
   }
@@ -399,7 +439,7 @@ final class RepositoryCompiler implements
   @NonNull
   @Override
   public RepositoryCompiler onConcurrentUpdate(@RepositoryConfig final int concurrentUpdateConfig) {
-    checkExpect(CONFIG);
+    checkExpectConfigAndEnsureEndFlow();
     this.concurrentUpdateConfig = concurrentUpdateConfig;
     return this;
   }
@@ -407,7 +447,7 @@ final class RepositoryCompiler implements
   @NonNull
   @Override
   public RepositoryCompiler sendDiscardedValuesTo(@NonNull final Receiver disposer) {
-    checkExpect(CONFIG);
+    checkExpectConfigAndEnsureEndFlow();
     discardedValueDisposer = checkNotNull(disposer);
     return this;
   }
@@ -431,7 +471,7 @@ final class RepositoryCompiler implements
 
   @NonNull
   private Repository compileRepositoryAndReset() {
-    checkExpect(CONFIG);
+    checkExpectConfigAndEnsureEndFlow();
     Repository repository = compiledRepository(initialValue, eventSources, frequency, directives,
         notifyChecker, concurrentUpdateConfig, deactivationConfig, discardedValueDisposer);
     expect = NOTHING;
@@ -440,6 +480,7 @@ final class RepositoryCompiler implements
     frequency = 0;
     directives.clear();
     goLazyUsed = false;
+    inThenCheckTerminationClause = false;
     notifyChecker = objectsUnequal();
     deactivationConfig = RepositoryConfig.CONTINUE_FLOW;
     concurrentUpdateConfig = RepositoryConfig.CONTINUE_FLOW;

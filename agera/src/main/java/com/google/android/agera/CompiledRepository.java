@@ -277,6 +277,7 @@ final class CompiledRepository extends BaseObservable
   private static final int BIND = 8;
   private static final int FILTER_SUCCESS = 9;
   private static final int FILTER_FAILURE = 10;
+  private static final int FILTER_FAILED_CHECK = 11;
 
   /**
    * @param asynchronously Whether this flow is run asynchronously. True after the first goTo and
@@ -338,6 +339,9 @@ final class CompiledRepository extends BaseObservable
           break;
         case FILTER_FAILURE:
           i = runFilterFailure(directives, i);
+          break;
+        case FILTER_FAILED_CHECK:
+          i = runFilterFailedCheck(directives, i);
           break;
         case END:
           i = runEnd(directives, i);
@@ -484,11 +488,32 @@ final class CompiledRepository extends BaseObservable
   private int runFilterFailure(@NonNull final Object[] directives, final int index) {
     final Result tryValue = (Result) intermediateValue;
     if (tryValue.succeeded()) {
-      runTerminate(tryValue.get(), identityFunction());
+      setNewValueAndEndFlow(tryValue.get());
       return -1;
     } else {
       intermediateValue = tryValue.getFailure();
       return index + 1;
+    }
+  }
+
+  static void addFilterFailedCheck(@NonNull final Function caseFunction,
+      @NonNull final Predicate casePredicate,
+      @NonNull final List<Object> directives) {
+    directives.add(FILTER_FAILED_CHECK);
+    directives.add(caseFunction);
+    directives.add(casePredicate);
+  }
+
+  private int runFilterFailedCheck(@NonNull final Object[] directives, final int index) {
+    final Function caseFunction = (Function) directives[index + 1];
+    final Predicate casePredicate = (Predicate) directives[index + 2];
+
+    final Object caseValue = caseFunction.apply(intermediateValue);
+    if (casePredicate.apply(caseValue)) {
+      setNewValueAndEndFlow(intermediateValue);
+      return -1;
+    } else {
+      return index + 3;
     }
   }
 

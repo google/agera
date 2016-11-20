@@ -46,13 +46,15 @@ import java.util.concurrent.RejectedExecutionException;
  *   <li>{@link RFlow#goTo goTo(e)}
  *   <li>{@link RFlow#goLazy goLazy()}
  *   <li>{@link RFlow#thenSkip thenSkip()}
+ *   <li>{@link RThenCheckOrConfig#thenCheck(Predicate) thenCheck(p)}.<i>term</i>
+ *   <li>{@link RThenCheckOrConfig#thenCheck(Function, Predicate) thenCheck(f, p)}.<i>term</i>
  * </ul>
  * where <i>term</i> (the termination clause) is one of:
  * <ul>
  *   <li>{@link RTermination#orSkip orSkip()}
  *   <li>{@link RTermination#orEnd orEnd(f)}
+ *   <li>{@link RTerminationOrContinue#orContinue() orContinue()} (if directive starts with 'then')
  * </ul>
- *
  */
 public interface RepositoryCompilerStates {
 
@@ -119,12 +121,17 @@ public interface RepositoryCompilerStates {
 
     @NonNull
     @Override
+    RThenCheckOrConfig<TVal, RFlow<TVal, TVal, ?>> thenGetFrom(
+            @NonNull Supplier<? extends TVal> supplier);
+
+    @NonNull
+    @Override
     <TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, ?>> attemptGetFrom(
         @NonNull Supplier<Result<TCur>> attemptSupplier);
 
     @NonNull
     @Override
-    RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+    RTerminationOrContinue<TVal, Throwable, RThenCheckOrConfig<TVal, RFlow<TVal, TVal, ?>>,
         RFlow<TVal, Throwable, ?>> thenAttemptGetFrom(
             @NonNull Supplier<? extends Result<? extends TVal>> attemptSupplier);
 
@@ -135,13 +142,19 @@ public interface RepositoryCompilerStates {
 
     @NonNull
     @Override
+    <TAdd> RThenCheckOrConfig<TVal, RFlow<TVal, TVal, ?>> thenMergeIn(
+            @NonNull Supplier<TAdd> supplier,
+            @NonNull Merger<? super TPre, ? super TAdd, ? extends TVal> merger);
+
+    @NonNull
+    @Override
     <TAdd, TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, ?>> attemptMergeIn(
         @NonNull Supplier<TAdd> supplier,
         @NonNull Merger<? super TPre, ? super TAdd, Result<TCur>> attemptMerger);
 
     @NonNull
     @Override
-    <TAdd> RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+    <TAdd> RTerminationOrContinue<TVal, Throwable, RThenCheckOrConfig<TVal, RFlow<TVal, TVal, ?>>,
         RFlow<TVal, Throwable, ?>> thenAttemptMergeIn(
             @NonNull Supplier<TAdd> supplier,
             @NonNull Merger<? super TPre, ? super TAdd,
@@ -153,12 +166,17 @@ public interface RepositoryCompilerStates {
 
     @NonNull
     @Override
+    RThenCheckOrConfig<TVal, RFlow<TVal, TVal, ?>> thenTransform(
+            @NonNull Function<? super TPre, ? extends TVal> function);
+
+    @NonNull
+    @Override
     <TCur> RTermination<TVal, Throwable, RFlow<TVal, TCur, ?>> attemptTransform(
         @NonNull Function<? super TPre, Result<TCur>> attemptFunction);
 
     @NonNull
     @Override
-    RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+    RTerminationOrContinue<TVal, Throwable, RThenCheckOrConfig<TVal, RFlow<TVal, TVal, ?>>,
         RFlow<TVal, Throwable, ?>> thenAttemptTransform(
             @NonNull Function<? super TPre, ? extends Result<? extends TVal>> attemptFunction);
 
@@ -322,7 +340,8 @@ public interface RepositoryCompilerStates {
      * compiled repository, with notification if necessary.
      */
     @NonNull
-    RConfig<TVal> thenGetFrom(@NonNull Supplier<? extends TVal> supplier);
+    RThenCheckOrConfig<TVal, ? extends RSyncFlow<TVal, TVal, ?>> thenGetFrom(
+            @NonNull Supplier<? extends TVal> supplier);
 
     /**
      * Perform the {@link #attemptGetFrom} directive and use the successful output value as the new
@@ -331,7 +350,8 @@ public interface RepositoryCompilerStates {
      * depending on the clause that follows.
      */
     @NonNull
-    RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+    RTerminationOrContinue<TVal, Throwable,
+        ? extends RThenCheckOrConfig<TVal, ? extends RSyncFlow<TVal, TVal, ?>>,
         ? extends RSyncFlow<TVal, Throwable, ?>> thenAttemptGetFrom(
             @NonNull Supplier<? extends Result<? extends TVal>> attemptSupplier);
 
@@ -340,7 +360,8 @@ public interface RepositoryCompilerStates {
      * compiled repository, with notification if necessary.
      */
     @NonNull
-    <TAdd> RConfig<TVal> thenMergeIn(@NonNull Supplier<TAdd> supplier,
+    <TAdd> RThenCheckOrConfig<TVal, ? extends RSyncFlow<TVal, TVal, ?>> thenMergeIn(
+        @NonNull Supplier<TAdd> supplier,
         @NonNull Merger<? super TPre, ? super TAdd, ? extends TVal> merger);
 
     /**
@@ -350,7 +371,8 @@ public interface RepositoryCompilerStates {
      * depending on the clause that follows.
      */
     @NonNull
-    <TAdd> RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+    <TAdd> RTerminationOrContinue<TVal, Throwable,
+        ? extends RThenCheckOrConfig<TVal, ? extends RSyncFlow<TVal, TVal, ?>>,
         ? extends RSyncFlow<TVal, Throwable, ?>> thenAttemptMergeIn(
             @NonNull Supplier<TAdd> supplier,
             @NonNull Merger<? super TPre, ? super TAdd,
@@ -361,7 +383,7 @@ public interface RepositoryCompilerStates {
      * compiled repository, with notification if necessary.
      */
     @NonNull
-    RConfig<TVal> thenTransform(
+    RThenCheckOrConfig<TVal, ? extends RSyncFlow<TVal, TVal, ?>> thenTransform(
         @NonNull Function<? super TPre, ? extends TVal> function);
 
     /**
@@ -371,7 +393,8 @@ public interface RepositoryCompilerStates {
      * depending on the clause that follows.
      */
     @NonNull
-    RTerminationOrContinue<TVal, Throwable, RConfig<TVal>,
+    RTerminationOrContinue<TVal, Throwable,
+        ? extends RThenCheckOrConfig<TVal, ? extends RSyncFlow<TVal, TVal, ?>>,
         ? extends RSyncFlow<TVal, Throwable, ?>> thenAttemptTransform(
             @NonNull Function<? super TPre, ? extends Result<? extends TVal>> attemptFunction);
   }
@@ -403,7 +426,7 @@ public interface RepositoryCompilerStates {
 
   /**
    * Compiler state allowing to terminate or continue the data processing flow following a failed
-   * attempt to produce the new value of the repository.
+   * check at the previous breaking point of the data processing flow.
    *
    * @param <TVal> Value type of the repository.
    * @param <TTerm> Value type from which to terminate the flow.
@@ -415,13 +438,50 @@ public interface RepositoryCompilerStates {
       extends RTermination<TVal, TTerm, TRet> {
 
     /**
-     * If the previous attempt failed, continue with the rest of the data processing flow, using the
-     * {@linkplain Result#getFailure() failure} as the input value to the next directive. Otherwise,
-     * end the data processing flow and use the successful output value from the attempt as the new
-     * value of the compiled repository, with notification if necessary.
+     * If the previous check failed, continue with the rest of the data processing flow. If the
+     * failed check was due to a failed attempt, then the next directive receives the
+     * {@linkplain Result#getFailure() failure} as its input. If the failed check was at a TODO
+     * If the previous check did not fail, end the data processing flow and use the last output
+     * value as the new value of the compiled repository, with notification if necessary.
      */
     @NonNull
     TCon orContinue();
+  }
+
+  /**
+   * Compiler state allowing to perform a free-form check on a candidate new value produced by the
+   * previous {@code then}-directive, and resume the data processing flow if necessary or move on to
+   * configuration and ending the declaration of the repository.
+   *
+   * @param <TVal> Repository value type.
+   * @param <TCon> Compiler state to return to if the flow is to continue.
+   */
+  interface RThenCheckOrConfig<TVal, TCon> extends RConfig<TVal> {
+
+    /**
+     * Check the candidate new value with the given predicate. If the predicate applies, use it as
+     * the new value of the compiled repository, with notification if necessary. If the predicate
+     * does not apply, then either terminate the flow in a different way (skipping or using another
+     * value), or continue onto the next directive, depending on the clause that follows. The
+     * termination clause takes the candidate new value as its input.
+     */
+    @NonNull
+    RTerminationOrContinue<TVal, TVal, RConfig<TVal>, TCon> thenCheck(
+            @NonNull Predicate<? super TVal> predicate);
+
+    /**
+     * Use the case-function to compute a case value out of the candidate new value and check it
+     * with the given predicate. If the predicate applies to the case value, use the candidate new
+     * value (not the case value) as the new value of the compiled repository, with notification if
+     * necessary. If the predicate does not apply to the case value, then either terminate the flow
+     * in a different way (skipping or using another value), or continue onto the next directive,
+     * depending on the clause that follows. The termination clause takes the <i>case value</i> as
+     * its input.
+     */
+    @NonNull
+    <TCase> RTerminationOrContinue<TVal, TCase, RConfig<TVal>, TCon> thenCheck(
+            @NonNull Function<? super TVal, TCase> caseFunction,
+            @NonNull Predicate<? super TCase> casePredicate);
   }
 
   /**
