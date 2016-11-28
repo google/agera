@@ -84,7 +84,7 @@ public interface RepositoryPresenterCompilerStates {
      * in the whole {@link RecyclerView} throughout all changes.
      */
     @NonNull
-    TRet stableIdForItem(@NonNull Function<TVal, Long> stableIdForItem);
+    TRet stableIdForItem(@NonNull Function<? super TVal, Long> stableIdForItem);
   }
 
   /**
