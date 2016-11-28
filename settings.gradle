@@ -36,9 +36,9 @@ gradle.ext.licenseName = 'The Apache Software License, Version 2.0'
 gradle.ext.licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
 
 gradle.ext.minSdkVersion = 9
-gradle.ext.compileSdkVersion = 24
-gradle.ext.buildToolsVersion = '24.0.0'
-gradle.ext.supportLibraryVersion = '24.1.1'
+gradle.ext.compileSdkVersion = 25
+gradle.ext.buildToolsVersion = '25.0.1'
+gradle.ext.supportLibraryVersion = '25.0.1'
 gradle.ext.javaVersion = JavaVersion.VERSION_1_7
 
 gradle.allprojects {
@@ -48,8 +48,8 @@ gradle.allprojects {
         }
         dependencies {
             classpath 'me.tatarka:gradle-retrolambda:3.2.5'
-            classpath 'com.android.tools.build:gradle:2.1.2'
-            classpath 'com.github.dcendents:android-maven-gradle-plugin:1.3'
+            classpath 'com.android.tools.build:gradle:2.2.2'
+            classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
             classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.3.1'
             classpath 'com.novoda:bintray-release:0.3.4'
         }
