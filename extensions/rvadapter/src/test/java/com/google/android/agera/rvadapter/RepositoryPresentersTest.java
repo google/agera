@@ -205,4 +205,12 @@ public class RepositoryPresentersTest {
             .forList();
     assertThat(resultRepositoryPresenter.getItemId(STRING_LIST, 1), is(STABLE_ID));
   }
+
+  @Test
+  public void shouldAllowStableIdMethodForAnySuperType() {
+    repositoryPresenterOf(String.class)
+        .layout(LAYOUT_ID)
+        .stableIdForItem(Functions.<CharSequence, Long>staticFunction(STABLE_ID))
+        .forResult();
+  }
 }
