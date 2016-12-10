@@ -24,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasToString;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -661,6 +662,21 @@ public final class ResultTest {
   @Test
   public void shouldReturnNullPointerExceptionForFailureOrNullOnAbsent() {
     assertThat(ABSENT.failureOrNull(), instanceOf(NullPointerException.class));
+  }
+
+  @Test
+  public void shouldReturnTrueForContainsOfSameValue() {
+    assertThat(SUCCESS_WITH_VALUE.contains(VALUE), is(true));
+  }
+
+  @Test
+  public void shouldReturnFalseForContainsOfOtherValue() {
+    assertThat(SUCCESS_WITH_OTHER_VALUE.contains(VALUE), is(false));
+  }
+
+  @Test
+  public void shouldReturnFalseForContainsOfFailure() {
+    assertThat(ABSENT.contains(VALUE), is(false));
   }
 
   @Test

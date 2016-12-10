@@ -526,6 +526,10 @@ public final class Result<T> {
     return (Result<T>) attemptRecoverFunction.apply(failure);
   }
 
+  public boolean contains(@NonNull final T value) {
+    return this.value != null && this.value.equals(value);
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) { return true; }
