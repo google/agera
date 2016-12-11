@@ -92,6 +92,13 @@ gradle.allprojects {
                             testCoverageEnabled true
                         }
                     }
+                    testOptions {
+                        unitTests.all {
+                            jacoco {
+                                includeNoLocationClasses = true
+                            }
+                        }
+                    }
                 }
                 dependencies {
                     compile 'com.android.support:support-annotations:' +
