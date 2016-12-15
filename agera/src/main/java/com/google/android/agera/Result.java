@@ -75,9 +75,9 @@ public final class Result<T> {
    * Creates a {@link Result} of a failed attempt that encountered the given {@code failure}.
    */
   @NonNull
-  public static <T> Result<T> failure(@NonNull final Throwable failure) {
-    return failure == ABSENT_THROWABLE
-        ? Result.<T>absent() : new Result<T>(null, checkNotNull(failure));
+  public static <T> Result<T> failure(@Nullable final Throwable failure) {
+    return failure == ABSENT_THROWABLE ? Result.<T>absent()
+        : failure == null ? Result.<T>failure() : new Result<T>(null, failure);
   }
 
   /**
