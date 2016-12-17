@@ -484,7 +484,7 @@ public final class Result<T> {
    */
   @NonNull
   public T orGetFrom(@NonNull final Supplier<? extends T> supplier) {
-    return value != null ? value : checkNotNull(supplier.get());
+    return value != null ? value : Preconditions.<T>checkNotNull(supplier.get());
   }
 
   /**
