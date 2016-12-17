@@ -17,8 +17,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.google.android.agera.testapp">
   <uses-permission android:name="android.permission.INTERNET" />
-  <application>
-    <activity android:name="com.google.android.agera.testapp.NotesActivity"
+  <application android:name=".NotesApplication">
+    <activity android:name=".NotesActivity"
         android:label="@string/agera"
         android:theme="@style/Theme.Note">
       <intent-filter>

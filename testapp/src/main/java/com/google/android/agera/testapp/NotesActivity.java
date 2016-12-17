@@ -62,10 +62,6 @@ public final class NotesActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.notes_activity);
 
-    // Setup strict mode, no violations using Agera
-    setThreadPolicy(new ThreadPolicy.Builder().detectAll().penaltyLog().build());
-    setVmPolicy(new VmPolicy.Builder().detectAll().penaltyLog().build());
-
     // Create the notes store, containing all async IO
     final NotesStore notesStore = notesStore(getApplicationContext());
 
