@@ -15,6 +15,7 @@
  */
 package com.google.android.agera.testapp;
 
+import static android.text.TextUtils.isEmpty;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
@@ -28,6 +29,7 @@ import static com.google.android.agera.database.SqlRequests.sqlInsertRequest;
 import static com.google.android.agera.database.SqlRequests.sqlRequest;
 import static com.google.android.agera.database.SqlRequests.sqlUpdateRequest;
 import static com.google.android.agera.testapp.Note.note;
+import static com.google.android.agera.testapp.NoteGroup.noteGroup;
 import static com.google.android.agera.testapp.NotesSqlDatabaseSupplier.NOTES_NOTE_COLUMN;
 import static com.google.android.agera.testapp.NotesSqlDatabaseSupplier.NOTES_NOTE_ID_COLUMN;
 import static com.google.android.agera.testapp.NotesSqlDatabaseSupplier.NOTES_TABLE;
@@ -48,7 +50,10 @@ import com.google.android.agera.database.SqlUpdateRequest;
 import android.content.Context;
 import android.support.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Executor;
 
 /**
@@ -63,12 +68,12 @@ final class NotesStore {
           + " ORDER BY " + NOTES_NOTE_COLUMN;
   private static final int ID_COLUMN_INDEX = 0;
   private static final int NOTE_COLUMN_INDEX = 1;
-  private static final List<Note> INITIAL_VALUE = emptyList();
+  private static final List<NoteGroup> INITIAL_VALUE = emptyList();
   @NonNull
   private static final Executor STORE_EXECUTOR = newSingleThreadExecutor();
 
   @NonNull
-  private final Repository<List<Note>> notesRepository;
+  private final Repository<List<NoteGroup>> notesRepository;
   @NonNull
   private final Receiver<SqlInsertRequest> insert;
   @NonNull
@@ -76,7 +81,7 @@ final class NotesStore {
   @NonNull
   private final Receiver<SqlDeleteRequest> delete;
 
-  private NotesStore(@NonNull final Repository<List<Note>> notesRepository,
+  private NotesStore(@NonNull final Repository<List<NoteGroup>> notesRepository,
       @NonNull final Receiver<SqlInsertRequest> insert,
       @NonNull final Receiver<SqlUpdateRequest> update,
       @NonNull final Receiver<SqlDeleteRequest> delete) {
@@ -123,16 +128,34 @@ final class NotesStore {
         .onUpdatesPerLoop()
         .goTo(STORE_EXECUTOR)
         .getFrom(() -> sqlRequest().sql(GET_NOTES_FROM_TABLE).compile())
-        .thenAttemptTransform(databaseQueryFunction(databaseSupplier,
+        .attemptTransform(databaseQueryFunction(databaseSupplier,
             cursor -> note(cursor.getInt(ID_COLUMN_INDEX), cursor.getString(NOTE_COLUMN_INDEX))))
         .orEnd(staticFunction(INITIAL_VALUE))
+        .thenTransform(notes -> {
+          final Map<Character, List<Note>> notesGroupsData = new TreeMap<>();
+          for (final Note note : notes) {
+            final String noteText = note.getNote();
+            final char groupId = isEmpty(noteText) ? 0 : noteText.charAt(0);
+            List<Note> notesGroupData = notesGroupsData.get(groupId);
+            if (notesGroupData == null) {
+              notesGroupData = new ArrayList<>();
+              notesGroupsData.put(groupId, notesGroupData);
+            }
+            notesGroupData.add(note);
+          }
+          final List<NoteGroup> notesGroups = new ArrayList<>();
+          for (final Map.Entry<Character, List<Note>> groupData : notesGroupsData.entrySet()) {
+            notesGroups.add(noteGroup(groupData.getKey(), groupData.getValue()));
+          }
+          return notesGroups;
+        })
         .onConcurrentUpdate(SEND_INTERRUPT)
         .onDeactivation(SEND_INTERRUPT)
         .compile(), insert, update, delete);
   }
 
   @NonNull
-  Repository<List<Note>> getNotesRepository() {
+  Repository<List<NoteGroup>> getNotesRepository() {
     return notesRepository;
   }
 

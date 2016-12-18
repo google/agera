@@ -16,14 +16,17 @@
 package com.google.android.agera.testapp;
 
 import static android.graphics.BitmapFactory.decodeByteArray;
+import static android.support.v7.widget.LinearLayoutManager.HORIZONTAL;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
 import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.net.HttpFunctions.httpFunction;
 import static com.google.android.agera.net.HttpRequests.httpGetRequest;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
+import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
 import static com.google.android.agera.testapp.NotesStore.notesStore;
+import static com.google.android.agera.testapp.RowHandler.rowBinder;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 import com.google.android.agera.Receiver;
@@ -46,6 +49,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 public final class NotesFragment extends Fragment {
@@ -64,24 +68,34 @@ public final class NotesFragment extends Fragment {
     setRetainInstance(true);
     notesStore = notesStore(getContext().getApplicationContext());
 
+    final RowHandler<NoteGroup, List<Note>> rowHandler = rowBinder(
+        (r) -> new LinearLayoutManager(getContext(), HORIZONTAL, false),
+        NoteGroup::getId, NoteGroup::getNotes, (r) ->
+            dataBindingRepositoryPresenterOf(Note.class)
+                .layout(R.layout.text_layout)
+                .itemId(BR.note)
+                .stableIdForItem(Note::getId)
+                .handler(BR.click,
+                    (Receiver<Note>) (note) -> {
+                      final EditText editText = new EditText(getContext());
+                      editText.setId(R.id.edit);
+                      editText.setText(note.getNote());
+                      new AlertDialog.Builder(getContext())
+                          .setTitle(R.string.edit_note)
+                          .setView(editText)
+                          .setPositiveButton(R.string.edit, (d, i) ->
+                              notesStore.updateNote(note, editText.getText().toString()))
+                          .create().show();
+                    })
+                .handler(BR.longClick, (Receiver<Note>) notesStore::deleteNote)
+                .forList());
+
     adapter = repositoryAdapter()
-        .add(notesStore.getNotesRepository(), dataBindingRepositoryPresenterOf(Note.class)
-            .layout(R.layout.text_layout)
-            .itemId(BR.note)
-            .stableIdForItem(Note::getId)
-            .handler(BR.click,
-                (Receiver<Note>) note -> {
-                  final EditText editText = new EditText(getContext());
-                  editText.setId(R.id.edit);
-                  editText.setText(note.getNote());
-                  new AlertDialog.Builder(getContext())
-                      .setTitle(R.string.edit_note)
-                      .setView(editText)
-                      .setPositiveButton(R.string.edit,
-                          (d, i) -> notesStore.updateNote(note, editText.getText().toString()))
-                      .create().show();
-                })
-            .handler(BR.longClick, (Receiver<Note>) notesStore::deleteNote)
+        .add(notesStore.getNotesRepository(), repositoryPresenterOf(NoteGroup.class)
+            .layout(R.layout.note_group_layout)
+            .stableIdForItem(NoteGroup::getId)
+            .bindWith(rowHandler)
+            .recycleWith(rowHandler)
             .forList())
         .build();
     adapter.setHasStableIds(true);
