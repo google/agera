@@ -18,7 +18,7 @@ package com.google.android.agera.rvadapter;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderStableIdCompile;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderRecycleStableIdCompile;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -37,7 +37,7 @@ public final class RepositoryPresenters {
    */
   @SuppressWarnings({"unchecked", "UnusedParameters"})
   @NonNull
-  public static <T> RPLayout<T, RPViewBinderStableIdCompile<T>> repositoryPresenterOf(
+  public static <T> RPLayout<T, RPViewBinderRecycleStableIdCompile<T>> repositoryPresenterOf(
       @Nullable final Class<T> type) {
     return new RepositoryPresenterCompiler();
   }

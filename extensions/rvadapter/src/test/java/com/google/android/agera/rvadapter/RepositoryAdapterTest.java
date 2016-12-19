@@ -187,6 +187,69 @@ public final class RepositoryAdapterTest {
   }
 
   @Test
+  public void shouldCallRecycleForOnViewRecycled() {
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    repositoryAdapter.onBindViewHolder(viewHolder, 0);
+
+    repositoryAdapter.onViewRecycled(viewHolder);
+
+    verify(repositoryPresenter).recycle(viewHolder);
+  }
+
+  @Test
+  public void shouldCallRecycleForOnFailedToRecycleView() {
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    repositoryAdapter.onBindViewHolder(viewHolder, 0);
+
+    repositoryAdapter.onFailedToRecycleView(viewHolder);
+
+    verify(repositoryPresenter).recycle(viewHolder);
+  }
+
+  public void shouldCallRecycleForOnViewRecycledForSecondPresenter() {
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    repositoryAdapter.onBindViewHolder(viewHolder, 1);
+
+    repositoryAdapter.onViewRecycled(viewHolder);
+
+    verify(secondRepositoryPresenter).recycle(viewHolder);
+  }
+
+  @Test
+  public void shouldCallRecycleForOnFailedToRecycleViewForSecondPresenter() {
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    repositoryAdapter.onBindViewHolder(viewHolder, 1);
+
+    repositoryAdapter.onFailedToRecycleView(viewHolder);
+
+    verify(secondRepositoryPresenter).recycle(viewHolder);
+  }
+
+  @Test
   public void shouldUpdateOnChangingRepositoryWhenObserving() {
     when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
     repositoryAdapter.getItemCount(); //Trigger a refresh

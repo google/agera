@@ -36,7 +36,9 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A specialized {@link RecyclerView.Adapter} that presents the data from a sequence of
@@ -270,6 +272,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   @NonNull
   private final RepositoryPresenter<Object>[] presenters;
   @NonNull
+  private final Map<ViewHolder, RepositoryPresenter<Object>> presenterForViewHolder;
+  @NonNull
   private final Observable observable;
   @NonNull
   private final int[] endPositions;
@@ -298,6 +302,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     this.repositoryCount = count;
     this.repositories = repositories;
     this.presenters = presenters;
+    this.presenterForViewHolder = new IdentityHashMap<>();
     this.observable = compositeObservable(observables);
     this.endPositions = new int[count];
     this.dataInvalid = true;
@@ -379,8 +384,27 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     resolveIndices(position);
     int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
     int resolvedItemIndex = this.resolvedItemIndex;
-    presenters[resolvedRepositoryIndex].bind(
-        data[resolvedRepositoryIndex], resolvedItemIndex, holder);
+    final RepositoryPresenter<Object> presenter = presenters[resolvedRepositoryIndex];
+    presenterForViewHolder.put(holder, presenter);
+    presenter.bind(data[resolvedRepositoryIndex], resolvedItemIndex, holder);
+  }
+
+  @Override
+  public boolean onFailedToRecycleView(final ViewHolder holder) {
+    recycle(holder);
+    return super.onFailedToRecycleView(holder);
+  }
+
+  @Override
+  public void onViewRecycled(final ViewHolder holder) {
+    recycle(holder);
+  }
+
+  private void recycle(@NonNull final ViewHolder holder) {
+    final RepositoryPresenter<Object> presenter = presenterForViewHolder.remove(holder);
+    if (presenter != null) {
+      presenter.recycle(holder);
+    }
   }
 
   /**

@@ -14,6 +14,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
 import com.google.android.agera.Functions;
+import com.google.android.agera.Receiver;
 import com.google.android.agera.Result;
 
 import android.support.v7.widget.RecyclerView;
@@ -25,7 +26,6 @@ import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
-import java.util.Arrays;
 import java.util.List;
 
 @RunWith(RobolectricTestRunner.class)
@@ -43,6 +43,8 @@ public class RepositoryPresentersTest {
   private static final long STABLE_ID = 2;
   @Mock
   private Binder<String, View> binder;
+  @Mock
+  private Receiver<View> recycler;
   @Mock
   private Function<String,Integer> layoutForItem;
   private RecyclerView.ViewHolder viewHolder;
@@ -97,6 +99,30 @@ public class RepositoryPresentersTest {
             .forList();
     listRepositoryPresenter.bind(STRING_LIST, 1, viewHolder);
     verify(binder).bind(SECOND_STRING, view);
+  }
+
+  @Test
+  public void shouldRecycleViewInRepositoryPresenter() {
+    final RepositoryPresenter<List<String>> listRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .bindWith(binder)
+            .recycleWith(recycler)
+            .forList();
+    listRepositoryPresenter.bind(STRING_LIST, 1, viewHolder);
+    listRepositoryPresenter.recycle(viewHolder);
+    verify(recycler).accept(view);
+  }
+
+  @Test
+  public void shouldHandleRecycleWithoutRecycler() {
+    final RepositoryPresenter<List<String>> listRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .bindWith(binder)
+            .forList();
+    listRepositoryPresenter.bind(STRING_LIST, 1, viewHolder);
+    listRepositoryPresenter.recycle(viewHolder);
   }
 
   @Test
