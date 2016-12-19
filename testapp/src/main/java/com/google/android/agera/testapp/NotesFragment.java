@@ -156,5 +156,6 @@ public final class NotesFragment extends Fragment {
   public void onDestroyView() {
     super.onDestroyView();
     recyclerView.setAdapter(null);
+    recyclerView = null;
   }
 }
