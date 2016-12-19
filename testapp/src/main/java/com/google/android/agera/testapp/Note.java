@@ -32,7 +32,7 @@ public final class Note {
     return new Note(id, note);
   }
 
-  public int getId() {
+  public long getId() {
     return id;
   }
 
