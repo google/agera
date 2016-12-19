@@ -55,38 +55,13 @@ public final class NotesFragment extends Fragment {
   private Repository<Result<Bitmap>> backgroundRepository;
   private Updatable updatable;
   private RepositoryAdapter adapter;
+  private NotesStore notesStore;
 
   @Override
   public void onCreate(@Nullable final Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setRetainInstance(true);
-  }
-
-  @Nullable
-  @Override
-  public View onCreateView(final LayoutInflater inflater, @Nullable final ViewGroup container,
-      @Nullable final Bundle savedInstanceState) {
-    final View view = inflater.inflate(R.layout.notes_fragment, container, false);
-
-    // Create the notes store, containing all async IO
-    final NotesStore notesStore = notesStore(getContext().getApplicationContext());
-
-    // Find the clear button and wire the click listener to call the clear notes updatable
-    view.findViewById(R.id.clear).setOnClickListener(v -> notesStore.clearNotes());
-
-    // Find the add button and wire the click listener to show a dialog that in turn calls the add
-    // note from text from the notes store when adding notes
-    view.findViewById(R.id.add).setOnClickListener(v -> {
-      final EditText editText = new EditText(v.getContext());
-      editText.setId(R.id.edit);
-      new AlertDialog.Builder(v.getContext())
-          .setTitle(R.string.add_note)
-          .setView(editText)
-          .setPositiveButton(R.string.add, (d, i) -> {
-            notesStore.insertNoteFromText(editText.getText().toString());
-          })
-          .create().show();
-    });
+    notesStore = notesStore(getContext().getApplicationContext());
 
     adapter = repositoryAdapter()
         .add(notesStore.getNotesRepository(), dataBindingRepositoryPresenterOf(Note.class)
@@ -110,11 +85,6 @@ public final class NotesFragment extends Fragment {
         .build();
     adapter.setHasStableIds(true);
 
-    // Setup the recycler view using the repository adapter
-    final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.result);
-    recyclerView.setAdapter(adapter);
-    recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
     final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
 
     backgroundRepository = repositoryWithInitialValue(Result.<Bitmap>absent())
@@ -132,9 +102,36 @@ public final class NotesFragment extends Fragment {
         })
         .onDeactivation(SEND_INTERRUPT)
         .compile();
+  }
 
+  @Nullable
+  @Override
+  public View onCreateView(final LayoutInflater inflater, @Nullable final ViewGroup container,
+      @Nullable final Bundle savedInstanceState) {
+    final View view = inflater.inflate(R.layout.notes_fragment, container, false);
+
+    // Find the clear button and wire the click listener to call the clear notes updatable
+    view.findViewById(R.id.clear).setOnClickListener(v -> notesStore.clearNotes());
+
+    // Find the add button and wire the click listener to show a dialog that in turn calls the add
+    // note from text from the notes store when adding notes
+    view.findViewById(R.id.add).setOnClickListener(v -> {
+      final EditText editText = new EditText(v.getContext());
+      editText.setId(R.id.edit);
+      new AlertDialog.Builder(v.getContext())
+          .setTitle(R.string.add_note)
+          .setView(editText)
+          .setPositiveButton(R.string.add, (d, i) -> {
+            notesStore.insertNoteFromText(editText.getText().toString());
+          })
+          .create().show();
+    });
+
+    // Setup the recycler view using the repository adapter
+    final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.result);
+    recyclerView.setAdapter(adapter);
+    recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
     final ImageView imageView = (ImageView) view.findViewById(R.id.background);
-
     updatable = () -> backgroundRepository.get().ifSucceededSendTo(imageView::setImageBitmap);
     return view;
   }
@@ -144,6 +141,7 @@ public final class NotesFragment extends Fragment {
     super.onStart();
     adapter.startObserving();
     backgroundRepository.addUpdatable(updatable);
+    updatable.update();
   }
 
   @Override
