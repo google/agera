@@ -56,6 +56,7 @@ public final class NotesFragment extends Fragment {
   private Updatable updatable;
   private RepositoryAdapter adapter;
   private NotesStore notesStore;
+  private RecyclerView recyclerView;
 
   @Override
   public void onCreate(@Nullable final Bundle savedInstanceState) {
@@ -128,7 +129,7 @@ public final class NotesFragment extends Fragment {
     });
 
     // Setup the recycler view using the repository adapter
-    final RecyclerView recyclerView = (RecyclerView) view.findViewById(R.id.result);
+    recyclerView = (RecyclerView) view.findViewById(R.id.result);
     recyclerView.setAdapter(adapter);
     recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
     final ImageView imageView = (ImageView) view.findViewById(R.id.background);
@@ -149,5 +150,11 @@ public final class NotesFragment extends Fragment {
     super.onStop();
     backgroundRepository.removeUpdatable(updatable);
     adapter.stopObserving();
+  }
+
+  @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    recyclerView.setAdapter(null);
   }
 }
