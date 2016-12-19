@@ -106,8 +106,7 @@ public final class NotesFragment extends Fragment {
                           (d, i) -> notesStore.updateNote(note, editText.getText().toString()))
                       .create().show();
                 })
-            .handler(BR.longClick,
-                (Predicate<Note>) notesStore::deleteNote)
+            .handler(BR.longClick, (Receiver<Note>) notesStore::deleteNote)
             .forList())
         .build();
     adapter.setHasStableIds(true);
