@@ -26,7 +26,6 @@ import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresen
 import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
-import com.google.android.agera.Predicate;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
@@ -93,7 +92,7 @@ public final class NotesFragment extends Fragment {
         .add(notesStore.getNotesRepository(), dataBindingRepositoryPresenterOf(Note.class)
             .layout(R.layout.text_layout)
             .itemId(BR.note)
-            .stableIdForItem(input -> (long) input.getId())
+            .stableIdForItem(Note::getId)
             .handler(BR.click,
                 (Receiver<Note>) note -> {
                   final EditText editText = new EditText(getContext());
