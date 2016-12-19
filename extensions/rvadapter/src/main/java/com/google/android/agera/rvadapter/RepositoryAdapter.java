@@ -78,6 +78,22 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     @NonNull
     final List<Observable> observables = new ArrayList<>();
 
+    boolean useMutlipleUpdates = false;
+
+    /**
+     * Specifies that the {@link RepositoryAdapter} being built should use a sequence of items
+     * inserted, items removed, and items changed notifications to rebind items from repositories
+     * with new data instead of using a single notifyDataSetChanged. Uses {@code equals} to
+     * determine if the data is new.
+     *
+     * @return This instance, for chaining.
+     */
+    @NonNull
+    public Builder useMultipleUpdates() {
+      this.useMutlipleUpdates = true;
+      return this;
+    }
+
     /**
      * Specifies that the {@link RepositoryAdapter} being built should present the given
      * {@code repository} next (after all previously added repositories), using the given
@@ -100,7 +116,6 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
       final RepositoryPresenter<Object> untypedPresenter =
           (RepositoryPresenter<Object>) checkNotNull(presenter);
       presenters.add(untypedPresenter);
-      observables.add(untypedRepository);
       return this;
     }
 
@@ -262,6 +277,19 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     }
   }
 
+  private static final class UpdateChangesUpdatable implements Updatable {
+    @NonNull
+    private final RepositoryAdapter repositoryAdapter;
+
+    private UpdateChangesUpdatable(@NonNull final RepositoryAdapter repositoryAdapter) {
+      this.repositoryAdapter = repositoryAdapter;
+    }
+
+    public void update() {
+      repositoryAdapter.updateChanges();
+    }
+  }
+
   private final int repositoryCount;
   @NonNull
   private final Repository<Object>[] repositories;
@@ -270,7 +298,11 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   @NonNull
   private final RepositoryPresenter<Object>[] presenters;
   @NonNull
-  private final Observable observable;
+  private final Observable updateAllObservable;
+  @NonNull
+  private final Observable updateChangesObservable;
+  @NonNull
+  private final Updatable updateChangesUpdatable;
   @NonNull
   private final int[] endPositions;
 
@@ -298,7 +330,10 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     this.repositoryCount = count;
     this.repositories = repositories;
     this.presenters = presenters;
-    this.observable = compositeObservable(observables);
+    this.updateAllObservable = compositeObservable(observables);
+    this.updateChangesObservable = compositeObservable(repositories);
+    this.updateChangesUpdatable =
+        builder.useMutlipleUpdates ? new UpdateChangesUpdatable(this) : this;
     this.endPositions = new int[count];
     this.dataInvalid = true;
   }
@@ -308,7 +343,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
    * to {@link #stopObserving()}.
    */
   public final void startObserving() {
-    observable.addUpdatable(this);
+    updateAllObservable.addUpdatable(this);
+    updateChangesObservable.addUpdatable(updateChangesUpdatable);
     update();
   }
 
@@ -317,7 +353,49 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
    * {@link #startObserving()}.
    */
   public final void stopObserving() {
-    observable.removeUpdatable(this);
+    updateChangesObservable.removeUpdatable(updateChangesUpdatable);
+    updateAllObservable.removeUpdatable(this);
+  }
+
+  /**
+   * Invalidates the data set so {@link RecyclerView} will schedule rebinds of changed data.
+   */
+  private void updateChanges() {
+    if (dataInvalid) {
+      return;
+    }
+
+    int totalItemsAddedCount = 0;
+    for (int i = 0; i < repositoryCount; i++) {
+      endPositions[i] += totalItemsAddedCount;
+
+      final Object newData = repositories[i].get();
+      if (!newData.equals(data[i])) {
+        data[i] = newData;
+        final int itemCount = presenters[i].getItemCount(data[i]);
+        final int startPosition = i > 0 ? endPositions[i-1] : 0;
+        final int endPosition = startPosition + itemCount;
+        final int itemsAddedCount = endPosition - endPositions[i];
+        if (itemsAddedCount == 0) {
+          notifyItemRangeChanged(startPosition, itemCount);
+        } else {
+          totalItemsAddedCount += itemsAddedCount;
+          endPositions[i] += itemsAddedCount;
+
+          if (itemsAddedCount > 0) {
+            if (itemCount != itemsAddedCount) {
+              notifyItemRangeChanged(startPosition, itemCount - itemsAddedCount);
+            }
+            notifyItemRangeInserted(endPosition - itemsAddedCount, itemsAddedCount);
+          } else {
+            if (itemCount > 0) {
+              notifyItemRangeChanged(startPosition, itemCount);
+            }
+            notifyItemRangeRemoved(startPosition + itemCount, -itemsAddedCount);
+          }
+        }
+      }
+    }
   }
 
   /**
