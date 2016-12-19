@@ -39,7 +39,6 @@ import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import com.google.android.agera.Function;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
-import com.google.android.agera.Reservoir;
 import com.google.android.agera.Result;
 import com.google.android.agera.UpdateDispatcher;
 import com.google.android.agera.database.SqlDeleteRequest;
@@ -55,8 +54,7 @@ import java.util.concurrent.Executor;
 /**
  * Encapsulates all database interactions for {@link Note}s. Getting a list of all notes is
  * implemented with a {@link #getNotesRepository()} Repository} that can be activated by and
- * observed from the Activity. Write operations are implemented using a {@link Reservoir} and a
- * reacting repository.
+ * observed from the Activity.
  */
 final class NotesStore {
   private static final String MODIFY_NOTE_WHERE = NOTES_NOTE_ID_COLUMN + "=?";
@@ -66,8 +64,8 @@ final class NotesStore {
   private static final int ID_COLUMN_INDEX = 0;
   private static final int NOTE_COLUMN_INDEX = 1;
   private static final List<Note> INITIAL_VALUE = emptyList();
-
-  private static NotesStore notesStore;
+  @NonNull
+  private static final Executor STORE_EXECUTOR = newSingleThreadExecutor();
 
   @NonNull
   private final Repository<List<Note>> notesRepository;
@@ -90,12 +88,6 @@ final class NotesStore {
 
   @NonNull
   synchronized static NotesStore notesStore(@NonNull final Context applicationContext) {
-    if (notesStore != null) {
-      return notesStore;
-    }
-    // Create a thread executor to execute all database operations on.
-    final Executor executor = newSingleThreadExecutor();
-
     // Create a database supplier that initializes the database. This is also used to supply the
     // database in all database operations.
     final NotesSqlDatabaseSupplier databaseSupplier = databaseSupplier(applicationContext);
@@ -110,26 +102,26 @@ final class NotesStore {
 
     final UpdateDispatcher updateDispatcher = updateDispatcher();
 
-    final Receiver<SqlDeleteRequest> delete = value -> executor.execute(() -> {
+    final Receiver<SqlDeleteRequest> delete = value -> STORE_EXECUTOR.execute(() -> {
       deleteNoteFunction.apply(value);
       updateDispatcher.update();
     });
 
-    final Receiver<SqlUpdateRequest> update = value -> executor.execute(() -> {
+    final Receiver<SqlUpdateRequest> update = value -> STORE_EXECUTOR.execute(() -> {
       updateNoteFunction.apply(value);
       updateDispatcher.update();
     });
 
-    final Receiver<SqlInsertRequest> insert = value -> executor.execute(() -> {
+    final Receiver<SqlInsertRequest> insert = value -> STORE_EXECUTOR.execute(() -> {
       insertNoteFunction.apply(value);
       updateDispatcher.update();
     });
 
     // Create the wired up notes store
-    notesStore = new NotesStore(repositoryWithInitialValue(INITIAL_VALUE)
+    return new NotesStore(repositoryWithInitialValue(INITIAL_VALUE)
         .observe(updateDispatcher)
         .onUpdatesPerLoop()
-        .goTo(executor)
+        .goTo(STORE_EXECUTOR)
         .getFrom(() -> sqlRequest().sql(GET_NOTES_FROM_TABLE).compile())
         .thenAttemptTransform(databaseQueryFunction(databaseSupplier,
             cursor -> note(cursor.getInt(ID_COLUMN_INDEX), cursor.getString(NOTE_COLUMN_INDEX))))
@@ -137,7 +129,6 @@ final class NotesStore {
         .onConcurrentUpdate(SEND_INTERRUPT)
         .onDeactivation(SEND_INTERRUPT)
         .compile(), insert, update, delete);
-    return notesStore;
   }
 
   @NonNull
