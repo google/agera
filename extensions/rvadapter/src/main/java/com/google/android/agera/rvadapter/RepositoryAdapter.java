@@ -27,6 +27,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application.ActivityLifecycleCallbacks;
 import android.os.Bundle;
+import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Adapter;
@@ -79,6 +80,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     final List<RepositoryPresenter<Object>> presenters = new ArrayList<>();
     @NonNull
     final List<Observable> observables = new ArrayList<>();
+    private boolean whileAttached;
 
     /**
      * Specifies that the {@link RepositoryAdapter} being built should present the given
@@ -132,6 +134,21 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
      */
     @NonNull
     public RepositoryAdapter build() {
+      return new RepositoryAdapter(this);
+    }
+
+    /**
+     * Builds the {@link RepositoryAdapter} that presents the provided repositories in order and
+     * observes the repositories as well as any additional observables while it is attached to a
+     * {@link RecyclerView}.
+     *
+     * <p>Note: {@link RecyclerView#setAdapter} has to be called with {@code null} when no longer in
+     * use to avoid the @{link RepositoryAdapter} to leak resources, and keep any associated
+     * {@link Repository} active forever.
+     */
+    @NonNull
+    public Adapter<ViewHolder> whileAttached() {
+      whileAttached = true;
       return new RepositoryAdapter(this);
     }
 
@@ -277,6 +294,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   private final Observable observable;
   @NonNull
   private final int[] endPositions;
+  private final boolean whileAttached;
 
   private boolean dataInvalid;
   private int resolvedRepositoryIndex;
@@ -306,6 +324,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     this.observable = compositeObservable(observables);
     this.endPositions = new int[count];
     this.dataInvalid = true;
+    this.whileAttached = builder.whileAttached;
   }
 
   /**
@@ -323,6 +342,24 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
    */
   public final void stopObserving() {
     observable.removeUpdatable(this);
+  }
+
+  @CallSuper
+  @Override
+  public void onAttachedToRecyclerView(final RecyclerView recyclerView) {
+    super.onAttachedToRecyclerView(recyclerView);
+    if (whileAttached) {
+      startObserving();
+    }
+  }
+
+  @CallSuper
+  @Override
+  public void onDetachedFromRecyclerView(final RecyclerView recyclerView) {
+    super.onDetachedFromRecyclerView(recyclerView);
+    if (whileAttached) {
+      stopObserving();
+    }
   }
 
   /**

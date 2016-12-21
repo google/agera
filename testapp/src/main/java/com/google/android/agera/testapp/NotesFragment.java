@@ -22,15 +22,17 @@ import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.net.HttpFunctions.httpFunction;
 import static com.google.android.agera.net.HttpRequests.httpGetRequest;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
+import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
 import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
+import com.google.android.agera.Observable;
+import com.google.android.agera.Observables;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.Updatable;
-import com.google.android.agera.rvadapter.RepositoryAdapter;
 
 import android.app.AlertDialog;
 import android.graphics.Bitmap;
@@ -39,6 +41,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.Adapter;
+import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,6 +50,8 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 public final class NotesFragment extends Fragment {
@@ -54,7 +60,7 @@ public final class NotesFragment extends Fragment {
 
   private Repository<Result<Bitmap>> backgroundRepository;
   private Updatable updatable;
-  private RepositoryAdapter adapter;
+  private Adapter<ViewHolder> adapter;
   private NotesStore notesStore;
   private RecyclerView recyclerView;
 
@@ -83,7 +89,7 @@ public final class NotesFragment extends Fragment {
                 })
             .handler(BR.longClick, (Receiver<Note>) notesStore::deleteNote)
             .forList())
-        .build();
+        .whileAttached();
     adapter.setHasStableIds(true);
 
     final DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
@@ -138,9 +144,14 @@ public final class NotesFragment extends Fragment {
   }
 
   @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    recyclerView.setAdapter(null);
+  }
+
+  @Override
   public void onStart() {
     super.onStart();
-    adapter.startObserving();
     backgroundRepository.addUpdatable(updatable);
     updatable.update();
   }
@@ -149,7 +160,6 @@ public final class NotesFragment extends Fragment {
   public void onStop() {
     super.onStop();
     backgroundRepository.removeUpdatable(updatable);
-    adapter.stopObserving();
   }
 
   @Override
