@@ -15,17 +15,15 @@
  */
 package com.google.android.agera.rvadapter;
 
+import android.support.annotation.LayoutRes;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
-
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
-
 import java.util.List;
 
 /**

@@ -19,16 +19,14 @@ import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.success;
 
-import com.google.android.agera.Function;
-import com.google.android.agera.Merger;
-import com.google.android.agera.Result;
-import com.google.android.agera.Supplier;
-
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
-
+import com.google.android.agera.Function;
+import com.google.android.agera.Merger;
+import com.google.android.agera.Result;
+import com.google.android.agera.Supplier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

@@ -15,10 +15,9 @@
  */
 package com.google.android.agera.net;
 
+import android.support.annotation.NonNull;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTBodyHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
-
-import android.support.annotation.NonNull;
 
 /**
  * Creates instances of {@link HttpRequest}.

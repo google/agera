@@ -20,6 +20,7 @@ import static com.google.android.agera.database.SqlRequestCompiler.SQL_INSERT_RE
 import static com.google.android.agera.database.SqlRequestCompiler.SQL_REQUEST;
 import static com.google.android.agera.database.SqlRequestCompiler.SQL_UPDATE_REQUEST;
 
+import android.support.annotation.NonNull;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBArgumentConflictCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBColumn;
@@ -30,8 +31,6 @@ import com.google.android.agera.database.SqlRequestCompilerStates.DBConflictComp
 import com.google.android.agera.database.SqlRequestCompilerStates.DBSql;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBTable;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBWhereCompile;
-
-import android.support.annotation.NonNull;
 
 /**
  * Creates sql requests.

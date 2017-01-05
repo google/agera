@@ -16,7 +16,6 @@
 package com.google.android.agera;
 
 import android.support.annotation.NonNull;
-
 import java.io.Closeable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;

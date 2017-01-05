@@ -35,10 +35,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -52,6 +48,9 @@ import java.net.URLStreamHandlerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public final class HttpFunctionsTest {
   private static final String TEST_PROTOCOL = "httptest";

@@ -32,7 +32,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
 import com.google.android.agera.test.mocks.MockUpdatable;
-
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,8 +40,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-
-import java.util.List;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)

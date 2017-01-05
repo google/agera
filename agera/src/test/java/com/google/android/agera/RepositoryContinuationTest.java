@@ -15,26 +15,19 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Repositories.mutableRepository;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.success;
 import static com.google.android.agera.Suppliers.staticSupplier;
 import static com.google.android.agera.test.matchers.SupplierGives.has;
-import static com.google.android.agera.test.matchers.UpdatableUpdated.wasNotUpdated;
-import static com.google.android.agera.test.matchers.UpdatableUpdated.wasUpdated;
 import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
-import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
 import com.google.android.agera.test.mocks.MockUpdatable;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,8 +35,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-
-import java.util.List;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)

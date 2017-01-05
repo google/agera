@@ -17,11 +17,9 @@ package com.google.android.agera.content.test.mocks;
 
 import static org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks;
 
+import android.support.annotation.NonNull;
 import com.google.android.agera.Observable;
 import com.google.android.agera.Updatable;
-
-import android.support.annotation.NonNull;
-
 import java.util.ArrayList;
 import java.util.List;
 

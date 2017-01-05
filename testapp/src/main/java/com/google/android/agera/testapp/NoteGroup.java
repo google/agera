@@ -16,7 +16,6 @@
 package com.google.android.agera.testapp;
 
 import android.support.annotation.NonNull;
-
 import java.util.List;
 
 public final class NoteGroup {

@@ -18,15 +18,13 @@ package com.google.android.agera.net;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
 
+import android.support.annotation.NonNull;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTBodyHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTCachesConnectionTimeoutReadTimeoutCompile;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTCompile;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTConnectionTimeoutReadTimeoutCompile;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTReadTimeoutCompile;
-
-import android.support.annotation.NonNull;
-
 import java.util.HashMap;
 import java.util.Map;
 

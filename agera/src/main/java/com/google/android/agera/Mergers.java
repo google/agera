@@ -15,9 +15,8 @@
  */
 package com.google.android.agera;
 
-import com.google.android.agera.Common.StaticProducer;
-
 import android.support.annotation.NonNull;
+import com.google.android.agera.Common.StaticProducer;
 
 /**
  * Utility methods for obtaining {@link Merger} instances.

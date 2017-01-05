@@ -15,9 +15,8 @@
  */
 package com.google.android.agera.test.matchers;
 
-import com.google.android.agera.test.mocks.MockUpdatable;
-
 import android.support.annotation.NonNull;
+import com.google.android.agera.test.mocks.MockUpdatable;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.TypeSafeMatcher;

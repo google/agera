@@ -21,22 +21,19 @@ import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerBindingCompile;
 
+import android.databinding.DataBindingUtil;
+import android.databinding.ViewDataBinding;
+import android.support.annotation.LayoutRes;
+import android.support.annotation.NonNull;
+import android.support.v4.util.Pair;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPItemBinding;
-
-import android.databinding.DataBindingUtil;
-import android.databinding.ViewDataBinding;
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.v4.util.Pair;
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
-
 import java.util.ArrayList;
 import java.util.List;
 

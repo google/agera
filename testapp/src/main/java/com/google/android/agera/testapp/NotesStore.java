@@ -38,6 +38,8 @@ import static java.lang.String.valueOf;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
+import android.content.Context;
+import android.support.annotation.NonNull;
 import com.google.android.agera.Function;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
@@ -46,10 +48,6 @@ import com.google.android.agera.UpdateDispatcher;
 import com.google.android.agera.database.SqlDeleteRequest;
 import com.google.android.agera.database.SqlInsertRequest;
 import com.google.android.agera.database.SqlUpdateRequest;
-
-import android.content.Context;
-import android.support.annotation.NonNull;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

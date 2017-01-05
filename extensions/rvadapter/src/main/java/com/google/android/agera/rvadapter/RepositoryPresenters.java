@@ -15,14 +15,12 @@
  */
 package com.google.android.agera.rvadapter;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderRecycleStableIdCompile;
-
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
 import java.util.List;
 
 /**

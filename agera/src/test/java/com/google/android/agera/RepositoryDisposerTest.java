@@ -15,9 +15,22 @@
  */
 package com.google.android.agera;
 
+import static com.google.android.agera.Functions.staticFunction;
+import static com.google.android.agera.Predicates.falsePredicate;
+import static com.google.android.agera.Predicates.truePredicate;
+import static com.google.android.agera.Repositories.repositoryWithInitialValue;
+import static com.google.android.agera.RepositoryConfig.CANCEL_FLOW;
+import static com.google.android.agera.Suppliers.staticSupplier;
+import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+import static org.robolectric.annotation.Config.NONE;
+
 import com.google.android.agera.test.SingleSlotDelayedExecutor;
 import com.google.android.agera.test.mocks.MockUpdatable;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,23 +38,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-
-import static com.google.android.agera.Functions.staticFunction;
-import static com.google.android.agera.Predicates.equalTo;
-import static com.google.android.agera.Predicates.falsePredicate;
-import static com.google.android.agera.Predicates.truePredicate;
-import static com.google.android.agera.Repositories.repositoryWithInitialValue;
-import static com.google.android.agera.RepositoryConfig.CANCEL_FLOW;
-import static com.google.android.agera.Result.failure;
-import static com.google.android.agera.Suppliers.staticSupplier;
-import static com.google.android.agera.test.mocks.MockUpdatable.mockUpdatable;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.robolectric.annotation.Config.NONE;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)

@@ -33,7 +33,6 @@ import com.google.android.agera.database.SqlRequestCompilerStates.DBCompile;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBSql;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBTable;
 import com.google.android.agera.database.SqlRequestCompilerStates.DBWhereCompile;
-
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Before;
 import org.junit.Test;

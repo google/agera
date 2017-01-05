@@ -18,9 +18,6 @@ package com.google.android.agera.database;
 import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.Result.failure;
 
-import com.google.android.agera.Result;
-import com.google.android.agera.Supplier;
-
 import android.content.Context;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
@@ -28,6 +25,8 @@ import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import com.google.android.agera.Result;
+import com.google.android.agera.Supplier;
 
 /**
  * Abstract extension of {@link SQLiteOpenHelper} implementing a sql database {@link Supplier} to be

@@ -38,14 +38,13 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.core.Is.is;
 import static org.robolectric.annotation.Config.NONE;
 
-import com.google.android.agera.Function;
-import com.google.android.agera.Result;
-import com.google.android.agera.Supplier;
-
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
+import com.google.android.agera.Function;
+import com.google.android.agera.Result;
+import com.google.android.agera.Supplier;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

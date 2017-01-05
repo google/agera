@@ -1,10 +1,6 @@
 package android.databinding;
 
-import com.google.android.agera.rvdatabinding.BuildConfig;
-
-import android.os.Build;
 import android.view.View;
-
 import java.util.HashMap;
 import java.util.Map;
 

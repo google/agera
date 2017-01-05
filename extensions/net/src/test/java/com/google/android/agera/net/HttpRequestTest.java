@@ -31,12 +31,9 @@ import static org.hamcrest.Matchers.not;
 
 import com.google.android.agera.net.HttpRequestCompilerStates.HTBodyHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
 import com.google.android.agera.net.HttpRequestCompilerStates.HTHeaderFieldRedirectsCachesConnectionTimeoutReadTimeoutCompile;
-
-import dalvik.annotation.TestTarget;
+import java.util.Map;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Test;
-
-import java.util.Map;
 
 public final class HttpRequestTest {
   private static final String URL = "http://agera";

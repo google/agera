@@ -27,23 +27,21 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.robolectric.Robolectric.flushForegroundThreadScheduler;
 import static org.robolectric.annotation.Config.NONE;
 
-import com.google.android.agera.test.mocks.MockUpdatable;
-
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
-
+import com.google.android.agera.test.mocks.MockUpdatable;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)

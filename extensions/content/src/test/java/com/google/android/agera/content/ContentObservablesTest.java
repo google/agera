@@ -25,14 +25,13 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
-import com.google.android.agera.ActivationHandler;
-import com.google.android.agera.content.test.matchers.UpdatableUpdated;
-import com.google.android.agera.content.test.mocks.MockUpdatable;
-
 import android.app.Application;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import com.google.android.agera.ActivationHandler;
+import com.google.android.agera.content.test.matchers.UpdatableUpdated;
+import com.google.android.agera.content.test.mocks.MockUpdatable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

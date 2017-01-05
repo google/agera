@@ -19,10 +19,6 @@ import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Preconditions.checkArgument;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
-import com.google.android.agera.Observable;
-import com.google.android.agera.Repository;
-import com.google.android.agera.Updatable;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application.ActivityLifecycleCallbacks;
@@ -33,7 +29,9 @@ import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-
+import com.google.android.agera.Observable;
+import com.google.android.agera.Repository;
+import com.google.android.agera.Updatable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;

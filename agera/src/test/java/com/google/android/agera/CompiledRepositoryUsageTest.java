@@ -28,7 +28,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
 import com.google.android.agera.test.SingleSlotDelayedExecutor;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
