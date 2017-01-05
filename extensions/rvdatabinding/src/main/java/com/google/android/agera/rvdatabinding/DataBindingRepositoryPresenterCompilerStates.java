@@ -15,7 +15,6 @@
  */
 package com.google.android.agera.rvdatabinding;
 
-import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import com.google.android.agera.Function;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCompile;
@@ -24,7 +23,7 @@ import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPSt
 public interface DataBindingRepositoryPresenterCompilerStates {
   interface DBRPItemBinding<TVal, TRet> {
     @NonNull
-    TRet itemId(@LayoutRes int itemId);
+    TRet itemId(int itemId);
 
     @NonNull
     TRet itemIdForItem(@NonNull Function<TVal, Integer> itemIdForItem);
@@ -32,7 +31,7 @@ public interface DataBindingRepositoryPresenterCompilerStates {
 
   interface DBRPHandlerBinding<TRet> {
     @NonNull
-    TRet handler(@LayoutRes int handlerId, @NonNull Object handler);
+    TRet handler(int handlerId, @NonNull Object handler);
   }
 
   interface DBRPHandlerBindingCompile<TVal>

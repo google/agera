@@ -53,14 +53,14 @@ final class DataBindingRepositoryPresenterCompiler
 
   @NonNull
   @Override
-  public Object handler(@LayoutRes final int handlerId, @NonNull final Object handler) {
+  public Object handler(final int handlerId, @NonNull final Object handler) {
     handlers.add(create(handlerId, handler));
     return this;
   }
 
   @NonNull
   @Override
-  public Object itemId(@LayoutRes final int itemId) {
+  public Object itemId(final int itemId) {
     this.itemId = staticFunction(itemId);
     return this;
   }
