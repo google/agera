@@ -59,7 +59,8 @@ final class RowHandler<TRow, TRowItems> extends OnScrollListener
   @NonNull
   private final RecycledViewPool pool;
 
-  private RowHandler(@NonNull final Function<TRow, TRowItems> data,
+  private RowHandler(@NonNull final RecycledViewPool pool,
+      @NonNull final Function<TRow, TRowItems> data,
       @NonNull final Function<TRow, Long> stableId,
       @NonNull final Function<TRow, RepositoryPresenter<TRowItems>> presenter,
       @NonNull final Function<TRow, LayoutManager> layoutManager) {
@@ -71,16 +72,17 @@ final class RowHandler<TRow, TRowItems> extends OnScrollListener
     this.previousStableIds = new IdentityHashMap<>();
     this.adapterRepositories = new IdentityHashMap<>();
     this.startedAdapters = new HashSet<>();
-    this.pool = new RecycledViewPool();
+    this.pool = pool;
   }
 
   @NonNull
   static <TRow, TRowItems> RowHandler<TRow, TRowItems> rowBinder(
+      @NonNull final RecycledViewPool pool,
       @NonNull final Function<TRow, LayoutManager> layoutManager,
       @NonNull final Function<TRow, Long> stableIdFunction,
       @NonNull final Function<TRow, TRowItems> dataFunction,
       @NonNull final Function<TRow, RepositoryPresenter<TRowItems>> presenterFromView) {
-    return new RowHandler<>(dataFunction, stableIdFunction, presenterFromView, layoutManager);
+    return new RowHandler<>(pool, dataFunction, stableIdFunction, presenterFromView, layoutManager);
   }
 
   @Override

@@ -36,6 +36,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.RecycledViewPool;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -59,6 +60,7 @@ public final class NotesFragment extends Fragment {
   private RepositoryAdapter adapter;
   private NotesStore notesStore;
   private RecyclerView recyclerView;
+  private RecycledViewPool pool;
 
   @Override
   public void onCreate(@Nullable final Bundle savedInstanceState) {
@@ -66,7 +68,8 @@ public final class NotesFragment extends Fragment {
     setRetainInstance(true);
     notesStore = notesStore(getContext().getApplicationContext());
 
-    final RowHandler<NoteGroup, List<Note>> rowHandler = rowBinder(
+    pool = new RecycledViewPool();
+    final RowHandler<NoteGroup, List<Note>> rowHandler = rowBinder(pool,
         (r) -> new LinearLayoutManager(getContext(), HORIZONTAL, false),
         NoteGroup::getId, NoteGroup::getNotes, (r) ->
             dataBindingRepositoryPresenterOf(Note.class)
@@ -169,5 +172,6 @@ public final class NotesFragment extends Fragment {
     super.onDestroyView();
     recyclerView.setAdapter(null);
     recyclerView = null;
+    pool.clear();
   }
 }
