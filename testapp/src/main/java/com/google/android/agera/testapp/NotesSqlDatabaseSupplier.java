@@ -15,12 +15,11 @@
  */
 package com.google.android.agera.testapp;
 
-import com.google.android.agera.database.SqlDatabaseSupplier;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
+import com.google.android.agera.database.SqlDatabaseSupplier;
 
 final class NotesSqlDatabaseSupplier extends SqlDatabaseSupplier {
   static final String NOTES_NOTE_COLUMN = "note";

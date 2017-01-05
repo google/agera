@@ -37,9 +37,11 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 
-import com.google.android.agera.test.mocks.MockUpdatable;
-
 import android.support.annotation.NonNull;
+import com.google.android.agera.test.mocks.MockUpdatable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,10 +50,6 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executor;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)

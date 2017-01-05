@@ -16,13 +16,12 @@
 package com.google.android.agera.rvadapter.test.matchers;
 
 import android.support.annotation.NonNull;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
 
 public final class HasPrivateConstructor extends TypeSafeMatcher<Class<?>> {
   private static final HasPrivateConstructor INSTANCE = new HasPrivateConstructor();

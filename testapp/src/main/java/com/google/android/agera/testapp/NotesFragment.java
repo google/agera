@@ -29,12 +29,6 @@ import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static com.google.android.agera.testapp.RowHandler.rowBinder;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
-import com.google.android.agera.Receiver;
-import com.google.android.agera.Repository;
-import com.google.android.agera.Result;
-import com.google.android.agera.Updatable;
-import com.google.android.agera.rvadapter.RepositoryAdapter;
-
 import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -48,7 +42,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
-
+import com.google.android.agera.Receiver;
+import com.google.android.agera.Repository;
+import com.google.android.agera.Result;
+import com.google.android.agera.Updatable;
+import com.google.android.agera.rvadapter.RepositoryAdapter;
 import java.util.List;
 import java.util.concurrent.Executor;
 

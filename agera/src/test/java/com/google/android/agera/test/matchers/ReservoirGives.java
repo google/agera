@@ -17,11 +17,10 @@ package com.google.android.agera.test.matchers;
 
 import static com.google.android.agera.Result.present;
 
-import com.google.android.agera.Reservoir;
-import com.google.android.agera.Result;
-
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import com.google.android.agera.Reservoir;
+import com.google.android.agera.Result;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;

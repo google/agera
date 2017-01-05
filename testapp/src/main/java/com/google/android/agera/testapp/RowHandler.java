@@ -19,13 +19,6 @@ import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Repositories.mutableRepository;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
 
-import com.google.android.agera.Binder;
-import com.google.android.agera.Function;
-import com.google.android.agera.MutableRepository;
-import com.google.android.agera.Receiver;
-import com.google.android.agera.rvadapter.RepositoryAdapter;
-import com.google.android.agera.rvadapter.RepositoryPresenter;
-
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -34,7 +27,12 @@ import android.support.v7.widget.RecyclerView.LayoutManager;
 import android.support.v7.widget.RecyclerView.OnScrollListener;
 import android.support.v7.widget.RecyclerView.RecycledViewPool;
 import android.view.View;
-
+import com.google.android.agera.Binder;
+import com.google.android.agera.Function;
+import com.google.android.agera.MutableRepository;
+import com.google.android.agera.Receiver;
+import com.google.android.agera.rvadapter.RepositoryAdapter;
+import com.google.android.agera.rvadapter.RepositoryPresenter;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;

@@ -15,13 +15,11 @@
  */
 package com.google.android.agera;
 
-import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Preconditions.checkNotNull;
-
-import com.google.android.agera.RepositoryCompilerStates.REventSource;
 
 import android.os.Looper;
 import android.support.annotation.NonNull;
+import com.google.android.agera.RepositoryCompilerStates.REventSource;
 
 /**
  * Utility methods for obtaining {@link Repository} instances.

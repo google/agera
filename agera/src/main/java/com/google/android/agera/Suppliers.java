@@ -17,9 +17,8 @@ package com.google.android.agera;
 
 import static com.google.android.agera.Preconditions.checkNotNull;
 
-import com.google.android.agera.Common.StaticProducer;
-
 import android.support.annotation.NonNull;
+import com.google.android.agera.Common.StaticProducer;
 
 /**
  * Utility methods for obtaining {@link Supplier} instances.

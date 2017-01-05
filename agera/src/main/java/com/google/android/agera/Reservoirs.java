@@ -21,7 +21,6 @@ import static com.google.android.agera.Result.absentIfNull;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
 import java.util.ArrayDeque;
 import java.util.PriorityQueue;
 import java.util.Queue;

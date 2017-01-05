@@ -15,12 +15,11 @@
  */
 package com.google.android.agera.rvdatabinding;
 
+import android.support.annotation.LayoutRes;
+import android.support.annotation.NonNull;
 import com.google.android.agera.Function;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPStableId;
-
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
 
 public interface DataBindingRepositoryPresenterCompilerStates {
   interface DBRPItemBinding<TVal, TRet> {

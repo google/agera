@@ -20,13 +20,11 @@ import static com.google.android.agera.Common.NULL_OPERATOR;
 import static com.google.android.agera.FunctionCompiler.functionCompiler;
 import static com.google.android.agera.Preconditions.checkNotNull;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import com.google.android.agera.Common.StaticProducer;
 import com.google.android.agera.FunctionCompilerStates.FItem;
 import com.google.android.agera.FunctionCompilerStates.FList;
-
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
 import java.util.List;
 
 /**

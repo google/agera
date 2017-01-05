@@ -16,7 +16,6 @@
 package com.google.android.agera;
 
 import android.support.annotation.NonNull;
-
 import java.util.Comparator;
 import java.util.List;
 

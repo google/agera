@@ -19,7 +19,6 @@ import static com.google.android.agera.Preconditions.checkNotNull;
 
 import android.content.ContentValues;
 import android.support.annotation.NonNull;
-
 import java.util.Arrays;
 
 /**

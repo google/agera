@@ -15,11 +15,10 @@
  */
 package com.google.android.agera.rvadapter;
 
-import com.google.android.agera.Repository;
-
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import com.google.android.agera.Repository;
 
 /**
  * Contains logic to present the content of a {@link Repository}.

@@ -44,9 +44,12 @@ import static org.robolectric.shadows.ShadowLooper.getShadowMainLooper;
 import static org.robolectric.shadows.ShadowLooper.idleMainLooper;
 import static org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks;
 
-import com.google.android.agera.test.mocks.MockUpdatable;
-
 import android.support.annotation.NonNull;
+import com.google.android.agera.test.mocks.MockUpdatable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,11 +59,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.util.Scheduler;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Config(manifest = NONE)
 @RunWith(RobolectricTestRunner.class)
