@@ -114,27 +114,15 @@ final class RowHandler<TRow, TRowItems> extends OnScrollListener
         startedAdapters.add(adapter);
       }
     }
-    final LayoutManager layoutManager = recyclerView.getLayoutManager();
-    final Parcelable state = itemRowStates.get(id);
-    layoutManager.onRestoreInstanceState(state);
-    if (state == null) {
-      layoutManager.scrollToPosition(0);
-    }
-  }
-
-  @Override
-  public void onScrollStateChanged(final RecyclerView recyclerView, final int newState) {
-    if (recyclerView != null
-        && recyclerView.getLayoutManager() != null) {
-      itemRowStates.put(previousStableIds.get(recyclerView.getAdapter()),
-          recyclerView.getLayoutManager().onSaveInstanceState());
-    }
+    recyclerView.getLayoutManager().onRestoreInstanceState(itemRowStates.get(id));
   }
 
   @Override
   public void accept(@NonNull final View view) {
     final RecyclerView recyclerView = (RecyclerView) view;
     final RepositoryAdapter adapter = (RepositoryAdapter) recyclerView.getAdapter();
+    itemRowStates.put(previousStableIds.get(adapter),
+        recyclerView.getLayoutManager().onSaveInstanceState());
     if (startedAdapters.remove(adapter)) {
       adapter.stopObserving();
     }
