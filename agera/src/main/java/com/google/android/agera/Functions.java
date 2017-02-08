@@ -25,6 +25,8 @@ import android.support.annotation.Nullable;
 import com.google.android.agera.Common.StaticProducer;
 import com.google.android.agera.FunctionCompilerStates.FItem;
 import com.google.android.agera.FunctionCompilerStates.FList;
+import com.google.android.agera.FunctionCompilerStates.FResult;
+
 import java.util.List;
 
 /**
@@ -81,6 +83,18 @@ public final class Functions {
   @SuppressWarnings({"unchecked", "UnusedParameters"})
   public static <F> FList<F, List<F>, List<F>> functionFromListOf(
       @Nullable final Class<F> from) {
+    return functionCompiler();
+  }
+
+  /**
+   * Starts describing a {@link Function} that starts with a {@link Result} of an item.
+   *
+   * @return the next {@link FunctionCompilerStates} state
+   */
+  @NonNull
+  @SuppressWarnings({"unchecked", "UnusedParameters"})
+  public static <F> FResult<F, Result<F>> functionFromResultOf(
+          @Nullable final Class<F> from) {
     return functionCompiler();
   }
 

@@ -26,7 +26,7 @@ import java.util.List;
 public interface FunctionCompilerStates {
 
   /**
-   * Methods allowed in both the {@link FItem} and {@link FList} compiler states.
+   * Methods allowed in the {@link FItem}, {@link FList} and {@link FResult} compiler states.
    */
   interface FBase<TPrev, TFrom> {
 
@@ -45,6 +45,14 @@ public interface FunctionCompilerStates {
      */
     @NonNull
     <TTo> Function<TFrom, TTo> thenApply(@NonNull Function<? super TPrev, TTo> function);
+
+    /**
+     * Adds a {@link Function} which can fail to the behavior chain to be applied to the item.
+     *
+     * @param function the function which can fail to apply to the item
+     */
+    @NonNull
+    <TTo> FResult<TTo, TFrom> attemptApply(@NonNull Function<? super TPrev, Result<TTo>> function);
   }
 
   /**
@@ -143,5 +151,88 @@ public interface FunctionCompilerStates {
      */
     @NonNull
     Function<TFrom, TPrevList> thenSort(@NonNull Comparator<TPrev> comparator);
+  }
+
+  /**
+   * Compiler state allowing to specify how the {@link Function} should modify {@link Result}s.
+   */
+  interface FResult<TPrev, TFrom> {
+
+    /**
+     * Adds a {@link Function} to the behavior chain to map the item into a new type. If the result
+     * failed, then we return {@code sameFailure}.
+     *
+     * @param function the function to apply to the item to create a new result
+     */
+    @NonNull
+    <TTo> FResult<TTo, TFrom> applyIfSucceeded(@NonNull Function<? super TPrev, TTo> function);
+
+    /**
+     * Adds a {@link Function} to the end of the behavior chain to map the item into a new type. If
+     * the result failed, then we return {@code sameFailure}.
+     *
+     * @param function the function to apply to the item to create a new result
+     */
+    @NonNull
+    <TTo> Function<TFrom, Result<TTo>> thenApplyIfSucceeded(
+        @NonNull Function<? super TPrev, TTo> function);
+
+    /**
+     * Adds a {@link Function} to the behavior chain to map the item into a new result type. If the
+     * result failed, then we return {@code sameFailure}.
+     *
+     * @param function the function to apply to the item to create a new result
+     */
+    @NonNull
+    <TTo> FResult<TTo, TFrom> attemptApplyIfSucceeded(
+        @NonNull Function<? super TPrev, Result<TTo>> function);
+
+    /**
+     * Adds a {@link Function} to the end of the behavior chain to map the item into a new result
+     * type. If the result failed, then we return {@code sameFailure}.
+     *
+     * @param function the function to apply to the item to create a new result
+     */
+    @NonNull
+    <TTo> Function<TFrom, Result<TTo>> thenAttemptApplyIfSucceeded(
+        @NonNull Function<? super TPrev, Result<TTo>> function);
+
+    /**
+     * Adds a {@link Function} to the behavior chain to recover from the failure. If the result
+     * succeeded, then we return {@code get}.
+     *
+     * @param function the function to apply to the failure to recover
+     */
+    @NonNull
+    FItem<TPrev, TFrom> recover(@NonNull Function<? super Throwable, TPrev> function);
+
+    /**
+     * Adds a {@link Function} to the end of the behavior chain to recover from the failure. If the
+     * result succeeded, then we return {@code get}.
+     *
+     * @param function the function to apply to the failure to recover
+     */
+    @NonNull
+    Function<TFrom, TPrev> thenRecover(@NonNull Function<? super Throwable, TPrev> function);
+
+    /**
+     * Adds a {@link Function} to the behavior chain to try to recover from the failure. If the
+     * result succeeded, then we return {@code the result}.
+     *
+     * @param function the function to apply to the failure to try to recover
+     */
+    @NonNull
+    FResult<TPrev, TFrom> attemptRecover(
+        @NonNull Function<? super Throwable, Result<TPrev>> function);
+
+    /**
+     * Adds a {@link Function} to the end of the behavior chain to try to recover from the failure.
+     * If the result succeeded, then we return {@code the result}.
+     *
+     * @param function the function to apply to the failure to try to recover
+     */
+    @NonNull
+    Function<TFrom, Result<TPrev>> thenAttemptRecover(
+        @NonNull Function<? super Throwable, Result<TPrev>> function);
   }
 }
