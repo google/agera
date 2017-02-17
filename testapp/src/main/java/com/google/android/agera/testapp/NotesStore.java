@@ -87,7 +87,7 @@ final class NotesStore {
       @NonNull final Receiver<SqlInsertRequest> insert,
       @NonNull final Receiver<SqlUpdateRequest> update,
       @NonNull final Receiver<SqlDeleteRequest> delete,
-                     @NonNull final Receiver<SqlCloseRequest> close) {
+      @NonNull final Receiver<SqlCloseRequest> close) {
     this.insert = insert;
     this.update = update;
     this.delete = delete;
@@ -109,7 +109,7 @@ final class NotesStore {
     final Function<SqlDeleteRequest, Result<Integer>> deleteNoteFunction =
         databaseDeleteFunction(databaseSupplier);
     final Function<SqlCloseRequest, Result<Boolean>> closeDatabaseFunction =
-            databaseCloseFunction(databaseSupplier);
+        databaseCloseFunction(databaseSupplier);
 
     final UpdateDispatcher updateDispatcher = updateDispatcher();
 
@@ -128,7 +128,8 @@ final class NotesStore {
       updateDispatcher.update();
     });
 
-    final Receiver<SqlCloseRequest> close = value -> STORE_EXECUTOR.execute(() -> closeDatabaseFunction.apply(value));
+    final Receiver<SqlCloseRequest> close = value -> STORE_EXECUTOR.execute(() ->
+      closeDatabaseFunction.apply(value));
 
     // Create the wired up notes store
     return new NotesStore(repositoryWithInitialValue(INITIAL_VALUE)

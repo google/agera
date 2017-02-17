@@ -23,8 +23,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
-import android.util.Log;
-
 import com.google.android.agera.Function;
 import com.google.android.agera.Merger;
 import com.google.android.agera.Result;
@@ -80,7 +78,7 @@ public final class SqlDatabaseFunctions {
    */
   @NonNull
   public static Function<SqlCloseRequest, Result<Boolean>> databaseCloseFunction(
-          @NonNull final Supplier<Result<SQLiteDatabase>> database) {
+      @NonNull final Supplier<Result<SQLiteDatabase>> database) {
     return new DatabaseFunction<>(database, new DatabaseCloseMerger());
   }
 
@@ -166,11 +164,11 @@ public final class SqlDatabaseFunctions {
   }
 
   private static final class DatabaseCloseMerger
-          implements Merger<SQLiteDatabase, SqlCloseRequest, Result<Boolean>> {
+      implements Merger<SQLiteDatabase, SqlCloseRequest, Result<Boolean>> {
     @NonNull
     @Override
     public Result<Boolean> merge(@NonNull SQLiteDatabase database,
-                                 @NonNull SqlCloseRequest closeRequest) {
+        @NonNull SqlCloseRequest closeRequest) {
       try {
         database.close();
         return success(true);
