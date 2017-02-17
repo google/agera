@@ -17,23 +17,52 @@ package com.google.android.agera.rvdatabinding;
 
 import android.support.annotation.NonNull;
 import com.google.android.agera.Function;
+import com.google.android.agera.Repository;
+import com.google.android.agera.rvadapter.RepositoryPresenter;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPStableId;
 
+/**
+ * Container of the compiler state interfaces supporting the creation of a data binding
+ * {@link RepositoryPresenter}.
+ */
 public interface DataBindingRepositoryPresenterCompilerStates {
+
+  /**
+   * Compiler state to specify how to bind the {@code View} using data binding.
+   */
   interface DBRPItemBinding<TVal, TRet> {
+
+    /**
+     * Specifies a data binding @{code itemId} from the previously given {@code layout} to bind a
+     * single item in the {@link Repository}.
+     */
     @NonNull
     TRet itemId(int itemId);
 
+    /**
+     * Specifies a {@link Function} to return a data binding @{code itemId} from the previously
+     * given {@code layout} to bind a single item in the {@link Repository}.
+     */
     @NonNull
     TRet itemIdForItem(@NonNull Function<TVal, Integer> itemIdForItem);
   }
 
+  /**
+   * Compiler state to specify index independent handlers from the given {@code layout}.
+   */
   interface DBRPHandlerBinding<TRet> {
+    /**
+     * Specifies what {@code handler} is associated with the {@code handlerId} in the previously
+     * given {@code layout}.
+     */
     @NonNull
     TRet handler(int handlerId, @NonNull Object handler);
   }
 
+  /**
+   * Compiler state allowing to specify handlers, Recycle, StableId or compile.
+   */
   interface DBRPHandlerBindingCompile<TVal>
       extends RPCompile<TVal>, DBRPHandlerBinding<DBRPHandlerBindingCompile<TVal>>,
       RPStableId<TVal, DBRPHandlerBindingCompile<TVal>> {}
