@@ -73,15 +73,6 @@ public final class SqlDatabaseFunctions {
     return new DatabaseFunction<>(database, new DatabaseDeleteMerger());
   }
 
-  /**
-   * Creates a sql close {@link Function}.
-   */
-  @NonNull
-  public static Function<SqlCloseRequest, Result<Boolean>> databaseCloseFunction(
-      @NonNull final Supplier<Result<SQLiteDatabase>> database) {
-    return new DatabaseFunction<>(database, new DatabaseCloseMerger());
-  }
-
   private static final class DatabaseInsertMerger
       implements Merger<SQLiteDatabase, SqlInsertRequest, Result<Long>> {
 
@@ -158,21 +149,6 @@ public final class SqlDatabaseFunctions {
           cursor.close();
         }
       } catch (final SQLException e) {
-        return failure(e);
-      }
-    }
-  }
-
-  private static final class DatabaseCloseMerger
-      implements Merger<SQLiteDatabase, SqlCloseRequest, Result<Boolean>> {
-    @NonNull
-    @Override
-    public Result<Boolean> merge(@NonNull SQLiteDatabase database,
-        @NonNull SqlCloseRequest closeRequest) {
-      try {
-        database.close();
-        return success(true);
-      } catch (SQLException e) {
         return failure(e);
       }
     }
