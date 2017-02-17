@@ -20,6 +20,7 @@ import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Repositories.repositoryWithInitialValue;
 import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
+import static com.google.android.agera.database.SqlDatabaseFunctions.databaseCloseFunction;
 import static com.google.android.agera.database.SqlDatabaseFunctions.databaseDeleteFunction;
 import static com.google.android.agera.database.SqlDatabaseFunctions.databaseInsertFunction;
 import static com.google.android.agera.database.SqlDatabaseFunctions.databaseQueryFunction;
@@ -45,6 +46,7 @@ import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.UpdateDispatcher;
+import com.google.android.agera.database.SqlCloseRequest;
 import com.google.android.agera.database.SqlDeleteRequest;
 import com.google.android.agera.database.SqlInsertRequest;
 import com.google.android.agera.database.SqlUpdateRequest;
@@ -78,14 +80,18 @@ final class NotesStore {
   private final Receiver<SqlUpdateRequest> update;
   @NonNull
   private final Receiver<SqlDeleteRequest> delete;
+  @NonNull
+  private final Receiver<SqlCloseRequest> close;
 
   private NotesStore(@NonNull final Repository<List<NoteGroup>> notesRepository,
       @NonNull final Receiver<SqlInsertRequest> insert,
       @NonNull final Receiver<SqlUpdateRequest> update,
-      @NonNull final Receiver<SqlDeleteRequest> delete) {
+      @NonNull final Receiver<SqlDeleteRequest> delete,
+                     @NonNull final Receiver<SqlCloseRequest> close) {
     this.insert = insert;
     this.update = update;
     this.delete = delete;
+    this.close = close;
     this.notesRepository = notesRepository;
   }
 
@@ -102,6 +108,8 @@ final class NotesStore {
         databaseUpdateFunction(databaseSupplier);
     final Function<SqlDeleteRequest, Result<Integer>> deleteNoteFunction =
         databaseDeleteFunction(databaseSupplier);
+    final Function<SqlCloseRequest, Result<Boolean>> closeDatabaseFunction =
+            databaseCloseFunction(databaseSupplier);
 
     final UpdateDispatcher updateDispatcher = updateDispatcher();
 
@@ -119,6 +127,8 @@ final class NotesStore {
       insertNoteFunction.apply(value);
       updateDispatcher.update();
     });
+
+    final Receiver<SqlCloseRequest> close = value -> STORE_EXECUTOR.execute(() -> closeDatabaseFunction.apply(value));
 
     // Create the wired up notes store
     return new NotesStore(repositoryWithInitialValue(INITIAL_VALUE)
@@ -149,7 +159,7 @@ final class NotesStore {
         })
         .onConcurrentUpdate(SEND_INTERRUPT)
         .onDeactivation(SEND_INTERRUPT)
-        .compile(), insert, update, delete);
+        .compile(), insert, update, delete, close);
   }
 
   @NonNull
@@ -185,5 +195,9 @@ final class NotesStore {
     delete.accept(sqlDeleteRequest()
         .table(NOTES_TABLE)
         .compile());
+  }
+
+  void closeDatabase() {
+    close.accept(new SqlCloseRequest());
   }
 }

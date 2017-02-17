@@ -173,5 +173,6 @@ public final class NotesFragment extends Fragment {
     recyclerView.setAdapter(null);
     recyclerView = null;
     pool.clear();
+    notesStore.closeDatabase();
   }
 }
