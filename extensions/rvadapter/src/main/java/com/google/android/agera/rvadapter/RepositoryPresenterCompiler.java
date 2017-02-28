@@ -44,6 +44,12 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
 
   @NonNull
   @Override
+  public RepositoryPresenter forItem() {
+    return new ItemBasicRepositoryPresenter<>(layoutForItem, binder, recycler, stableIdForItem);
+  }
+
+  @NonNull
+  @Override
   public RepositoryPresenter<List> forList() {
     return new ListBasicRepositoryPresenter(layoutForItem, binder, recycler, stableIdForItem);
   }
@@ -148,6 +154,28 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
     public void recycle(@NonNull final RecyclerView.ViewHolder holder) {
       super.recycle(holder);
       recycler.accept(holder.itemView);
+    }
+  }
+
+  private static final class ItemBasicRepositoryPresenter<T>
+      extends BasicRepositoryPresenter<T, T> {
+
+    public ItemBasicRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
+        @NonNull final Binder<T, View> binder,
+        @NonNull final Receiver<View> recycler,
+        @NonNull final Function<T, Long> stableIdForItem) {
+      super(layoutId, binder, recycler, stableIdForItem);
+    }
+
+    @Override
+    public int getItemCount(@NonNull final T data) {
+      return 1;
+    }
+
+    @NonNull
+    @Override
+    protected T getValue(@NonNull final T data, final int index) {
+      return data;
     }
   }
 
