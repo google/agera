@@ -33,15 +33,14 @@ import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Result;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPItemCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderRecycleItemCompile;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderRecycleStableIdCompile;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPMain;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
-final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycleStableIdCompile,
-    RPViewBinderRecycleItemCompile {
+final class RepositoryPresenterCompiler implements RPLayout, RPMain {
   @NonNull
   private Function<Object, Integer> layoutForItem;
   @NonNull
@@ -95,28 +94,28 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
 
   @NonNull
   @Override
-  public Object bindWith(@NonNull final Binder binder) {
+  public RPMain bindWith(@NonNull final Binder binder) {
     this.binder = binder;
     return this;
   }
 
   @NonNull
   @Override
-  public Object stableIdForItem(@NonNull final Function stableIdForItem) {
+  public RPMain stableIdForItem(@NonNull final Function stableIdForItem) {
     this.stableIdForItem = stableIdForItem;
     return this;
   }
 
   @NonNull
   @Override
-  public Object stableId(final long stableId) {
+  public RPItemCompile stableId(final long stableId) {
     this.stableIdForItem(staticFunction(stableId));
     return this;
   }
 
   @NonNull
   @Override
-  public Object recycleWith(@NonNull final Receiver recycler) {
+  public RPMain recycleWith(@NonNull final Receiver recycler) {
     this.recycler = recycler;
     return this;
   }

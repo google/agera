@@ -19,10 +19,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import com.google.android.agera.Repository;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
-import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerStableIdRecycleCompile;
-import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPItemBinding;
+import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPMain;
 
 /**
  * Contains concrete implementations of {@link RepositoryPresenter} to present the content of a
@@ -67,18 +65,20 @@ import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterComp
  *   .layout(R.layout.item_layout)
  *   .itemId(BR.user)
  *   .handler(BR.handlers, new Handlers())
- *   .compileList();
+ *   .forList();
  * }
  * </pre>
  * <p> See the data binding library documentation for details.
  */
 public final class DataBindingRepositoryPresenters {
 
+  /**
+   * Starts the creation of a {@link RepositoryPresenter} using the Android data binding library.
+   */
   @SuppressWarnings("unchecked")
   @NonNull
-  public static <T> RPLayout<T, DBRPItemBinding<T,
-      DBRPHandlerStableIdRecycleCompile<T, RPCompile<T>>>>
-  dataBindingRepositoryPresenterOf(@Nullable final Class<T> type) {
+  public static <T> RPLayout<T, DBRPMain<T>> dataBindingRepositoryPresenterOf(
+      @Nullable final Class<T> type) {
     return new DataBindingRepositoryPresenterCompiler();
   }
 
