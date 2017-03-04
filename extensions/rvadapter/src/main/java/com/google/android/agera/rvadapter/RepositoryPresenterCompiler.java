@@ -36,11 +36,12 @@ import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPItemCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPMain;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPTypedCollectionCompile;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
-final class RepositoryPresenterCompiler implements RPLayout, RPMain {
+final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedCollectionCompile {
   @NonNull
   private Function<Object, Integer> layoutForItem;
   @NonNull
@@ -49,33 +50,50 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain {
   private Receiver recycler = nullReceiver();
   @NonNull
   private Function<Object, Long> stableIdForItem = staticFunction(RecyclerView.NO_ID);
+  @NonNull
+  private Binder collectionBinder = nullBinder();
 
   @NonNull
   @Override
   public RepositoryPresenter forItem() {
     return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
-        itemAsList());
+        itemAsList(), collectionBinder);
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<List> forList() {
     return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
-        (Function) identityFunction());
+        (Function) identityFunction(), collectionBinder);
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result> forResult() {
     return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
-        (Function) resultAsList());
+        (Function) resultAsList(), collectionBinder);
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result<List>> forResultList() {
     return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
-        (Function) resultListAsList());
+        (Function) resultListAsList(), collectionBinder);
+  }
+
+  @NonNull
+  @Override
+  public RPTypedCollectionCompile bindCollectionWith(
+      @NonNull final Binder collectionBinder) {
+    this.collectionBinder = collectionBinder;
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public RepositoryPresenter forCollection(@NonNull final Function converter) {
+    return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
+        converter, collectionBinder);
   }
 
   @NonNull
@@ -124,6 +142,8 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain {
     @NonNull
     private final Function<Object, List<Object>> converter;
     @NonNull
+    private final Binder<Object, View> collectionBinder;
+    @NonNull
     private final Function<Object, Integer> layoutId;
     @NonNull
     private final Binder<Object, View> binder;
@@ -141,7 +161,9 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain {
         @NonNull final Binder<Object, View> binder,
         @NonNull final Function<Object, Long> stableIdForItem,
         @NonNull final Receiver<View> recycler,
-        @NonNull final Function<Object, List<Object>> converter) {
+        @NonNull final Function<Object, List<Object>> converter,
+        @NonNull final Binder<Object, View> collectionBinder) {
+      this.collectionBinder = collectionBinder;
       this.converter = converter;
       this.layoutId = layoutId;
       this.binder = binder;
@@ -162,7 +184,9 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain {
     @Override
     public void bind(@NonNull final Object data, final int index,
         @NonNull final RecyclerView.ViewHolder holder) {
-      binder.bind(getItems(data).get(index), holder.itemView);
+      final Object item = getItems(data).get(index);
+      binder.bind(item, holder.itemView);
+      collectionBinder.bind(item, holder.itemView);
     }
 
     @Override

@@ -148,7 +148,10 @@ final class NotesStore {
           }
           final List<NoteGroup> notesGroups = new ArrayList<>();
           for (final Map.Entry<Character, List<Note>> groupData : notesGroupsData.entrySet()) {
-            notesGroups.add(noteGroup(groupData.getKey(), groupData.getValue()));
+            notesGroups.add(noteGroup(
+                String.valueOf(groupData.getKey()),
+                groupData.getKey(),
+                groupData.getValue()));
           }
           return notesGroups;
         })

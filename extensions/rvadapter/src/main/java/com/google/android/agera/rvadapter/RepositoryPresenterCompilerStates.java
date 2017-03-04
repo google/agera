@@ -96,10 +96,37 @@ public interface RepositoryPresenterCompilerStates {
   }
 
   /**
+   * Compiler state to compile for the generic collection container type of the associated
+   * {@link Repository}.
+   */
+  interface RPCollectionCompile<TVal> {
+    /**
+     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a type that can be
+     * converted to a {@link List} of items using the {@code converter}.
+     */
+    @NonNull
+    <TCol> RepositoryPresenter<TCol> forCollection(@NonNull Function<TCol, List<TVal>> converter);
+  }
+
+  /**
+   * Compiler state to compile for the generic collection container type of the associated
+   * {@link Repository}.
+   */
+  interface RPTypedCollectionCompile<TVal, TCol> {
+    /**
+     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a type that can be
+     * converted to a {@link List} of items using the {@code converter}.
+     */
+    @NonNull
+    RepositoryPresenter<TCol> forCollection(@NonNull Function<TCol, List<TVal>> converter);
+  }
+
+  /**
    * Compiler state to specify how to bind the {@link Repository} item to the view inflated by the
    * layout.
    */
-  interface RPMain<T> extends RPItemCompile<T>, RPSpecificCollectionCompile<T> {
+  interface RPMain<T> extends RPItemCompile<T>,
+      RPSpecificCollectionCompile<T>, RPCollectionCompile<T> {
 
     /**
      * Specifies a {@link Binder} to bind a single item in the {@link Repository} to an inflated
@@ -136,5 +163,13 @@ public interface RepositoryPresenterCompilerStates {
      */
     @NonNull
     RPItemCompile<T> stableId(long stableId);
+
+    /**
+     * Specifies a {@link Binder} to bind a single item in the {@link Repository} to an inflated
+     * {@code View}.
+     */
+    @NonNull
+    <TCol> RPTypedCollectionCompile<T, TCol> bindCollectionWith(
+        @NonNull Binder<TCol, View> collectionBinder);
   }
 }

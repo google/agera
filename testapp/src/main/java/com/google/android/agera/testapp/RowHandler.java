@@ -38,33 +38,29 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
-final class RowHandler<TRow, TRowItems> extends OnScrollListener
-    implements Binder<TRow, View>, Receiver<View> {
+final class RowHandler<TRow>
+    extends OnScrollListener implements Binder<TRow, View>, Receiver<View> {
   @NonNull
   private final Set<RepositoryAdapter> startedAdapters;
   @NonNull
   private final Map<Long, Parcelable> itemRowStates;
   @NonNull
-  private final Map<Adapter, MutableRepository<TRowItems>> adapterRepositories;
+  private final Map<Adapter, MutableRepository<TRow>> adapterRepositories;
   @NonNull
   private final Map<Adapter, Long> previousStableIds;
   @NonNull
-  private final Function<TRow, TRowItems> data;
-  @NonNull
   private final Function<TRow, Long> stableId;
   @NonNull
-  private final Function<TRow, RepositoryPresenter<TRowItems>> presenter;
+  private final Function<TRow, RepositoryPresenter<TRow>> presenter;
   @NonNull
   private final Function<TRow, LayoutManager> layoutManager;
   @NonNull
   private final RecycledViewPool pool;
 
   private RowHandler(@NonNull final RecycledViewPool pool,
-      @NonNull final Function<TRow, TRowItems> data,
       @NonNull final Function<TRow, Long> stableId,
-      @NonNull final Function<TRow, RepositoryPresenter<TRowItems>> presenter,
+      @NonNull final Function<TRow, RepositoryPresenter<TRow>> presenter,
       @NonNull final Function<TRow, LayoutManager> layoutManager) {
-    this.data = checkNotNull(data);
     this.stableId = checkNotNull(stableId);
     this.presenter = checkNotNull(presenter);
     this.layoutManager = layoutManager;
@@ -76,23 +72,21 @@ final class RowHandler<TRow, TRowItems> extends OnScrollListener
   }
 
   @NonNull
-  static <TRow, TRowItems> RowHandler<TRow, TRowItems> rowBinder(
+  static <TRow> RowHandler<TRow> rowBinder(
       @NonNull final RecycledViewPool pool,
       @NonNull final Function<TRow, LayoutManager> layoutManager,
       @NonNull final Function<TRow, Long> stableIdFunction,
-      @NonNull final Function<TRow, TRowItems> dataFunction,
-      @NonNull final Function<TRow, RepositoryPresenter<TRowItems>> presenterFromView) {
-    return new RowHandler<>(pool, dataFunction, stableIdFunction, presenterFromView, layoutManager);
+      @NonNull final Function<TRow, RepositoryPresenter<TRow>> presenterFromView) {
+    return new RowHandler<>(pool, stableIdFunction, presenterFromView, layoutManager);
   }
 
   @Override
   public void bind(@NonNull final TRow row, @NonNull final View view) {
     final RecyclerView recyclerView = (RecyclerView) view;
     final long id = stableId.apply(row);
-    final TRowItems rowItems = data.apply(row);
     if (!(recyclerView.getAdapter() instanceof RepositoryAdapter)) {
-      final MutableRepository<TRowItems> newRepository = mutableRepository(rowItems);
-      final RepositoryPresenter<TRowItems> newPresenter = presenter.apply(row);
+      final MutableRepository<TRow> newRepository = mutableRepository(row);
+      final RepositoryPresenter<TRow> newPresenter = presenter.apply(row);
       final RepositoryAdapter newAdapter = repositoryAdapter()
           .add(newRepository, newPresenter)
           .build();
@@ -107,7 +101,7 @@ final class RowHandler<TRow, TRowItems> extends OnScrollListener
       newAdapter.startObserving();
     } else {
       final RepositoryAdapter adapter = (RepositoryAdapter) recyclerView.getAdapter();
-      adapterRepositories.get(adapter).accept(rowItems);
+      adapterRepositories.get(adapter).accept(row);
       previousStableIds.put(adapter, id);
       if (!startedAdapters.contains(adapter)) {
         adapter.startObserving();

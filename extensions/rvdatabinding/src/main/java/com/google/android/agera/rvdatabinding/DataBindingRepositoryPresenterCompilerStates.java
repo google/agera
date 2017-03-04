@@ -21,9 +21,11 @@ import com.google.android.agera.Function;
 import com.google.android.agera.Repository;
 import com.google.android.agera.rvadapter.RepositoryAdapter;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCollectionCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPItemCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPSpecificCollectionCompile;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPTypedCollectionCompile;
 
 /**
  * Container of the compiler state interfaces supporting the creation of a data binding
@@ -34,7 +36,8 @@ public interface DataBindingRepositoryPresenterCompilerStates {
   /**
    * Compiler state to specify how to bind the {@code View} using data binding.
    */
-  interface DBRPMain<T> extends RPItemCompile<T>, RPSpecificCollectionCompile<T> {
+  interface DBRPMain<T> extends RPItemCompile<T>,
+      RPSpecificCollectionCompile<T>, RPCollectionCompile<T> {
 
     /**
      * Specifies a data binding @{code itemId} from the previously given {@code layout} to bind a
@@ -63,6 +66,21 @@ public interface DataBindingRepositoryPresenterCompilerStates {
      */
     @NonNull
     DBRPMain<T> onRecycle(@RecycleConfig int recycleConfig);
+
+    /**
+     * Specifies a data binding @{code itemId} from the previously given {@code layout} to bind a
+     * single item in the {@link Repository}.
+     */
+    @NonNull
+    RPCollectionCompile<T> collectionId(int collectionId);
+
+    /**
+     * Specifies a {@link Function} to return a data binding @{code itemId} from the previously
+     * given {@code layout} to bind a single item in the {@link Repository}.
+     */
+    @NonNull
+    <TCol> RPTypedCollectionCompile<T, TCol> collectionIdForCollection(
+        @NonNull Function<TCol, Integer> collectionIdForCollection);
 
     /**
      * Specifies a {@link Function} providing a stable id for the given item. Called only if stable

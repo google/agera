@@ -30,6 +30,7 @@ import java.lang.annotation.RetentionPolicy;
 @IntDef(flag = true, value = {
     RecycleConfig.DO_NOTHING,
     RecycleConfig.CLEAR_ITEM,
+    RecycleConfig.CLEAR_COLLECTION,
     RecycleConfig.CLEAR_HANDLERS,
     RecycleConfig.CLEAR_ALL,
 })
@@ -51,8 +52,13 @@ public @interface RecycleConfig {
   int CLEAR_HANDLERS = 1 << 1;
 
   /**
-   * When the {@link RecyclerView} recycles a view, rebind both the item from the {@link Repository}
-   * and all handlers with {@code null}.
+   * When the {@link RecyclerView} recycles a view, rebind the collection from the
+   * {@link Repository} with {@code null}.
    */
-  int CLEAR_ALL = CLEAR_ITEM | CLEAR_HANDLERS;
+  int CLEAR_COLLECTION = 1 << 2;
+
+  /**
+   * When the {@link RecyclerView} recycles a view, rebind all variables with {@code null}.
+   */
+  int CLEAR_ALL = CLEAR_ITEM | CLEAR_COLLECTION | CLEAR_HANDLERS;
 }

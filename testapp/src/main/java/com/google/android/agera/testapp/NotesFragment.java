@@ -51,7 +51,6 @@ import com.google.android.agera.Result;
 import com.google.android.agera.Updatable;
 import com.google.android.agera.rvadapter.RepositoryAdapter;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.Executor;
 
 public final class NotesFragment extends Fragment {
@@ -72,9 +71,9 @@ public final class NotesFragment extends Fragment {
     notesStore = notesStore(getContext().getApplicationContext());
 
     pool = new RecycledViewPool();
-    final RowHandler<NoteGroup, List<Note>> rowHandler = rowBinder(pool,
+    final RowHandler<NoteGroup> rowHandler = rowBinder(pool,
         (r) -> new LinearLayoutManager(getContext(), HORIZONTAL, false),
-        NoteGroup::getId, NoteGroup::getNotes, (r) ->
+        NoteGroup::getId, (r) ->
             dataBindingRepositoryPresenterOf(Note.class)
                 .layout(R.layout.text_layout)
                 .itemId(BR.note)
@@ -92,7 +91,8 @@ public final class NotesFragment extends Fragment {
                     })
                 .handler(BR.longClick, (Receiver<Note>) notesStore::deleteNote)
                 .stableIdForItem(Note::getId)
-                .forList());
+                .collectionId(BR.noteGroup)
+                .forCollection(NoteGroup::getNotes));
 
     adapter = repositoryAdapter()
         .addLayout(layout(R.layout.header))
