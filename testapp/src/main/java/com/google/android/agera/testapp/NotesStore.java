@@ -45,6 +45,7 @@ import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.UpdateDispatcher;
+import com.google.android.agera.database.SqlDatabaseSupplier;
 import com.google.android.agera.database.SqlDeleteRequest;
 import com.google.android.agera.database.SqlInsertRequest;
 import com.google.android.agera.database.SqlUpdateRequest;
@@ -78,15 +79,19 @@ final class NotesStore {
   private final Receiver<SqlUpdateRequest> update;
   @NonNull
   private final Receiver<SqlDeleteRequest> delete;
+  @NonNull
+  private final SqlDatabaseSupplier databaseSupplier;
 
   private NotesStore(@NonNull final Repository<List<NoteGroup>> notesRepository,
       @NonNull final Receiver<SqlInsertRequest> insert,
       @NonNull final Receiver<SqlUpdateRequest> update,
-      @NonNull final Receiver<SqlDeleteRequest> delete) {
+      @NonNull final Receiver<SqlDeleteRequest> delete,
+      @NonNull final SqlDatabaseSupplier databaseSupplier) {
     this.insert = insert;
     this.update = update;
     this.delete = delete;
     this.notesRepository = notesRepository;
+    this.databaseSupplier = databaseSupplier;
   }
 
   @NonNull
@@ -149,7 +154,7 @@ final class NotesStore {
         })
         .onConcurrentUpdate(SEND_INTERRUPT)
         .onDeactivation(SEND_INTERRUPT)
-        .compile(), insert, update, delete);
+        .compile(), insert, update, delete, databaseSupplier);
   }
 
   @NonNull
@@ -185,5 +190,9 @@ final class NotesStore {
     delete.accept(sqlDeleteRequest()
         .table(NOTES_TABLE)
         .compile());
+  }
+
+  void closeDatabase() {
+    databaseSupplier.close();
   }
 }
