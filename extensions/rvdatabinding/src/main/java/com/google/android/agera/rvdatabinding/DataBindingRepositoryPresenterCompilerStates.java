@@ -61,9 +61,32 @@ public interface DataBindingRepositoryPresenterCompilerStates {
   }
 
   /**
-   * Compiler state allowing to specify handlers, Recycle, StableId or compile.
+   * Compiler state to specify a recycle config.
    */
-  interface DBRPHandlerBindingCompile<TVal>
-      extends RPCompile<TVal>, DBRPHandlerBinding<DBRPHandlerBindingCompile<TVal>>,
-      RPStableId<TVal, DBRPHandlerBindingCompile<TVal>> {}
+  interface DBRPRecycle<TRet> {
+    /**
+     * Specifies what {@code handler} is associated with the {@code handlerId} in the previously
+     * given {@code layout}.
+     */
+    @NonNull
+    TRet onRecycle(@RecycleConfig int recycleConfig);
+  }
+
+  /**
+   * Compiler state allowing to specify handlers, stable id, recycle strategy or compile.
+   */
+  interface DBRPHandlerStableIdRecycleCompile<TVal>
+      extends DBRPHandlerBinding<DBRPHandlerStableIdRecycleCompile<TVal>>,
+      DBRPStableIdRecycleCompile<TVal> {}
+
+  /**
+   * Compiler state allowing to specify stable id, recycle strategy or compile.
+   */
+  interface DBRPStableIdRecycleCompile<TVal>
+      extends RPStableId<TVal, DBRPRecycleCompile<TVal>>, DBRPRecycleCompile<TVal> {}
+
+  /**
+   * Compiler state allowing to specify recycle strategy or compile.
+   */
+  interface DBRPRecycleCompile<TVal> extends RPCompile<TVal>, DBRPRecycle<RPCompile<TVal>> {}
 }
