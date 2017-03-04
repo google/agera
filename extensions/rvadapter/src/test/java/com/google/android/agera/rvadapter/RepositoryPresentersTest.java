@@ -211,11 +211,6 @@ public class RepositoryPresentersTest {
   }
 
   @Test
-  public void shouldHavePrivateConstructor() {
-    assertThat(RepositoryPresenters.class, hasPrivateConstructor());
-  }
-
-  @Test
   public void shouldReturnStableIdForRepositoryPresenterOfResult() {
     final RepositoryPresenter<Result<String>> resultRepositoryPresenter =
         repositoryPresenterOf(String.class)
@@ -223,6 +218,37 @@ public class RepositoryPresentersTest {
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .forResult();
     assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
+  }
+
+
+  @Test
+  public void shouldReturnStableIdForRepositoryPresenterOfItem() {
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
+            .forItem();
+    assertThat(resultRepositoryPresenter.getItemId(STRING, 0), is(STABLE_ID));
+  }
+
+  @Test
+  public void shouldReturnStaticStableIdForRepositoryPresenterOfResult() {
+    final RepositoryPresenter<Result<String>> resultRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .stableId(STABLE_ID)
+            .forResult();
+    assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
+  }
+
+  @Test
+  public void shouldReturnStaticStableIdForRepositoryPresenterOfItem() {
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .stableId(STABLE_ID)
+            .forItem();
+    assertThat(resultRepositoryPresenter.getItemId(STRING, 0), is(STABLE_ID));
   }
 
   @Test
@@ -262,5 +288,10 @@ public class RepositoryPresentersTest {
         .layout(LAYOUT_ID)
         .stableIdForItem(Functions.<CharSequence, Long>staticFunction(STABLE_ID))
         .forResult();
+  }
+
+  @Test
+  public void shouldHavePrivateConstructor() {
+    assertThat(RepositoryPresenters.class, hasPrivateConstructor());
   }
 }

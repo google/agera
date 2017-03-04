@@ -524,12 +524,46 @@ public class DataBindingRepositoryPresentersTest {
   }
 
   @Test
+  public void shouldReturnStableIdForRepositoryPresenterOfItem() {
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
+        .forItem();
+    assertThat(resultRepositoryPresenter.getItemId(STRING, 0), is(STABLE_ID));
+  }
+
+  @Test
   public void shouldReturnStableIdForRepositoryPresenterOfResult() {
     final RepositoryPresenter<Result<String>> resultRepositoryPresenter =
         dataBindingRepositoryPresenterOf(String.class)
             .layout(LAYOUT_ID)
             .itemId(ITEM_ID)
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
+            .forResult();
+    assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
+  }
+
+
+  @Test
+  public void shouldReturnStaticStableIdForRepositoryPresenterOfItem() {
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .stableId(STABLE_ID)
+            .forItem();
+    assertThat(resultRepositoryPresenter.getItemId(STRING, 0), is(STABLE_ID));
+  }
+
+  @Test
+  public void shouldReturnStaticStableIdForRepositoryPresenterOfResult() {
+    final RepositoryPresenter<Result<String>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .stableId(STABLE_ID)
             .forResult();
     assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
   }

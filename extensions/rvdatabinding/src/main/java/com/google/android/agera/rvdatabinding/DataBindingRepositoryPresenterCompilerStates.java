@@ -20,6 +20,7 @@ import com.google.android.agera.Function;
 import com.google.android.agera.Repository;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCompile;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPItemCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPStableId;
 
 /**
@@ -75,18 +76,25 @@ public interface DataBindingRepositoryPresenterCompilerStates {
   /**
    * Compiler state allowing to specify handlers, stable id, recycle strategy or compile.
    */
-  interface DBRPHandlerStableIdRecycleCompile<TVal>
-      extends DBRPHandlerBinding<DBRPHandlerStableIdRecycleCompile<TVal>>,
-      DBRPStableIdRecycleCompile<TVal> {}
+  interface DBRPHandlerStableIdRecycleCompile<TVal, TCom>
+      extends DBRPHandlerBinding<DBRPHandlerStableIdRecycleCompile<TVal, TCom>>,
+      DBRPStableIdRecycleCompile<TVal, TCom, RPItemCompile<TVal>> {}
 
   /**
    * Compiler state allowing to specify stable id, recycle strategy or compile.
    */
-  interface DBRPStableIdRecycleCompile<TVal>
-      extends RPStableId<TVal, DBRPRecycleCompile<TVal>>, DBRPRecycleCompile<TVal> {}
+  interface DBRPStableIdRecycleCompile<TVal, TCom, TICom>
+      extends RPStableId<TVal, DBRPRecycleCompile<TVal, TCom>,
+      DBRPRecycleItemCompile<TVal, TICom>>, DBRPRecycleCompile<TVal, TCom> {}
 
   /**
    * Compiler state allowing to specify recycle strategy or compile.
    */
-  interface DBRPRecycleCompile<TVal> extends RPCompile<TVal>, DBRPRecycle<RPCompile<TVal>> {}
+  interface DBRPRecycleCompile<TVal, TRec> extends RPCompile<TVal>, DBRPRecycle<TRec> {}
+
+  /**
+   * Compiler state allowing to specify recycle strategy or compile.
+   */
+  interface DBRPRecycleItemCompile<TVal, TRec>
+      extends RPItemCompile<TVal>, DBRPRecycle<TRec> {}
 }
