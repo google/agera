@@ -15,46 +15,50 @@
  */
 package com.google.android.agera.rvdatabinding;
 
-import static android.support.v4.util.Pair.create;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
-import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerBindingCompile;
+import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_HANDLERS;
+import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ITEM;
+import static com.google.android.agera.rvdatabinding.RecycleConfig.DO_NOTHING;
 
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
-import android.support.v4.util.Pair;
 import android.support.v7.widget.RecyclerView;
+import android.util.SparseArray;
 import android.view.View;
 import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
+import com.google.android.agera.Receiver;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
+import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerStableIdRecycleCompile;
 import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPItemBinding;
-import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
 final class DataBindingRepositoryPresenterCompiler
-    implements DBRPItemBinding, DBRPHandlerBindingCompile, RPLayout {
+    implements DBRPItemBinding, DBRPHandlerStableIdRecycleCompile, RPLayout {
   @NonNull
-  private final List<Pair<Integer, Object>> handlers;
+  private final SparseArray<Object> handlers;
   private Function<Object, Integer> layoutFactory;
   private Function itemId;
   @NonNull
   private Function<Object, Long> stableIdForItem = staticFunction(RecyclerView.NO_ID);
+  @RecycleConfig
+  private int recycleConfig = DO_NOTHING;
 
   DataBindingRepositoryPresenterCompiler() {
-    this.handlers = new ArrayList<>();
+    this.handlers = new SparseArray<>();
   }
 
   @NonNull
   @Override
   public Object handler(final int handlerId, @NonNull final Object handler) {
-    handlers.add(create(handlerId, handler));
+    handlers.put(handlerId, handler);
     return this;
   }
 
@@ -72,14 +76,14 @@ final class DataBindingRepositoryPresenterCompiler
     return this;
   }
 
-
   @NonNull
   @Override
   public RepositoryPresenter forItem() {
     return repositoryPresenterOf(null)
         .layoutForItem(layoutFactory)
         .stableIdForItem(stableIdForItem)
-        .bindWith(new ViewBinder(itemId, new ArrayList<>(handlers)))
+        .bindWith(new ViewBinder(itemId, handlers))
+        .recycleWith(new ViewRecycler(recycleConfig, handlers))
         .forItem();
   }
 
@@ -89,7 +93,8 @@ final class DataBindingRepositoryPresenterCompiler
     return repositoryPresenterOf(null)
         .layoutForItem(layoutFactory)
         .stableIdForItem(stableIdForItem)
-        .bindWith(new ViewBinder(itemId, new ArrayList<>(handlers)))
+        .bindWith(new ViewBinder(itemId, handlers))
+        .recycleWith(new ViewRecycler(recycleConfig, handlers))
         .forList();
   }
 
@@ -99,7 +104,8 @@ final class DataBindingRepositoryPresenterCompiler
     return repositoryPresenterOf(Object.class)
         .layoutForItem(layoutFactory)
         .stableIdForItem(stableIdForItem)
-        .bindWith(new ViewBinder(itemId, new ArrayList<>(handlers)))
+        .bindWith(new ViewBinder(itemId, handlers))
+        .recycleWith(new ViewRecycler(recycleConfig, handlers))
         .forResult();
   }
 
@@ -109,7 +115,8 @@ final class DataBindingRepositoryPresenterCompiler
     return repositoryPresenterOf(null)
         .layoutForItem(layoutFactory)
         .stableIdForItem(stableIdForItem)
-        .bindWith(new ViewBinder(itemId, new ArrayList<>(handlers)))
+        .bindWith(new ViewBinder(itemId, handlers))
+        .recycleWith(new ViewRecycler(recycleConfig, handlers))
         .forResultList();
   }
 
@@ -134,13 +141,20 @@ final class DataBindingRepositoryPresenterCompiler
     return this;
   }
 
+  @NonNull
+  @Override
+  public Object onRecycle(@RecycleConfig final int recycleConfig) {
+    this.recycleConfig = recycleConfig;
+    return this;
+  }
+
   private static final class ViewBinder implements Binder<Object, View> {
     private final Function<Object, Integer> itemId;
     @NonNull
-    private final List<Pair<Integer, Object>> handlers;
+    private final SparseArray<Object> handlers;
 
     ViewBinder(@NonNull final Function<Object, Integer> itemId,
-        @NonNull final List<Pair<Integer, Object>> handlers) {
+        @NonNull final SparseArray<Object> handlers) {
       this.itemId = itemId;
       this.handlers = checkNotNull(handlers);
     }
@@ -148,11 +162,48 @@ final class DataBindingRepositoryPresenterCompiler
     @Override
     public void bind(@NonNull final Object item, @NonNull final View view) {
       final ViewDataBinding viewDataBinding = DataBindingUtil.bind(view);
-      viewDataBinding.setVariable(itemId.apply(item), item);
-      for (final Pair<Integer, Object> handler : handlers) {
-        viewDataBinding.setVariable(handler.first, handler.second);
+      final Integer itemVariable = itemId.apply(item);
+      viewDataBinding.setVariable(itemVariable, item);
+      view.setTag(R.id.agera__rvdatabinding__item_id, itemVariable);
+      for (int i = 0; i < handlers.size(); i++) {
+        final int variableId = handlers.keyAt(i);
+        viewDataBinding.setVariable(variableId, handlers.valueAt(i));
       }
       viewDataBinding.executePendingBindings();
+    }
+  }
+
+  private static final class ViewRecycler implements Receiver<View> {
+    @RecycleConfig
+    private final int recycleConfig;
+    @NonNull
+    private SparseArray<Object> handlers;
+
+    ViewRecycler(
+        @RecycleConfig final int recycleConfig,
+        @NonNull final SparseArray<Object> handlers) {
+      this.recycleConfig = recycleConfig;
+      this.handlers = checkNotNull(handlers);
+    }
+
+    @Override
+    public void accept(@NonNull final View view) {
+      if (recycleConfig != 0) {
+        final ViewDataBinding viewDataBinding = DataBindingUtil.bind(view);
+        if ((recycleConfig & CLEAR_ITEM) != 0) {
+          final Object tag = view.getTag(R.id.agera__rvdatabinding__item_id);
+          view.setTag(R.id.agera__rvdatabinding__item_id, null);
+          if (tag instanceof Integer) {
+            viewDataBinding.setVariable((int) tag, null);
+          }
+        }
+        if ((recycleConfig & CLEAR_HANDLERS) != 0) {
+          for (int i = 0; i < handlers.size(); i++) {
+            viewDataBinding.setVariable(handlers.keyAt(i), null);
+          }
+        }
+        viewDataBinding.executePendingBindings();
+      }
     }
   }
 }

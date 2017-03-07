@@ -1,17 +1,25 @@
 package com.google.android.agera.rvdatabinding;
 
 import static android.databinding.DataBinderMapper.setDataBinding;
+import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.present;
 import static com.google.android.agera.Result.success;
 import static com.google.android.agera.rvadapter.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
+import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ALL;
+import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_HANDLERS;
+import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ITEM;
+import static com.google.android.agera.rvdatabinding.RecycleConfig.DO_NOTHING;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import android.databinding.ViewDataBinding;
+import android.support.annotation.LayoutRes;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import com.google.android.agera.Binder;
@@ -35,16 +43,16 @@ public class DataBindingRepositoryPresentersTest {
   private static final Result<String> STRING_RESULT = present(STRING);
   private static final List<String> STRING_LIST = asList(STRING, SECOND_STRING);
   private static final Result<List<String>> STRING_LIST_RESULT = success(STRING_LIST);
-  private static final Result<String> FAILURE = Result.<String>failure();
-  private static final Result<List<String>> LIST_FAILURE = Result.<List<String>>failure();
+  private static final Result<String> FAILURE = failure();
+  private static final Result<List<String>> LIST_FAILURE = failure();
   private static final Object HANDLER = new Object();
   private static final Object SECOND_HANDLER = new Object();
+  @LayoutRes
   private static final int LAYOUT_ID = 1;
   private static final int DYNAMIC_LAYOUT_ID = 2;
   private static final int ITEM_ID = 3;
-  private static final int DYNAMIC_ITEM_ID = 4;
-  private static final int HANDLER_ID = 5;
-  private static final int SECOND_HANDLER_ID = 6;
+  private static final int HANDLER_ID = 4;
+  private static final int SECOND_HANDLER_ID = 5;
   private static final long STABLE_ID = 2;
   @Mock
   private Binder<String, View> binder;
@@ -78,19 +86,92 @@ public class DataBindingRepositoryPresentersTest {
             .handler(HANDLER_ID, HANDLER)
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .forResult();
+
     resultRepositoryPresenter.bind(STRING_RESULT, 0, viewHolder);
+
+    verify(view).setTag(R.id.agera__rvdatabinding__item_id, ITEM_ID);
+    verify(viewDataBinding).setVariable(ITEM_ID, STRING);
+    verify(viewDataBinding).setVariable(HANDLER_ID, HANDLER);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, SECOND_HANDLER);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
   }
 
   @Test
-  public void shouldBindRepositoryPresenterOfResultWithoutBinder() {
+  public void shouldNotRecycleRepositoryPresenterOfResultWithNoRecycling() {
     final RepositoryPresenter<Result<String>> resultRepositoryPresenter =
         dataBindingRepositoryPresenterOf(String.class)
             .layout(LAYOUT_ID)
             .itemId(ITEM_ID)
             .handler(HANDLER_ID, HANDLER)
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(DO_NOTHING)
             .forResult();
-    resultRepositoryPresenter.bind(STRING_RESULT, 0, viewHolder);
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfResultWithItemRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+
+    final RepositoryPresenter<Result<String>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ITEM)
+            .forResult();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfResultWithAllRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    final RepositoryPresenter<Result<String>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ALL)
+            .forResult();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfResultWithHandlerRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    final RepositoryPresenter<Result<String>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_HANDLERS)
+            .forResult();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
   }
 
   @Test
@@ -101,7 +182,152 @@ public class DataBindingRepositoryPresentersTest {
             .itemId(ITEM_ID)
             .handler(HANDLER_ID, HANDLER)
             .forResultList();
+
     resultListRepositoryPresenter.bind(STRING_LIST_RESULT, 1, viewHolder);
+
+    verify(view).setTag(R.id.agera__rvdatabinding__item_id, ITEM_ID);
+    verify(viewDataBinding).setVariable(ITEM_ID, SECOND_STRING);
+    verify(viewDataBinding).setVariable(HANDLER_ID, HANDLER);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldNotRecycleRepositoryPresenterOfResultListWithNoRecycling() {
+    final RepositoryPresenter<Result<List<String>>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(DO_NOTHING)
+            .forResultList();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfResultListWithItemRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+
+    final RepositoryPresenter<Result<List<String>>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ITEM)
+            .forResultList();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfResultListWithAllRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    final RepositoryPresenter<Result<List<String>>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ALL)
+            .forResultList();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfResultListWithHandlerRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    final RepositoryPresenter<Result<List<String>>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_HANDLERS)
+            .forResultList();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfItemWithItemRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ITEM)
+            .forItem();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfItemWithAllRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ALL)
+            .forItem();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfItemWithHandlerRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_HANDLERS)
+            .forItem();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
   }
 
   @Test
@@ -121,8 +347,93 @@ public class DataBindingRepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .itemId(ITEM_ID)
             .forList();
+
     listRepositoryPresenter.bind(STRING_LIST, 1, viewHolder);
+
+    verify(view).setTag(R.id.agera__rvdatabinding__item_id, ITEM_ID);
+    verify(viewDataBinding).setVariable(ITEM_ID, SECOND_STRING);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
   }
+
+  @Test
+  public void shouldNotRecycleRepositoryPresenterOfListWithNoRecycling() {
+    final RepositoryPresenter<List<String>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(DO_NOTHING)
+            .forList();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfListWithItemRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+
+    final RepositoryPresenter<List<String>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ITEM)
+            .forList();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfListWithAllRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    final RepositoryPresenter<List<String>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ALL)
+            .forList();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfListWithHandlerRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    final RepositoryPresenter<List<String>> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_HANDLERS)
+            .forList();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
 
   @Test
   public void shouldReturnZeroForCountOfRepositoryPresenterOfFailedResult() {

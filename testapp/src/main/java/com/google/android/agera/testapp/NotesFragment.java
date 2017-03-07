@@ -75,7 +75,6 @@ public final class NotesFragment extends Fragment {
             dataBindingRepositoryPresenterOf(Note.class)
                 .layout(R.layout.text_layout)
                 .itemId(BR.note)
-                .stableIdForItem(Note::getId)
                 .handler(BR.click,
                     (Receiver<Note>) (note) -> {
                       final EditText editText = new EditText(getContext());
@@ -89,6 +88,7 @@ public final class NotesFragment extends Fragment {
                           .create().show();
                     })
                 .handler(BR.longClick, (Receiver<Note>) notesStore::deleteNote)
+                .stableIdForItem(Note::getId)
                 .forList());
 
     adapter = repositoryAdapter()

@@ -20,7 +20,7 @@ import android.support.annotation.Nullable;
 import com.google.android.agera.Repository;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
-import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerBindingCompile;
+import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerStableIdRecycleCompile;
 import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPItemBinding;
 
 /**
@@ -75,7 +75,7 @@ public final class DataBindingRepositoryPresenters {
 
   @SuppressWarnings("unchecked")
   @NonNull
-  public static <T> RPLayout<T, DBRPItemBinding<T, DBRPHandlerBindingCompile<T>>>
+  public static <T> RPLayout<T, DBRPItemBinding<T, DBRPHandlerStableIdRecycleCompile<T>>>
   dataBindingRepositoryPresenterOf(@Nullable final Class<T> type) {
     return new DataBindingRepositoryPresenterCompiler();
   }
