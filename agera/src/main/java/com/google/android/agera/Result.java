@@ -18,11 +18,11 @@ package com.google.android.agera;
 import static com.google.android.agera.Preconditions.checkArgument;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -58,7 +58,7 @@ public final class Result<T> {
   @Nullable
   private final T value;
   @Nullable
-  private volatile List<T> list;
+  private transient volatile List<T> list;
   @Nullable
   private final Throwable failure;
 
@@ -66,6 +66,7 @@ public final class Result<T> {
     checkArgument(value != null ^ failure != null, "Illegal Result arguments");
     this.value = value;
     this.failure = failure;
+    this.list = value != null ? null : Collections.<T>emptyList();
   }
 
   /**
@@ -172,9 +173,6 @@ public final class Result<T> {
    */
   @NonNull
   public List<T> asList() {
-    if (value == null) {
-      return emptyList();
-    }
     List<T> list = this.list;
     if (list == null) {
       synchronized (this) {
