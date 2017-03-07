@@ -26,7 +26,7 @@ final class Common {
   static final StaticCondicate TRUE_CONDICATE = new StaticCondicate(true);
   static final StaticCondicate FALSE_CONDICATE = new StaticCondicate(false);
 
-  private static final class NullOperator implements Function, Receiver {
+  private static final class NullOperator implements Function, Receiver, Binder {
     @NonNull
     @Override
     public Object apply(@NonNull final Object from) {
@@ -35,6 +35,9 @@ final class Common {
 
     @Override
     public void accept(@NonNull final Object value) {}
+
+    @Override
+    public void bind(@NonNull final Object o, @NonNull final Object o2) {}
   }
 
   private static final class StaticCondicate implements Condition, Predicate {

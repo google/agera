@@ -15,8 +15,10 @@
  */
 package com.google.android.agera.rvadapter;
 
+import static com.google.android.agera.Binders.nullBinder;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Preconditions.checkNotNull;
+import static com.google.android.agera.Receivers.nullReceiver;
 
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
@@ -32,13 +34,11 @@ import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
 final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycleStableIdCompile {
-  @NonNull
-  private static final NullHandler NULL_HANDLER = new NullHandler();
   private Function<Object, Integer> layoutForItem;
   @NonNull
-  private Binder binder = NULL_HANDLER;
+  private Binder binder = nullBinder();
   @NonNull
-  private Receiver recycler = NULL_HANDLER;
+  private Receiver recycler = nullReceiver();
   @NonNull
   private Function<Object, Long> stableIdForItem = staticFunction(RecyclerView.NO_ID);
 
@@ -93,14 +93,6 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
   public Object recycleWith(@NonNull final Receiver recycler) {
     this.recycler = recycler;
     return this;
-  }
-
-  private static final class NullHandler implements Binder, Receiver {
-    @Override
-    public void bind(@NonNull Object o, @NonNull Object o2) {}
-
-    @Override
-    public void accept(@NonNull final Object o) {}
   }
 
   private abstract static class BasicRepositoryPresenter<TVal, T>
