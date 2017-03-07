@@ -105,6 +105,16 @@ public class DataBindingRepositoryPresentersTest {
   }
 
   @Test
+  public void shouldBindRepositoryPresenterOfItem() {
+    final RepositoryPresenter<String> itemRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .forItem();
+    itemRepositoryPresenter.bind(STRING, 0, viewHolder);
+  }
+
+  @Test
   public void shouldBindRepositoryPresenterOfList() {
     final RepositoryPresenter<List<String>> listRepositoryPresenter =
         dataBindingRepositoryPresenterOf(String.class)

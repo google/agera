@@ -103,6 +103,13 @@ public interface RepositoryPresenterCompilerStates {
   interface RPCompile<TVal> {
 
     /**
+     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a single item that will be
+     * bound to the {@link RecyclerView}.
+     */
+    @NonNull
+    RepositoryPresenter<TVal> forItem();
+
+    /**
      * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link List} where each
      * item in the {@link List} will be bound to the {@link RecyclerView}.
      */

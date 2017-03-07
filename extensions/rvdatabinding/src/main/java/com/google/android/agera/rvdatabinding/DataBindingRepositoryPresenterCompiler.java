@@ -72,6 +72,17 @@ final class DataBindingRepositoryPresenterCompiler
     return this;
   }
 
+
+  @NonNull
+  @Override
+  public RepositoryPresenter forItem() {
+    return repositoryPresenterOf(null)
+        .layoutForItem(layoutFactory)
+        .stableIdForItem(stableIdForItem)
+        .bindWith(new ViewBinder(itemId, new ArrayList<>(handlers)))
+        .forItem();
+  }
+
   @NonNull
   @Override
   public RepositoryPresenter<List<Object>> forList() {
