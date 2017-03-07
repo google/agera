@@ -18,6 +18,7 @@ package com.google.android.agera.rvadapter;
 import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Preconditions.checkArgument;
 import static com.google.android.agera.Preconditions.checkNotNull;
+import static com.google.android.agera.Repositories.repository;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -76,6 +77,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     @NonNull
     final List<RepositoryPresenter<Object>> presenters = new ArrayList<>();
     @NonNull
+    final List<Boolean> isDynamicPresenter = new ArrayList<>();
+    @NonNull
     final List<Observable> observables = new ArrayList<>();
 
     /**
@@ -100,7 +103,52 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
       final RepositoryPresenter<Object> untypedPresenter =
           (RepositoryPresenter<Object>) checkNotNull(presenter);
       presenters.add(untypedPresenter);
+      isDynamicPresenter.add(true);
       observables.add(untypedRepository);
+      return this;
+    }
+
+    /**
+     * Specifies that the {@link RepositoryAdapter} being built should present the given
+     * {@code item} next (after all previously added item), using the given
+     * {@code presenter} for any presentation logic. Added items will be considered static;
+     * any stable id added returned by the {@link RepositoryPresenter} will be ignored, and the
+     * item will be kept stable by the {@link RepositoryAdapter}
+     *
+     * @param item A static item. This can be the same as a previously added item; this makes the
+     * resulting {@link RepositoryAdapter} present the same data in different positions and/or
+     * different ways.
+     * @param presenter The repository presenter associated with the {@code repository} at this
+     *     position.
+     * @return This instance, for chaining.
+     */
+    @NonNull
+    public <T> Builder addItem(@NonNull final T item,
+        @NonNull final RepositoryPresenter<T> presenter) {
+      @SuppressWarnings("unchecked")
+      final Repository<Object> repository = (Repository<Object>) repository(item);
+      repositories.add(repository);
+      @SuppressWarnings("unchecked")
+      final RepositoryPresenter<Object> untypedPresenter =
+          (RepositoryPresenter<Object>) checkNotNull(presenter);
+      presenters.add(untypedPresenter);
+      isDynamicPresenter.add(false);
+      return this;
+    }
+
+    /**
+     * Specifies that the {@link RepositoryAdapter} being built should present the given
+     * {@code presenter} next (after all previously added items).
+     *
+     * @param presenter The layout presenter associated with the {@code repository} at this
+     *     position.
+     * @return This instance, for chaining.
+     */
+    @NonNull
+    public Builder addLayout(@NonNull final LayoutPresenter presenter) {
+      repositories.add(repository(new Object()));
+      presenters.add(new LayoutRepositoryPresenter(presenter));
+      isDynamicPresenter.add(false);
       return this;
     }
 
@@ -228,9 +276,9 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
       @Override
       public void onActivityStopped(final Activity anyActivity) {
-          if (anyActivity == activity) {
-            repositoryAdapter.stopObserving();
-          }
+        if (anyActivity == activity) {
+          repositoryAdapter.stopObserving();
+        }
       }
     }
 
@@ -270,6 +318,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   @NonNull
   private final RepositoryPresenter<Object>[] presenters;
   @NonNull
+  private final Boolean[] isDynamicPresenter;
+  @NonNull
   private final Map<ViewHolder, RepositoryPresenter<Object>> presenterForViewHolder;
   @NonNull
   private final Observable observable;
@@ -294,12 +344,16 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     final RepositoryPresenter<Object>[] presenters = builder.presenters.toArray(
         (RepositoryPresenter<Object>[]) new RepositoryPresenter[count]);
 
+    @SuppressWarnings("unchecked")
+    final Boolean[] isDynamicPresenter = builder.isDynamicPresenter.toArray(new Boolean[count]);
+
     final Observable[] observables =
-        builder.observables.toArray(new Observable[builder.observables.size()]);
+       builder.observables.toArray(new Observable[builder.observables.size()]);
     this.data = new Object[count];
     this.repositoryCount = count;
     this.repositories = repositories;
     this.presenters = presenters;
+    this.isDynamicPresenter = isDynamicPresenter;
     this.presenterForViewHolder = new IdentityHashMap<>();
     this.observable = compositeObservable(observables);
     this.endPositions = new int[count];
@@ -358,10 +412,11 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   @Override
   public final long getItemId(final int position) {
     resolveIndices(position);
-    int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
-    int resolvedItemIndex = this.resolvedItemIndex;
-    return presenters[resolvedRepositoryIndex].getItemId(
-        data[resolvedRepositoryIndex], resolvedItemIndex);
+    final int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
+    final RepositoryPresenter<Object> presenter = presenters[resolvedRepositoryIndex];
+    final long itemId = presenter.getItemId(data[resolvedRepositoryIndex], this.resolvedItemIndex);
+    return isDynamicPresenter[resolvedRepositoryIndex]
+        ? itemId + repositoryCount : resolvedRepositoryIndex;
   }
 
   /**
@@ -431,5 +486,39 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
     resolvedRepositoryIndex = arrayIndex;
     resolvedItemIndex = arrayIndex == 0 ? position : position - endPositions[arrayIndex - 1];
+  }
+
+  private static final class LayoutRepositoryPresenter extends RepositoryPresenter<Object> {
+    private final LayoutPresenter presenter;
+
+    LayoutRepositoryPresenter(@NonNull final LayoutPresenter presenter) {
+      this.presenter = presenter;
+    }
+
+    @Override
+    public int getItemCount(@NonNull final Object data) {
+      return 1;
+    }
+
+    @Override
+    public int getLayoutResId(@NonNull final Object data, final int index) {
+      return presenter.getLayoutResId();
+    }
+
+    @Override
+    public void bind(@NonNull final Object data, final int index,
+        @NonNull final ViewHolder holder) {
+      presenter.bind(holder.itemView);
+    }
+
+    @Override
+    public void recycle(@NonNull final ViewHolder holder) {
+      presenter.recycle(holder.itemView);
+    }
+
+    @Override
+    public long getItemId(@NonNull final Object data, final int index) {
+      return 0;
+    }
   }
 }

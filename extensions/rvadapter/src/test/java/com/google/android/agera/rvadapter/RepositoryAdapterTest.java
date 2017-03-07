@@ -15,6 +15,7 @@
  */
 package com.google.android.agera.rvadapter;
 
+import static android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH;
 import static com.google.android.agera.Observables.updateDispatcher;
 import static com.google.android.agera.Repositories.mutableRepository;
 import static com.google.android.agera.Repositories.repository;
@@ -23,7 +24,7 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -33,14 +34,15 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.robolectric.annotation.Config.NONE;
 import static org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Application.ActivityLifecycleCallbacks;
 import android.content.Context;
 import android.support.annotation.LayoutRes;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.AdapterDataObserver;
+import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,17 +61,23 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = NONE)
 public final class RepositoryAdapterTest {
+  private static final int NBR_OF_ADDED = 4;
   private static final List<String> REPOSITORY_LIST = asList("a", "b", "c");
   private static final String REPOSITORY_ITEM = "d";
   private static final String ALTERNATIVE_REPOSITORY_ITEM = "e";
+  private static final String ITEM = "f";
   @LayoutRes
-  public static final int LAYOUT_ID = 3;
+  private static final int LAYOUT_ID = 3;
   @Mock
   private RepositoryPresenter repositoryPresenter;
   @Mock
   private RepositoryPresenter secondRepositoryPresenter;
   @Mock
-  private RecyclerView.ViewHolder viewHolder;
+  private RepositoryPresenter itemRepositoryPresenter;
+  @Mock
+  private LayoutPresenter layoutPresenter;
+  @Mock
+  private ViewHolder viewHolder;
   @Mock
   private ViewGroup viewGroup;
   @Mock
@@ -104,40 +112,60 @@ public final class RepositoryAdapterTest {
     when(layoutInflater.inflate(LAYOUT_ID, viewGroup, false)).thenReturn(view);
     when(repositoryPresenter.getItemCount(REPOSITORY_ITEM)).thenReturn(1);
     when(secondRepositoryPresenter.getItemCount(REPOSITORY_LIST)).thenReturn(3);
+    when(itemRepositoryPresenter.getItemCount(ITEM)).thenReturn(1);
 
     repositoryAdapter = repositoryAdapter()
         .add(repository, repositoryPresenter)
         .add(secondRepository, secondRepositoryPresenter)
+        .addLayout(layoutPresenter)
+        .addItem(ITEM, itemRepositoryPresenter)
         .addAdditionalObservable(updateDispatcher)
         .build();
   }
 
   @Test
   public void shouldReturnItemCountFromPresenters() {
-    assertThat(repositoryAdapter.getItemCount(), is(4));
+    assertThat(repositoryAdapter.getItemCount(), is(6));
   }
 
   @Test
   public void shouldReturnItemIdFromFirstPresenter() {
-    when(repositoryPresenter.getItemId(REPOSITORY_ITEM, 0)).thenReturn(1L);
-    assertThat(repositoryAdapter.getItemId(0), is(1L));
+    when(repositoryPresenter.getItemId(REPOSITORY_ITEM, 0)).thenReturn(10L);
+    assertThat(repositoryAdapter.getItemId(0), is(10L + NBR_OF_ADDED));
 
     verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
+    verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
   }
 
   @Test
   public void shouldReturnItemIdFromSecondPresenter() {
-    when(secondRepositoryPresenter.getItemId(REPOSITORY_LIST, 0)).thenReturn(2L);
-    assertThat(repositoryAdapter.getItemId(1), is(2L));
+    when(secondRepositoryPresenter.getItemId(REPOSITORY_LIST, 0)).thenReturn(11L);
+    assertThat(repositoryAdapter.getItemId(1), is(11L + NBR_OF_ADDED));
 
     verify(repositoryPresenter, never()).getItemId(any(), anyInt());
+    verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
+  }
+
+  @Test
+  public void shouldReturnItemIdFromLayoutPresenter() {
+    assertThat(repositoryAdapter.getItemId(4), is(2L));
+
+    verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
+    verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
+  }
+
+  @Test
+  public void shouldReturnItemIdFromItemPresenter() {
+    assertThat(repositoryAdapter.getItemId(5), is(3L));
+
+    verify(repositoryPresenter, never()).getItemId(any(), anyInt());
+    verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
   }
 
   @Test(expected = IndexOutOfBoundsException.class)
   public void shouldThrowExceptionForOutOfBoundsIndex() {
-    repositoryAdapter.getItemId(4);
+    repositoryAdapter.getItemId(6);
   }
-
 
   @Test(expected = IndexOutOfBoundsException.class)
   public void shouldThrowExceptionForNegativeIndex() {
@@ -166,6 +194,17 @@ public final class RepositoryAdapterTest {
 
     verify(repositoryPresenter, never()).getItemId(any(), anyInt());
   }
+
+  @Test
+  public void shouldReturnItemViewTypeFromLayoutPresenter() {
+    when(layoutPresenter.getLayoutResId()).thenReturn(34);
+    assertThat(repositoryAdapter.getItemViewType(4), is(34));
+
+    verify(repositoryPresenter, never()).getItemId(any(), anyInt());
+    verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
+    verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
+  }
+
 
   @Test
   public void shouldCreateViewHolder() {
@@ -216,6 +255,7 @@ public final class RepositoryAdapterTest {
     verify(repositoryPresenter).recycle(viewHolder);
   }
 
+  @Test
   public void shouldCallRecycleForOnViewRecycledForSecondPresenter() {
     when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
     repositoryAdapter.getItemCount(); //Trigger a refresh
@@ -245,6 +285,54 @@ public final class RepositoryAdapterTest {
     repositoryAdapter.onFailedToRecycleView(viewHolder);
 
     verify(secondRepositoryPresenter).recycle(viewHolder);
+  }
+
+
+  @Test
+  public void shouldCallRecycleForOnViewRecycledForLayoutPresenter() {
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    updateDispatcher.update();
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    final ViewHolder viewHolder = new ViewHolder(view) {};
+    repositoryAdapter.onBindViewHolder(viewHolder, 4);
+
+    repositoryAdapter.onViewRecycled(viewHolder);
+
+    verify(layoutPresenter).recycle(view);
+  }
+
+  @Test
+  public void shouldCallRecycleForOnFailedToRecycleViewForLayoutPresenter() {
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    updateDispatcher.update();
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    final ViewHolder viewHolder = new ViewHolder(view) {};
+    repositoryAdapter.onBindViewHolder(viewHolder, 4);
+
+    repositoryAdapter.onFailedToRecycleView(viewHolder);
+
+    verify(layoutPresenter).recycle(view);
+  }
+
+  @Test
+  public void shouldBindLayoutPresenter() {
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    updateDispatcher.update();
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+
+    final ViewHolder viewHolder = new ViewHolder(view) {};
+    repositoryAdapter.onBindViewHolder(viewHolder, 4);
+
+    verify(layoutPresenter).bind(view);
   }
 
   @Test
@@ -284,10 +372,10 @@ public final class RepositoryAdapterTest {
     when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
     repositoryAdapterWhileStarted.getItemCount(); //Trigger a refresh
 
-    setActivityToVisible();
+    setActivityToStarted();
     repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
     runUiThreadTasksIncludingDelayedTasks();
-    setActivityToInvisible();
+    setActivityToStopped();
 
     repositoryAdapterWhileStarted.onBindViewHolder(viewHolder, 0);
 
@@ -321,10 +409,10 @@ public final class RepositoryAdapterTest {
     when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
     repositoryAdapterWhileResumed.getItemCount(); //Trigger a refresh
 
-    setActivityToActive();
+    setActivityToResumed();
     repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
     runUiThreadTasksIncludingDelayedTasks();
-    setActivityToInactive();
+    setActivityToPaused();
 
     repositoryAdapterWhileResumed.onBindViewHolder(viewHolder, 0);
 
@@ -348,18 +436,155 @@ public final class RepositoryAdapterTest {
     verify(repositoryPresenter).bind(REPOSITORY_ITEM, 0, viewHolder);
   }
 
-    private void setActivityToActive() {
-      final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
-          forClass(ActivityLifecycleCallbacks.class);
+  @Test
+  public void shouldDoNothingOnActivityCreatedForWhileResumed() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileResumed(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToCreated();
+  }
 
-     verify(application).registerActivityLifecycleCallbacks(captor.capture());
+  @Test
+  public void shouldDoNothingOnActivityDestroyedForWhileResumed() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileResumed(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToDestroyed();
+  }
+
+  @Test
+  public void shouldDoNothingOnActivityCreatedForWhileStarted() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileStarted(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToCreated();
+  }
+
+  @Test
+  public void shouldDoNothingOnActivityDestroyedForWhileStarted() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileStarted(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToDestroyed();
+  }
+
+  @Test
+  public void shouldDoNothingOnActivityStoppedForWhileResumed() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileResumed(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToStopped();
+  }
+
+  @Test
+  public void shouldDoNothingOnActivityStartedForWhileResumed() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileResumed(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToStarted();
+  }
+
+  @Test
+  public void shouldDoNothingOnActivityResumedForWhileStarted() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileStarted(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToResumed();
+  }
+
+  @Test
+  public void shouldDoNothingOnActivityPausedForWhileStarted() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileStarted(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    setActivityToPaused();
+  }
+
+
+  @Test
+  public void shouldDoNothingOnSaveInstanceStateForWhileResumed() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileResumed(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    saveActivityInstanceState();
+  }
+
+  @Test
+  public void shouldDoNothingOnSaveInstanceStateForWhileStarted() {
+    repositoryAdapterWhileResumed = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .add(secondRepository, secondRepositoryPresenter)
+        .addAdditionalObservable(updateDispatcher)
+        .whileStarted(activity);
+    runUiThreadTasksIncludingDelayedTasks();
+    saveActivityInstanceState();
+  }
+
+  @TargetApi(ICE_CREAM_SANDWICH)
+  private void setActivityToCreated() {
+    final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
+        forClass(ActivityLifecycleCallbacks.class);
+
+    verify(application).registerActivityLifecycleCallbacks(captor.capture());
+
+    final ActivityLifecycleCallbacks callbacks = captor.getValue();
+
+    callbacks.onActivityCreated(activity, null);
+  }
+
+  @TargetApi(ICE_CREAM_SANDWICH)
+  private void setActivityToDestroyed() {
+    final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
+        forClass(ActivityLifecycleCallbacks.class);
+
+    verify(application).registerActivityLifecycleCallbacks(captor.capture());
+
+    final ActivityLifecycleCallbacks callbacks = captor.getValue();
+
+    callbacks.onActivityDestroyed(activity);
+  }
+
+  @TargetApi(ICE_CREAM_SANDWICH)
+  private void setActivityToResumed() {
+    final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
+        forClass(ActivityLifecycleCallbacks.class);
+
+    verify(application).registerActivityLifecycleCallbacks(captor.capture());
 
     final ActivityLifecycleCallbacks callbacks = captor.getValue();
 
     callbacks.onActivityResumed(activity);
   }
 
-  private void setActivityToInactive() {
+  @TargetApi(ICE_CREAM_SANDWICH)
+  private void setActivityToPaused() {
     final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
         forClass(ActivityLifecycleCallbacks.class);
 
@@ -370,7 +595,8 @@ public final class RepositoryAdapterTest {
     callbacks.onActivityPaused(activity);
   }
 
-  private void setActivityToVisible() {
+  @TargetApi(ICE_CREAM_SANDWICH)
+  private void setActivityToStarted() {
     final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
         forClass(ActivityLifecycleCallbacks.class);
 
@@ -381,7 +607,8 @@ public final class RepositoryAdapterTest {
     callbacks.onActivityStarted(activity);
   }
 
-  private void setActivityToInvisible() {
+  @TargetApi(ICE_CREAM_SANDWICH)
+  private void setActivityToStopped() {
     final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
         forClass(ActivityLifecycleCallbacks.class);
 
@@ -390,5 +617,17 @@ public final class RepositoryAdapterTest {
     final ActivityLifecycleCallbacks callbacks = captor.getValue();
 
     callbacks.onActivityStopped(activity);
+  }
+
+  @TargetApi(ICE_CREAM_SANDWICH)
+  private void saveActivityInstanceState() {
+    final ArgumentCaptor<ActivityLifecycleCallbacks> captor =
+        forClass(ActivityLifecycleCallbacks.class);
+
+    verify(application).registerActivityLifecycleCallbacks(captor.capture());
+
+    final ActivityLifecycleCallbacks callbacks = captor.getValue();
+
+    callbacks.onActivitySaveInstanceState(activity, null);
   }
 }
