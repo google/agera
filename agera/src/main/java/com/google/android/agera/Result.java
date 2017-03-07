@@ -18,9 +18,12 @@ package com.google.android.agera;
 import static com.google.android.agera.Preconditions.checkArgument;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Preconditions.checkState;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import java.util.List;
 
 /**
  * An immutable object encapsulating the result of an <i>attempt</i>. An attempt is a call to
@@ -54,6 +57,8 @@ public final class Result<T> {
 
   @Nullable
   private final T value;
+  @Nullable
+  private volatile List<T> list;
   @Nullable
   private final Throwable failure;
 
@@ -159,6 +164,27 @@ public final class Result<T> {
       return value;
     }
     throw new FailedResultException(failure);
+  }
+
+
+  /**
+   * Returns a list containing the value if it is present, or an empty list.
+   */
+  @NonNull
+  public List<T> asList() {
+    if (value == null) {
+      return emptyList();
+    }
+    List<T> list = this.list;
+    if (list == null) {
+      synchronized (this) {
+        list = this.list;
+        if (list == null) {
+          this.list = list = singletonList(value);
+        }
+      }
+    }
+    return list;
   }
 
   /**
