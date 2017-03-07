@@ -20,7 +20,6 @@ import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.present;
 import static com.google.android.agera.Result.success;
-import static nl.jqno.equalsverifier.EqualsVerifier.forClass;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
@@ -41,6 +40,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -688,7 +688,7 @@ public final class ResultTest {
 
   @Test
   public void shouldVerifyEqualsForResult() {
-    forClass(Result.class).verify();
+    EqualsVerifier.forClass(Result.class).verify();
   }
 
   @Test
