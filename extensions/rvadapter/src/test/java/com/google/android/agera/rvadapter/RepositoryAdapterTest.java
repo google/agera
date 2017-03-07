@@ -22,7 +22,9 @@ import static com.google.android.agera.Repositories.repository;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -61,7 +63,7 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = NONE)
 public final class RepositoryAdapterTest {
-  private static final int NBR_OF_ADDED = 4;
+  private static final long NBR_OF_STATIC = 2;
   private static final List<String> REPOSITORY_LIST = asList("a", "b", "c");
   private static final String REPOSITORY_ITEM = "d";
   private static final String ALTERNATIVE_REPOSITORY_ITEM = "e";
@@ -131,7 +133,12 @@ public final class RepositoryAdapterTest {
   @Test
   public void shouldReturnItemIdFromFirstPresenter() {
     when(repositoryPresenter.getItemId(REPOSITORY_ITEM, 0)).thenReturn(10L);
-    assertThat(repositoryAdapter.getItemId(0), is(10L + NBR_OF_ADDED));
+    when(repositoryPresenter.getItemId(REPOSITORY_ITEM, 1)).thenReturn(10L);
+
+    final long itemId = repositoryAdapter.getItemId(0);
+
+    assertThat(itemId, greaterThanOrEqualTo(NBR_OF_STATIC));
+    assertThat(repositoryAdapter.getItemId(0), is(itemId));
 
     verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
     verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
@@ -139,8 +146,21 @@ public final class RepositoryAdapterTest {
 
   @Test
   public void shouldReturnItemIdFromSecondPresenter() {
-    when(secondRepositoryPresenter.getItemId(REPOSITORY_LIST, 0)).thenReturn(11L);
-    assertThat(repositoryAdapter.getItemId(1), is(11L + NBR_OF_ADDED));
+    when(secondRepositoryPresenter.getItemId(REPOSITORY_LIST, 0)).thenReturn(10L);
+    when(secondRepositoryPresenter.getItemId(REPOSITORY_LIST, 1)).thenReturn(11L);
+
+    final long itemId = repositoryAdapter.getItemId(1);
+
+    assertThat(itemId, greaterThanOrEqualTo(NBR_OF_STATIC));
+    assertThat(repositoryAdapter.getItemId(1), is(itemId));
+
+    final long itemId2 = repositoryAdapter.getItemId(2);
+
+    assertThat(itemId2, greaterThanOrEqualTo(NBR_OF_STATIC));
+    assertThat(repositoryAdapter.getItemId(2), is(itemId2));
+    assertThat(itemId, not(itemId2));
+    verify(repositoryPresenter, never()).getItemId(any(), anyInt());
+    verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
 
     verify(repositoryPresenter, never()).getItemId(any(), anyInt());
     verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
@@ -148,7 +168,7 @@ public final class RepositoryAdapterTest {
 
   @Test
   public void shouldReturnItemIdFromLayoutPresenter() {
-    assertThat(repositoryAdapter.getItemId(4), is(2L));
+    assertThat(repositoryAdapter.getItemId(4), is(0L));
 
     verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
     verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
@@ -156,7 +176,7 @@ public final class RepositoryAdapterTest {
 
   @Test
   public void shouldReturnItemIdFromItemPresenter() {
-    assertThat(repositoryAdapter.getItemId(5), is(3L));
+    assertThat(repositoryAdapter.getItemId(5), is(1L));
 
     verify(repositoryPresenter, never()).getItemId(any(), anyInt());
     verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
