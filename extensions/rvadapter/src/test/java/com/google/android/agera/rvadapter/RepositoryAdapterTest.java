@@ -201,6 +201,36 @@ public final class RepositoryAdapterTest {
   }
 
   @Test
+  public void shouldCallRecycleForOnRebindViewHolder() {
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    repositoryAdapter.onBindViewHolder(viewHolder, 0);
+    repositoryAdapter.onBindViewHolder(viewHolder, 1);
+
+    verify(repositoryPresenter).recycle(viewHolder);
+  }
+
+  @Test
+  public void shouldNotCallRecycleForOnRebindViewHolderAtSamePosition() {
+    when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    repository.accept(ALTERNATIVE_REPOSITORY_ITEM);
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    repositoryAdapter.onBindViewHolder(viewHolder, 0);
+    repositoryAdapter.onBindViewHolder(viewHolder, 0);
+
+    verify(repositoryPresenter, times(0)).recycle(viewHolder);
+  }
+
+  @Test
   public void shouldCallRecycleForOnFailedToRecycleView() {
     when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
     repositoryAdapter.getItemCount(); //Trigger a refresh
@@ -216,6 +246,7 @@ public final class RepositoryAdapterTest {
     verify(repositoryPresenter).recycle(viewHolder);
   }
 
+  @Test
   public void shouldCallRecycleForOnViewRecycledForSecondPresenter() {
     when(repositoryPresenter.getItemCount(ALTERNATIVE_REPOSITORY_ITEM)).thenReturn(1);
     repositoryAdapter.getItemCount(); //Trigger a refresh
