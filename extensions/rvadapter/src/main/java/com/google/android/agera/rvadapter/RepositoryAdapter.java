@@ -86,8 +86,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
     /**
      * Specifies that the {@link RepositoryAdapter} being built should present the given
-     * {@code repository} next (after all previously added repositories), using the given
-     * {@code presenter} for any presentation logic.
+     * {@code repository} next (after all previously added repositories, items and static layouts),
+     * using the given {@code presenter} for any presentation logic.
      *
      * @param repository The repository to be presented. This can be the same as a previously added
      *     repository; this makes the resulting {@link RepositoryAdapter} present the same data in
@@ -112,10 +112,10 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
     /**
      * Specifies that the {@link RepositoryAdapter} being built should present the given
-     * {@code item} next (after all previously added item), using the given
-     * {@code presenter} for any presentation logic. Added items will be considered static;
-     * any stable id added returned by the {@link RepositoryPresenter} will be ignored, and the
-     * item will be kept stable by the {@link RepositoryAdapter}
+     * {@code item} next (after all previously added repositories, items and static layouts),
+     * using the given {@code presenter} for any presentation logic. Added items will be considered
+     * static; any stable id added returned by the {@link RepositoryPresenter} will be ignored, and
+     * the item will be kept stable by the {@link RepositoryAdapter}
      *
      * @param item A static item. This can be the same as a previously added item; this makes the
      * resulting {@link RepositoryAdapter} present the same data in different positions and/or
@@ -139,7 +139,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
     /**
      * Specifies that the {@link RepositoryAdapter} being built should present the given
-     * {@code presenter} next (after all previously added items).
+     * {@code presenter} next (after all previously added repositories, items and static layouts).
      *
      * @param presenter The layout presenter associated with the {@code repository} at this
      *     position.
