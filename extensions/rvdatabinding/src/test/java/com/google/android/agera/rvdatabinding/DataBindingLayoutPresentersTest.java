@@ -70,7 +70,7 @@ public class DataBindingLayoutPresentersTest {
             .handler(HANDLER_ID, HANDLER)
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .onRecycle(CLEAR_ITEM)
-            .compile();
+            .build();
 
     layoutPresenter.recycle(view);
 
@@ -84,7 +84,7 @@ public class DataBindingLayoutPresentersTest {
             .handler(HANDLER_ID, HANDLER)
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .onRecycle(CLEAR_ALL)
-            .compile();
+            .build();
 
     layoutPresenter.recycle(view);
 
@@ -101,7 +101,7 @@ public class DataBindingLayoutPresentersTest {
             .handler(HANDLER_ID, HANDLER)
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .onRecycle(CLEAR_HANDLERS)
-            .compile();
+            .build();
 
     layoutPresenter.recycle(view);
 
@@ -117,7 +117,7 @@ public class DataBindingLayoutPresentersTest {
         dataBindingLayoutPresenterFor(LAYOUT_ID)
             .handler(HANDLER_ID, HANDLER)
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
-            .compile();
+            .build();
 
     layoutPresenter.bind(view);
 

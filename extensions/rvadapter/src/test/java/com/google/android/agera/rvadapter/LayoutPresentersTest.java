@@ -54,7 +54,7 @@ public class LayoutPresentersTest {
   public void shouldReturnLayoutIdForCompiledLayout() {
     final LayoutPresenter layoutPresenter =
         layoutPresenterFor(LAYOUT_ID)
-            .compile();
+            .build();
 
     assertThat(layoutPresenter.getLayoutResId(), is(LAYOUT_ID));
   }
@@ -71,7 +71,7 @@ public class LayoutPresentersTest {
     final LayoutPresenter layoutPresenter =
         layoutPresenterFor(LAYOUT_ID)
             .bindWith(binder)
-            .compile();
+            .build();
 
     layoutPresenter.bind(view);
 
@@ -82,7 +82,7 @@ public class LayoutPresentersTest {
   public void shouldBindCompiledLayoutWithoutBinder() {
     final LayoutPresenter layoutPresenter =
         layoutPresenterFor(LAYOUT_ID)
-            .compile();
+            .build();
 
     layoutPresenter.bind(view);
   }
@@ -100,7 +100,7 @@ public class LayoutPresentersTest {
         layoutPresenterFor(LAYOUT_ID)
             .bindWith(binder)
             .recycleWith(recycler)
-            .compile();
+            .build();
 
     layoutPresenter.recycle(view);
 
@@ -112,7 +112,7 @@ public class LayoutPresentersTest {
     final LayoutPresenter layoutPresenter =
         layoutPresenterFor(LAYOUT_ID)
             .bindWith(binder)
-            .compile();
+            .build();
 
     layoutPresenter.recycle(view);
   }

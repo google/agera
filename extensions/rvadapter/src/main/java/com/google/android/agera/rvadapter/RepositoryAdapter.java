@@ -19,6 +19,7 @@ import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Preconditions.checkArgument;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Repositories.repository;
+import static com.google.android.agera.Suppliers.staticSupplier;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -33,6 +34,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import com.google.android.agera.Observable;
 import com.google.android.agera.Repository;
+import com.google.android.agera.Supplier;
 import com.google.android.agera.Updatable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,7 +76,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
    */
   public static final class Builder {
     @NonNull
-    final List<Repository<Object>> repositories = new ArrayList<>();
+    final List<Supplier<Object>> suppliers = new ArrayList<>();
     @NonNull
     final List<RepositoryPresenter<Object>> presenters = new ArrayList<>();
     @NonNull
@@ -99,7 +101,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
         @NonNull final RepositoryPresenter<T> presenter) {
       @SuppressWarnings("unchecked")
       final Repository<Object> untypedRepository = (Repository<Object>) checkNotNull(repository);
-      repositories.add(untypedRepository);
+      suppliers.add(untypedRepository);
       @SuppressWarnings("unchecked")
       final RepositoryPresenter<Object> untypedPresenter =
           (RepositoryPresenter<Object>) checkNotNull(presenter);
@@ -125,9 +127,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     @NonNull
     public <T> Builder addItem(@NonNull final T item,
         @NonNull final RepositoryPresenter<T> presenter) {
-      @SuppressWarnings("unchecked")
-      final Repository<Object> repository = (Repository<Object>) repository(item);
-      repositories.add(repository);
+      suppliers.add(staticSupplier((Object) item));
       @SuppressWarnings("unchecked")
       final RepositoryPresenter<Object> untypedPresenter =
           (RepositoryPresenter<Object>) checkNotNull(presenter);
@@ -147,7 +147,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
      */
     @NonNull
     public Builder addLayout(@NonNull final LayoutPresenter presenter) {
-      repositories.add(repository(new Object()));
+      suppliers.add(repository((Object) RepositoryAdapter.class));
       final int size = stableIdMap.size();
       stableIdMap.put(size, null);
       presenters.add(new LayoutRepositoryPresenter(presenter, size));
@@ -314,7 +314,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
   private final int repositoryCount;
   @NonNull
-  private final Repository<Object>[] repositories;
+  private final Supplier<Object>[] suppliers;
   @NonNull
   private final Object[] data;
   @NonNull
@@ -333,14 +333,14 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   private int resolvedItemIndex;
 
   public RepositoryAdapter(@NonNull final Builder builder) {
-    final int count = builder.repositories.size();
+    final int count = builder.suppliers.size();
     checkArgument(count > 0, "Must add at least one repository");
     checkArgument(builder.presenters.size() == count,
         "Unexpected repository and presenter count mismatch");
 
     @SuppressWarnings("unchecked")
-    final Repository<Object>[] repositories = builder.repositories.toArray(
-        (Repository<Object>[]) new Repository[count]);
+    final Supplier<Object>[] suppliers = builder.suppliers.toArray(
+        (Supplier<Object>[]) new Supplier[count]);
 
     @SuppressWarnings("unchecked")
     final RepositoryPresenter<Object>[] presenters = builder.presenters.toArray(
@@ -350,7 +350,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
         builder.observables.toArray(new Observable[builder.observables.size()]);
     this.data = new Object[count];
     this.repositoryCount = count;
-    this.repositories = repositories;
+    this.suppliers = suppliers;
     this.presenters = presenters;
     this.stableIdMap = builder.stableIdMap;
     this.presenterForViewHolder = new IdentityHashMap<>();
@@ -390,7 +390,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     if (dataInvalid) {
       int lastEndPosition = 0;
       for (int i = 0; i < repositoryCount; i++) {
-        data[i] = repositories[i].get();
+        data[i] = suppliers[i].get();
         lastEndPosition += presenters[i].getItemCount(data[i]);
         endPositions[i] = lastEndPosition;
       }
