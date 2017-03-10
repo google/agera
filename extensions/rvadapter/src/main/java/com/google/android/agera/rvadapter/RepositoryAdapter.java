@@ -20,6 +20,7 @@ import static com.google.android.agera.Preconditions.checkArgument;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Repositories.repository;
 import static com.google.android.agera.Suppliers.staticSupplier;
+import static java.lang.Boolean.TRUE;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -80,7 +81,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     @NonNull
     final List<RepositoryPresenter<Object>> presenters = new ArrayList<>();
     @NonNull
-    private final LongSparseArray<Object> stableIdMap = new LongSparseArray<>();
+    final LongSparseArray<Boolean> staticPresenters = new LongSparseArray<>();
     @NonNull
     final List<Observable> observables = new ArrayList<>();
 
@@ -116,6 +117,9 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
      * using the given {@code presenter} for any presentation logic. Added items will be considered
      * static; any stable id added returned by the {@link RepositoryPresenter} will be ignored, and
      * the item will be kept stable by the {@link RepositoryAdapter}
+     * <p>
+     * NOTE: adding an item with this method (as with {@link #addLayout} below) will offset the
+     * stable ID in other {@link RepositoryPresenter}s with the number of items and layouts added.
      *
      * @param item A static item. This can be the same as a previously added item; this makes the
      * resulting {@link RepositoryAdapter} present the same data in different positions and/or
@@ -131,15 +135,17 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
       @SuppressWarnings("unchecked")
       final RepositoryPresenter<Object> untypedPresenter =
           (RepositoryPresenter<Object>) checkNotNull(presenter);
-      final int size = stableIdMap.size();
-      stableIdMap.put(size, null);
-      presenters.add(new ItemRepositoryPresenter(size, untypedPresenter));
+      staticPresenters.put(presenters.size(), TRUE);
+      presenters.add(untypedPresenter);
       return this;
     }
 
     /**
      * Specifies that the {@link RepositoryAdapter} being built should present the given
      * {@code presenter} next (after all previously added repositories, items and static layouts).
+     * <p>
+     * NOTE: adding an item with this method (as with {@link #addItem} above) will offset the
+     * stable ID in other {@link RepositoryPresenter}s with the number of items and layouts added.
      *
      * @param presenter The layout presenter associated with the {@code repository} at this
      *     position.
@@ -148,9 +154,8 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     @NonNull
     public Builder addLayout(@NonNull final LayoutPresenter presenter) {
       suppliers.add(repository((Object) RepositoryAdapter.class));
-      final int size = stableIdMap.size();
-      stableIdMap.put(size, null);
-      presenters.add(new LayoutRepositoryPresenter(presenter, size));
+      staticPresenters.put(presenters.size(), TRUE);
+      presenters.add(new LayoutRepositoryPresenter(presenter));
       return this;
     }
 
@@ -320,7 +325,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   @NonNull
   private final RepositoryPresenter<Object>[] presenters;
   @NonNull
-  private final LongSparseArray<Object> stableIdMap;
+  private final LongSparseArray<Boolean> staticPresenters;
   @NonNull
   private final Map<ViewHolder, RepositoryPresenter<Object>> presenterForViewHolder;
   @NonNull
@@ -352,7 +357,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     this.repositoryCount = count;
     this.suppliers = suppliers;
     this.presenters = presenters;
-    this.stableIdMap = builder.stableIdMap;
+    this.staticPresenters = builder.staticPresenters;
     this.presenterForViewHolder = new IdentityHashMap<>();
     this.observable = compositeObservable(observables);
     this.endPositions = new int[count];
@@ -412,15 +417,13 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   public final long getItemId(final int position) {
     resolveIndices(position);
     final int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
-    final long itemId = presenters[resolvedRepositoryIndex]
-        .getItemId(data[resolvedRepositoryIndex], resolvedItemIndex);
-    if (stableIdMap.size() > 0) {
-      final int mappedId = stableIdMap.indexOfKey(itemId);
-      if (mappedId >= 0) {
-        return mappedId;
+    final RepositoryPresenter<Object> presenter = presenters[resolvedRepositoryIndex];
+    final long itemId = presenter.getItemId(data[resolvedRepositoryIndex], this.resolvedItemIndex);
+    if (staticPresenters.size() > 0) {
+      if (staticPresenters.get(resolvedRepositoryIndex) == null) {
+        return itemId + staticPresenters.size();
       }
-      stableIdMap.put(itemId, null);
-      return stableIdMap.size() - 1;
+      return staticPresenters.indexOfKey(resolvedRepositoryIndex);
     }
     return itemId;
   }
@@ -496,11 +499,9 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
   private static final class LayoutRepositoryPresenter extends RepositoryPresenter<Object> {
     private final LayoutPresenter presenter;
-    private final long itemId;
 
-    LayoutRepositoryPresenter(@NonNull final LayoutPresenter presenter, final long itemId) {
+    LayoutRepositoryPresenter(@NonNull final LayoutPresenter presenter) {
       this.presenter = presenter;
-      this.itemId = itemId;
     }
 
     @Override
@@ -526,45 +527,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
     @Override
     public long getItemId(@NonNull final Object data, final int index) {
-      return itemId;
-    }
-  }
-
-  private static final class ItemRepositoryPresenter extends RepositoryPresenter<Object> {
-    @NonNull
-    private final RepositoryPresenter<Object> presenter;
-    private final int itemId;
-
-    ItemRepositoryPresenter(final int itemId,
-        @NonNull final RepositoryPresenter<Object> presenter) {
-      this.itemId = itemId;
-      this.presenter = presenter;
-    }
-
-    @Override
-    public long getItemId(@NonNull final Object data, final int index) {
-      return itemId;
-    }
-
-    @Override
-    public void recycle(@NonNull final ViewHolder holder) {
-      presenter.recycle(holder);
-    }
-
-    @Override
-    public int getItemCount(@NonNull final Object data) {
-      return presenter.getItemCount(data);
-    }
-
-    @Override
-    public int getLayoutResId(@NonNull final Object data, final int index) {
-      return presenter.getLayoutResId(data, index);
-    }
-
-    @Override
-    public void bind(
-        @NonNull final Object data, final int index, @NonNull final ViewHolder holder) {
-      presenter.bind(data, index, holder);
+      return 0;
     }
   }
 }
