@@ -18,12 +18,16 @@ package com.google.android.agera.rvadapter;
 import static com.google.android.agera.Observables.compositeObservable;
 import static com.google.android.agera.Preconditions.checkArgument;
 import static com.google.android.agera.Preconditions.checkNotNull;
+import static com.google.android.agera.Repositories.repository;
+import static com.google.android.agera.Suppliers.staticSupplier;
+import static java.lang.Boolean.TRUE;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application.ActivityLifecycleCallbacks;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.util.LongSparseArray;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.ViewHolder;
@@ -31,6 +35,7 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import com.google.android.agera.Observable;
 import com.google.android.agera.Repository;
+import com.google.android.agera.Supplier;
 import com.google.android.agera.Updatable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,16 +77,18 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
    */
   public static final class Builder {
     @NonNull
-    final List<Repository<Object>> repositories = new ArrayList<>();
+    final List<Supplier<Object>> suppliers = new ArrayList<>();
     @NonNull
     final List<RepositoryPresenter<Object>> presenters = new ArrayList<>();
+    @NonNull
+    final LongSparseArray<Boolean> staticPresenters = new LongSparseArray<>();
     @NonNull
     final List<Observable> observables = new ArrayList<>();
 
     /**
      * Specifies that the {@link RepositoryAdapter} being built should present the given
-     * {@code repository} next (after all previously added repositories), using the given
-     * {@code presenter} for any presentation logic.
+     * {@code repository} next (after all previously added repositories, items and static layouts),
+     * using the given {@code presenter} for any presentation logic.
      *
      * @param repository The repository to be presented. This can be the same as a previously added
      *     repository; this makes the resulting {@link RepositoryAdapter} present the same data in
@@ -95,12 +102,60 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
         @NonNull final RepositoryPresenter<T> presenter) {
       @SuppressWarnings("unchecked")
       final Repository<Object> untypedRepository = (Repository<Object>) checkNotNull(repository);
-      repositories.add(untypedRepository);
+      suppliers.add(untypedRepository);
       @SuppressWarnings("unchecked")
       final RepositoryPresenter<Object> untypedPresenter =
           (RepositoryPresenter<Object>) checkNotNull(presenter);
       presenters.add(untypedPresenter);
       observables.add(untypedRepository);
+      return this;
+    }
+
+    /**
+     * Specifies that the {@link RepositoryAdapter} being built should present the given
+     * {@code item} next (after all previously added repositories, items and static layouts),
+     * using the given {@code presenter} for any presentation logic. Added items will be considered
+     * static; any stable id added returned by the {@link RepositoryPresenter} will be ignored, and
+     * the item will be kept stable by the {@link RepositoryAdapter}
+     * <p>
+     * NOTE: adding an item with this method (as with {@link #addLayout} below) will offset the
+     * stable ID in other {@link RepositoryPresenter}s with the number of items and layouts added.
+     *
+     * @param item A static item. This can be the same as a previously added item; this makes the
+     * resulting {@link RepositoryAdapter} present the same data in different positions and/or
+     * different ways.
+     * @param presenter The repository presenter associated with the {@code repository} at this
+     *     position.
+     * @return This instance, for chaining.
+     */
+    @NonNull
+    public <T> Builder addItem(@NonNull final T item,
+        @NonNull final RepositoryPresenter<T> presenter) {
+      suppliers.add(staticSupplier((Object) item));
+      @SuppressWarnings("unchecked")
+      final RepositoryPresenter<Object> untypedPresenter =
+          (RepositoryPresenter<Object>) checkNotNull(presenter);
+      staticPresenters.put(presenters.size(), TRUE);
+      presenters.add(untypedPresenter);
+      return this;
+    }
+
+    /**
+     * Specifies that the {@link RepositoryAdapter} being built should present the given
+     * {@code presenter} next (after all previously added repositories, items and static layouts).
+     * <p>
+     * NOTE: adding an item with this method (as with {@link #addItem} above) will offset the
+     * stable ID in other {@link RepositoryPresenter}s with the number of items and layouts added.
+     *
+     * @param presenter The layout presenter associated with the {@code repository} at this
+     *     position.
+     * @return This instance, for chaining.
+     */
+    @NonNull
+    public Builder addLayout(@NonNull final LayoutPresenter presenter) {
+      suppliers.add(repository((Object) RepositoryAdapter.class));
+      staticPresenters.put(presenters.size(), TRUE);
+      presenters.add(new LayoutRepositoryPresenter(presenter));
       return this;
     }
 
@@ -228,9 +283,9 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
       @Override
       public void onActivityStopped(final Activity anyActivity) {
-          if (anyActivity == activity) {
-            repositoryAdapter.stopObserving();
-          }
+        if (anyActivity == activity) {
+          repositoryAdapter.stopObserving();
+        }
       }
     }
 
@@ -264,11 +319,13 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
   private final int repositoryCount;
   @NonNull
-  private final Repository<Object>[] repositories;
+  private final Supplier<Object>[] suppliers;
   @NonNull
   private final Object[] data;
   @NonNull
   private final RepositoryPresenter<Object>[] presenters;
+  @NonNull
+  private final LongSparseArray<Boolean> staticPresenters;
   @NonNull
   private final Map<ViewHolder, RepositoryPresenter<Object>> presenterForViewHolder;
   @NonNull
@@ -281,14 +338,14 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   private int resolvedItemIndex;
 
   public RepositoryAdapter(@NonNull final Builder builder) {
-    final int count = builder.repositories.size();
+    final int count = builder.suppliers.size();
     checkArgument(count > 0, "Must add at least one repository");
     checkArgument(builder.presenters.size() == count,
         "Unexpected repository and presenter count mismatch");
 
     @SuppressWarnings("unchecked")
-    final Repository<Object>[] repositories = builder.repositories.toArray(
-        (Repository<Object>[]) new Repository[count]);
+    final Supplier<Object>[] suppliers = builder.suppliers.toArray(
+        (Supplier<Object>[]) new Supplier[count]);
 
     @SuppressWarnings("unchecked")
     final RepositoryPresenter<Object>[] presenters = builder.presenters.toArray(
@@ -298,8 +355,9 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
         builder.observables.toArray(new Observable[builder.observables.size()]);
     this.data = new Object[count];
     this.repositoryCount = count;
-    this.repositories = repositories;
+    this.suppliers = suppliers;
     this.presenters = presenters;
+    this.staticPresenters = builder.staticPresenters;
     this.presenterForViewHolder = new IdentityHashMap<>();
     this.observable = compositeObservable(observables);
     this.endPositions = new int[count];
@@ -337,7 +395,7 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     if (dataInvalid) {
       int lastEndPosition = 0;
       for (int i = 0; i < repositoryCount; i++) {
-        data[i] = repositories[i].get();
+        data[i] = suppliers[i].get();
         lastEndPosition += presenters[i].getItemCount(data[i]);
         endPositions[i] = lastEndPosition;
       }
@@ -358,10 +416,16 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
   @Override
   public final long getItemId(final int position) {
     resolveIndices(position);
-    int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
-    int resolvedItemIndex = this.resolvedItemIndex;
-    return presenters[resolvedRepositoryIndex].getItemId(
-        data[resolvedRepositoryIndex], resolvedItemIndex);
+    final int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
+    final RepositoryPresenter<Object> presenter = presenters[resolvedRepositoryIndex];
+    final long itemId = presenter.getItemId(data[resolvedRepositoryIndex], this.resolvedItemIndex);
+    if (staticPresenters.size() > 0) {
+      if (staticPresenters.get(resolvedRepositoryIndex) == null) {
+        return itemId + staticPresenters.size();
+      }
+      return staticPresenters.indexOfKey(resolvedRepositoryIndex);
+    }
+    return itemId;
   }
 
   /**
@@ -431,5 +495,39 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
 
     resolvedRepositoryIndex = arrayIndex;
     resolvedItemIndex = arrayIndex == 0 ? position : position - endPositions[arrayIndex - 1];
+  }
+
+  private static final class LayoutRepositoryPresenter extends RepositoryPresenter<Object> {
+    private final LayoutPresenter presenter;
+
+    LayoutRepositoryPresenter(@NonNull final LayoutPresenter presenter) {
+      this.presenter = presenter;
+    }
+
+    @Override
+    public int getItemCount(@NonNull final Object data) {
+      return 1;
+    }
+
+    @Override
+    public int getLayoutResId(@NonNull final Object data, final int index) {
+      return presenter.getLayoutResId();
+    }
+
+    @Override
+    public void bind(@NonNull final Object data, final int index,
+        @NonNull final ViewHolder holder) {
+      presenter.bind(holder.itemView);
+    }
+
+    @Override
+    public void recycle(@NonNull final ViewHolder holder) {
+      presenter.recycle(holder.itemView);
+    }
+
+    @Override
+    public long getItemId(@NonNull final Object data, final int index) {
+      return 0;
+    }
   }
 }

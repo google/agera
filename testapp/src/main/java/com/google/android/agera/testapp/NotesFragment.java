@@ -22,11 +22,13 @@ import static com.google.android.agera.RepositoryConfig.SEND_INTERRUPT;
 import static com.google.android.agera.Result.absentIfNull;
 import static com.google.android.agera.net.HttpFunctions.httpFunction;
 import static com.google.android.agera.net.HttpRequests.httpGetRequest;
+import static com.google.android.agera.rvadapter.LayoutPresenters.layout;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
 import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
 import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static com.google.android.agera.testapp.RowHandler.rowBinder;
+import static java.text.DateFormat.getInstance;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 import android.app.AlertDialog;
@@ -48,6 +50,7 @@ import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.Updatable;
 import com.google.android.agera.rvadapter.RepositoryAdapter;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -92,12 +95,17 @@ public final class NotesFragment extends Fragment {
                 .forList());
 
     adapter = repositoryAdapter()
+        .addLayout(layout(R.layout.header))
         .add(notesStore.getNotesRepository(), repositoryPresenterOf(NoteGroup.class)
             .layout(R.layout.note_group_layout)
             .stableIdForItem(NoteGroup::getId)
             .bindWith(rowHandler)
             .recycleWith(rowHandler)
             .forList())
+        .addItem(getInstance().format(new Date()), dataBindingRepositoryPresenterOf(String.class)
+            .layout(R.layout.footer)
+            .itemId(BR.string)
+            .forItem())
         .build();
     adapter.setHasStableIds(true);
 
