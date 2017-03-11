@@ -21,12 +21,15 @@ import static com.google.android.agera.Functions.functionFromListOf;
 import static com.google.android.agera.Functions.identityFunction;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Functions.supplierAsFunction;
+import static com.google.android.agera.Result.absent;
 import static com.google.android.agera.Result.failure;
+import static com.google.android.agera.Result.present;
 import static com.google.android.agera.Result.success;
 import static com.google.android.agera.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.Matchers.anyInt;
@@ -47,6 +50,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 public final class FunctionsTest {
+  private static final int VALUE = 42;
   private static final int VALUE_PLUS_TWO = 44;
   private static final int RECOVER_VALUE = 43;
   private static final String INPUT_STRING = "input";
@@ -55,6 +59,11 @@ public final class FunctionsTest {
   private static final Throwable THROWABLE = new Throwable();
   private static final Result<Integer> FAILURE = failure(THROWABLE);
   private static final Result<Integer> RECOVER_SUCCESS = success(RECOVER_VALUE);
+  private static final Result<Integer> PRESENT_WITH_VALUE = present(VALUE);
+  private static final Result<Integer> ABSENT = absent();
+  private static final Result<List<Integer>> FAILURE_LIST = failure(THROWABLE);
+  private static final Result<List<Integer>> ABSENT_LIST = absent();
+  private static final Result<List<String>> PRESENT_WITH_LIST = present(INPUT_LIST);
 
   @Mock
   private Function<Integer, Result<Integer>> mockDivideTenFunction;
@@ -83,6 +92,41 @@ public final class FunctionsTest {
     final Throwable throwable = new Throwable();
 
     assertThat(failedResult().apply(throwable).getFailure(), is(throwable));
+  }
+
+  @Test
+  public void shouldFunctionReturningEmptyListForAbsent() {
+    assertThat(Functions.<Integer>resultAsList().apply(ABSENT), is((empty())));
+  }
+
+  @Test
+  public void shouldReturnFunctionReturingEmptyListForFailure() {
+    assertThat(Functions.<Integer>resultAsList().apply(FAILURE), is((empty())));
+  }
+
+  @Test
+  public void shouldReturnFunctionReturningListWithValueForPresentWithValue() {
+    assertThat(Functions.<Integer>resultAsList().apply(PRESENT_WITH_VALUE), contains(VALUE));
+  }
+
+  @Test
+  public void shouldFunctionReturningEmptyListForAbsentList() {
+    assertThat(Functions.<Integer>resultListAsList().apply(ABSENT_LIST), is((empty())));
+  }
+
+  @Test
+  public void shouldReturnFunctionReturingEmptyListForFailureList() {
+    assertThat(Functions.<Integer>resultListAsList().apply(FAILURE_LIST), is((empty())));
+  }
+
+  @Test
+  public void shouldReturnFunctionReturningListWithValueForPresentWithList() {
+    assertThat(Functions.<String>resultListAsList().apply(PRESENT_WITH_LIST), is(INPUT_LIST));
+  }
+
+  @Test
+  public void shouldReturnFunctionReturningListWithValue() {
+    assertThat(Functions.<Integer>itemAsList().apply(VALUE), contains(VALUE));
   }
 
   @Test
@@ -176,13 +220,13 @@ public final class FunctionsTest {
   @Test
   public void shouldCreateFunctionFromListToSortedList() {
     final Function<List<String>, List<Integer>> function = functionFromListOf(String.class)
-            .map(new StringLength())
-            .thenSort(new Comparator<Integer>() {
-              @Override
-              public int compare(Integer lhs, Integer rhs) {
-                return lhs.compareTo(rhs);
-              }
-            });
+        .map(new StringLength())
+        .thenSort(new Comparator<Integer>() {
+          @Override
+          public int compare(Integer lhs, Integer rhs) {
+            return lhs.compareTo(rhs);
+          }
+        });
 
     final List<String> inputList = new ArrayList<>(INPUT_LIST);
     assertThat(function.apply(inputList), contains(3, 4, 7, 7));
