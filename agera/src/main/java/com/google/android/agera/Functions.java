@@ -19,18 +19,29 @@ import static com.google.android.agera.Common.FAILED_RESULT;
 import static com.google.android.agera.Common.NULL_OPERATOR;
 import static com.google.android.agera.FunctionCompiler.functionCompiler;
 import static com.google.android.agera.Preconditions.checkNotNull;
+import static java.util.Collections.singletonList;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import com.google.android.agera.Common.StaticProducer;
 import com.google.android.agera.FunctionCompilerStates.FItem;
 import com.google.android.agera.FunctionCompilerStates.FList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Utility methods for obtaining {@link Function} instances.
  */
 public final class Functions {
+  @NonNull
+  private static final ResultAsListFunction<Object> RESULT_AS_LIST_FUNCTION =
+      new ResultAsListFunction<>();
+  @NonNull
+  private static final ItemAsListFunction<Object> ITEM_AS_LIST_FUNCTION =
+      new ItemAsListFunction<>();
+  @NonNull
+  private static final ResultListAsListFunction<Object> RESULT_LIST_AS_LIST_FUNCTION =
+      new ResultListAsListFunction<>();
 
   /**
    * Returns a {@link Function} that returns {@code object} as the result of each
@@ -94,6 +105,36 @@ public final class Functions {
     return (Function<Throwable, Result<T>>) FAILED_RESULT;
   }
 
+  /**
+   * Returns a {@link Function} that wraps a {@link Throwable} in a
+   * {@link Result#failure(Throwable)}).
+   */
+  @SuppressWarnings("unchecked")
+  @NonNull
+  public static <T> Function<Result<T>, List<T>> resultAsList() {
+    return (Function) RESULT_AS_LIST_FUNCTION;
+  }
+
+  /**
+   * Returns a {@link Function} that wraps a {@link Throwable} in a
+   * {@link Result#failure(Throwable)}).
+   */
+  @SuppressWarnings("unchecked")
+  @NonNull
+  public static <T> Function<T, List<T>> itemAsList() {
+    return (Function) ITEM_AS_LIST_FUNCTION;
+  }
+
+  /**
+   * Returns a {@link Function} that wraps a {@link Throwable} in a
+   * {@link Result#failure(Throwable)}).
+   */
+  @SuppressWarnings("unchecked")
+  @NonNull
+  public static <T> Function<Result<List<T>>, List<T>> resultListAsList() {
+    return (Function) RESULT_LIST_AS_LIST_FUNCTION;
+  }
+
   private static final class SupplierAsFunction<F, T> implements Function<F, T> {
     @NonNull
     private final Supplier<? extends T> supplier;
@@ -106,6 +147,34 @@ public final class Functions {
     @Override
     public T apply(@NonNull F from) {
       return supplier.get();
+    }
+  }
+
+  private static final class ItemAsListFunction<T> implements Function<T, List<T>> {
+
+    @NonNull
+    @Override
+    public List<T> apply(@NonNull final T input) {
+      return singletonList(input);
+    }
+  }
+
+  private static final class ResultAsListFunction<T> implements Function<Result<T>, List<T>> {
+
+    @NonNull
+    @Override
+    public List<T> apply(@NonNull final Result<T> input) {
+      return input.asList();
+    }
+  }
+
+  private static final class ResultListAsListFunction<T>
+      implements Function<Result<List<T>>, List<T>> {
+
+    @NonNull
+    @Override
+    public List<T> apply(@NonNull final Result<List<T>> input) {
+      return input.isPresent() ? input.get() : Collections.<T>emptyList();
     }
   }
 
