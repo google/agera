@@ -18,6 +18,7 @@ package com.google.android.agera;
 import static com.google.android.agera.Functions.failedResult;
 import static com.google.android.agera.Functions.functionFrom;
 import static com.google.android.agera.Functions.functionFromListOf;
+import static com.google.android.agera.Functions.functionFromResultOf;
 import static com.google.android.agera.Functions.identityFunction;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Functions.supplierAsFunction;
@@ -49,17 +50,24 @@ import org.mockito.Mock;
 public final class FunctionsTest {
   private static final int VALUE_PLUS_TWO = 44;
   private static final int RECOVER_VALUE = 43;
+  private static final int STRING_VALUE = 5;
   private static final String INPUT_STRING = "input";
   private static final List<String> INPUT_LIST = asList("some", "strings", "for", "testing");
+  private static final Result<String> INPUT_RESULT = success("input");
   @SuppressWarnings("ThrowableInstanceNeverThrown")
   private static final Throwable THROWABLE = new Throwable();
   private static final Result<Integer> FAILURE = failure(THROWABLE);
   private static final Result<Integer> RECOVER_SUCCESS = success(RECOVER_VALUE);
+  private static final Result<Integer> STRING_VALUE_SUCCESS = success(STRING_VALUE);
+  private static final Result<Integer> STRING_VALUE_PLUS_TWO_SUCCESS = success(7);
+  private static final Result<String> INPUT_FAILURE = failure(THROWABLE);
 
   @Mock
   private Function<Integer, Result<Integer>> mockDivideTenFunction;
   @Mock
   private Function<Integer, Integer> mockPlusTwoFunction;
+  @Mock
+  private Function<Integer, Result<Integer>> mockTryPlusTwoFunction;
   @Mock
   private Function<Throwable, Result<Integer>> mockTryRecoverFunction;
   @Mock
@@ -73,6 +81,7 @@ public final class FunctionsTest {
     when(mockRecoverFunction.apply(THROWABLE)).thenReturn(RECOVER_VALUE);
     when(mockTryRecoverFunction.apply(THROWABLE)).thenReturn(RECOVER_SUCCESS);
     when(mockPlusTwoFunction.apply(anyInt())).thenReturn(VALUE_PLUS_TWO);
+    when(mockTryPlusTwoFunction.apply(anyInt())).thenReturn(STRING_VALUE_PLUS_TWO_SUCCESS);
     when(mockDivideTenFunction.apply(eq(2))).thenReturn(success(5));
     when(mockDivideTenFunction.apply(eq(0))).thenReturn(FAILURE);
     when(mockSupplier.get()).thenReturn(INPUT_STRING);
@@ -241,6 +250,191 @@ public final class FunctionsTest {
         .thenApply(Functions.<List<String>>identityFunction());
 
     assertThat(function, sameInstance(Functions.<List<String>>identityFunction()));
+  }
+
+  @Test
+  public void shouldCreateFunctionFromResultToItem() {
+    final Function<Result<String>, Integer> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .thenRecover(staticFunction(0));
+
+    assertThat(function.apply(INPUT_RESULT), is(STRING_VALUE));
+  }
+
+  @Test
+  public void shouldReturnSuccessForAttemptApplyOfSuccess() {
+    final Function<String, Result<Integer>> function = functionFrom(String.class)
+        .apply(new StringLength())
+        .attemptApply(mockTryPlusTwoFunction)
+        .thenApplyIfSucceeded(Functions.<Integer>identityFunction());
+
+    assertThat(function.apply(INPUT_STRING), is(STRING_VALUE_PLUS_TWO_SUCCESS));
+  }
+
+  @Test
+  public void shouldReturnSameFailureForAttemptApplyOfFailure() {
+    final Function<String, Result<Integer>> function = functionFrom(String.class)
+        .attemptApply(staticFunction(INPUT_FAILURE))
+        .thenApplyIfSucceeded(new StringLength());
+
+    assertThat(function.apply(INPUT_STRING), is(INPUT_FAILURE.<Integer>sameFailure()));
+  }
+
+  @Test
+  public void shouldReturnSuccessForApplyIfSucceededOfSuccess() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .thenApplyIfSucceeded(Functions.<Integer>identityFunction());
+
+    assertThat(function.apply(INPUT_RESULT), is(success(STRING_VALUE)));
+  }
+
+  @Test
+  public void shouldReturnSuccessForThenApplyIfSucceededOfSuccess() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .thenApplyIfSucceeded(new StringLength());
+
+    assertThat(function.apply(INPUT_RESULT), is(success(STRING_VALUE)));
+  }
+
+  @Test
+  public void shouldReturnSameFailureForApplyIfSucceededOfFailed() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .thenApplyIfSucceeded(Functions.<Integer>identityFunction());
+
+    assertThat(function.apply(INPUT_FAILURE), is(INPUT_FAILURE.<Integer>sameFailure()));
+  }
+
+  @Test
+  public void shouldReturnSameFailureForThenApplyIfSucceededOfFailed() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .thenApplyIfSucceeded(new StringLength());
+
+    assertThat(function.apply(INPUT_FAILURE), is(INPUT_FAILURE.<Integer>sameFailure()));
+  }
+
+  @Test
+  public void shouldReturnStringValuePlusTwoForAttemptApplyIfSucceededOfSuccess() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .attemptApplyIfSucceeded(mockTryPlusTwoFunction)
+        .thenApplyIfSucceeded(Functions.<Integer>identityFunction());
+
+    assertThat(function.apply(INPUT_RESULT), is(STRING_VALUE_PLUS_TWO_SUCCESS));
+  }
+
+  @Test
+  public void shouldReturnStringValuePlusTwoForThenAttemptApplyIfSucceededOfSuccess() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .thenAttemptApplyIfSucceeded(mockTryPlusTwoFunction);
+
+    assertThat(function.apply(INPUT_RESULT), is(STRING_VALUE_PLUS_TWO_SUCCESS));
+  }
+
+  @Test
+  public void shouldReturnSameFailureForAttemptApplyIfSucceededOfFailed() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .attemptApplyIfSucceeded(mockTryPlusTwoFunction)
+        .thenApplyIfSucceeded(Functions.<Integer>identityFunction());
+
+    assertThat(function.apply(INPUT_FAILURE), is(INPUT_FAILURE.<Integer>sameFailure()));
+  }
+
+  @Test
+  public void shouldReturnSameFailureForThenAttemptApplyIfSucceededOfFailed() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .thenAttemptApplyIfSucceeded(mockTryPlusTwoFunction);
+
+    assertThat(function.apply(INPUT_FAILURE), is(INPUT_FAILURE.<Integer>sameFailure()));
+  }
+
+  @Test
+  public void shouldReturnStringValueForRecoverOfSuccess() {
+    final Function<Result<String>, Integer> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .recover(mockRecoverFunction)
+        .thenApply(Functions.<Integer>identityFunction());
+
+    assertThat(function.apply(INPUT_RESULT), is(STRING_VALUE));
+  }
+
+  @Test
+  public void shouldReturnStringValueForThenRecoverOfSuccess() {
+    final Function<Result<String>, Integer> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .thenRecover(mockRecoverFunction);
+
+    assertThat(function.apply(INPUT_RESULT), is(STRING_VALUE));
+  }
+
+  @Test
+  public void shouldReturnRecoverValueForRecoverOfFailed() {
+    final Function<Result<String>, Integer> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .recover(mockRecoverFunction)
+        .thenApply(Functions.<Integer>identityFunction());
+
+    assertThat(function.apply(INPUT_FAILURE), is(RECOVER_VALUE));
+  }
+
+  @Test
+  public void shouldReturnRecoverValueForThenRecoverOfFailed() {
+    final Function<Result<String>, Integer> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .thenRecover(mockRecoverFunction);
+
+    assertThat(function.apply(INPUT_FAILURE), is(RECOVER_VALUE));
+  }
+
+  @Test
+  public void shouldReturnStringValueSuccessForAttemptRecoverOfSuccess() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .attemptRecover(mockTryRecoverFunction)
+        .thenApplyIfSucceeded(Functions.<Integer>identityFunction());
+
+    assertThat(function.apply(INPUT_RESULT), is(STRING_VALUE_SUCCESS));
+  }
+
+  @Test
+  public void shouldReturnStringValueSuccessForThenAttemptRecoverOfSuccess() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .thenAttemptRecover(mockTryRecoverFunction);
+
+    assertThat(function.apply(INPUT_RESULT), is(STRING_VALUE_SUCCESS));
+  }
+
+  @Test
+  public void shouldReturnRecoverSuccessForAttemptRecoverOfFailed() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .attemptRecover(mockTryRecoverFunction)
+        .thenApplyIfSucceeded(Functions.<Integer>identityFunction());
+
+    assertThat(function.apply(INPUT_FAILURE), is(RECOVER_SUCCESS));
+  }
+
+  @Test
+  public void shouldReturnRecoverSuccessForThenAttemptRecoverOfFailed() {
+    final Function<Result<String>, Result<Integer>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(new StringLength())
+        .thenAttemptRecover(mockTryRecoverFunction);
+
+    assertThat(function.apply(INPUT_FAILURE), is(RECOVER_SUCCESS));
+  }
+
+  @Test
+  public void shouldReturnResultIdentityFunctionIfNoFunctionsAddedToCompiler() {
+    final Function<Result<String>, Result<String>> function = functionFromResultOf(String.class)
+        .applyIfSucceeded(Functions.<String>identityFunction())
+        .thenApplyIfSucceeded(Functions.<String>identityFunction());
+
+    assertThat(function, sameInstance(Functions.<Result<String>>identityFunction()));
   }
 
   private static final class DoubleString implements Function<String, String> {

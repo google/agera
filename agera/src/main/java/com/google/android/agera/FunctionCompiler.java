@@ -18,18 +18,20 @@ package com.google.android.agera;
 import static com.google.android.agera.Common.NULL_OPERATOR;
 import static com.google.android.agera.Common.TRUE_CONDICATE;
 import static com.google.android.agera.Preconditions.checkNotNull;
+import static com.google.android.agera.Result.present;
 import static java.util.Collections.emptyList;
 
 import android.support.annotation.NonNull;
 import com.google.android.agera.FunctionCompilerStates.FItem;
 import com.google.android.agera.FunctionCompilerStates.FList;
+import com.google.android.agera.FunctionCompilerStates.FResult;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
-final class FunctionCompiler implements FList, FItem {
+final class FunctionCompiler implements FList, FResult, FItem {
   private static final ThreadLocal<FunctionCompiler> compilers = new ThreadLocal<>();
 
   @NonNull
@@ -98,6 +100,13 @@ final class FunctionCompiler implements FList, FItem {
 
   @NonNull
   @Override
+  public FResult attemptApply(@NonNull final Function function) {
+    addFunction(function);
+    return this;
+  }
+
+  @NonNull
+  @Override
   public FList morph(@NonNull final Function function) {
     addFunction(function);
     return this;
@@ -139,6 +148,64 @@ final class FunctionCompiler implements FList, FItem {
   @Override
   public Function thenMap(@NonNull final Function function) {
     map(function);
+    return createFunction();
+  }
+
+  @NonNull
+  @Override
+  public FResult applyIfSucceeded(@NonNull final Function function) {
+    if (function != NULL_OPERATOR) {
+      addFunction(new ApplyIfSucceededFunction(function));
+    }
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Function thenApplyIfSucceeded(@NonNull final Function function) {
+    applyIfSucceeded(function);
+    return createFunction();
+  }
+
+  @NonNull
+  @Override
+  public FResult attemptApplyIfSucceeded(@NonNull final Function function) {
+    addFunction(new AttemptApplyIfSucceededFunction(function));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Function thenAttemptApplyIfSucceeded(@NonNull final Function function) {
+    attemptApplyIfSucceeded(function);
+    return createFunction();
+  }
+
+  @NonNull
+  @Override
+  public FItem recover(@NonNull final Function function) {
+    addFunction(new RecoverFunction(function));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Function thenRecover(@NonNull final Function function) {
+    recover(function);
+    return createFunction();
+  }
+
+  @NonNull
+  @Override
+  public FResult attemptRecover(@NonNull final Function function) {
+    addFunction(new AttemptRecoverFunction(function));
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Function thenAttemptRecover(@NonNull final Function function) {
+    attemptRecover(function);
     return createFunction();
   }
 
@@ -203,6 +270,78 @@ final class FunctionCompiler implements FList, FItem {
         result.add(function.apply(item));
       }
       return result;
+    }
+  }
+
+  private static final class ApplyIfSucceededFunction<F, T>
+      implements Function<Result<F>, Result<T>> {
+    @NonNull
+    private final Function<F, T> function;
+
+    ApplyIfSucceededFunction(@NonNull final Function<F, T> function) {
+      this.function = checkNotNull(function);
+    }
+
+    @NonNull
+    @Override
+    @SuppressWarnings("unchecked")
+    public Result<T> apply(@NonNull final Result<F> input) {
+      if (input.failed()) {
+        return input.sameFailure();
+      }
+      return present(function.apply(input.get()));
+    }
+  }
+
+  private static final class AttemptApplyIfSucceededFunction<F, T>
+      implements Function<Result<F>, Result<T>> {
+    @NonNull
+    private final Function<F, Result<T>> function;
+
+    AttemptApplyIfSucceededFunction(@NonNull final Function<F, Result<T>> function) {
+      this.function = checkNotNull(function);
+    }
+
+    @NonNull
+    @Override
+    @SuppressWarnings("unchecked")
+    public Result<T> apply(@NonNull final Result<F> input) {
+      if (input.failed()) {
+        return input.sameFailure();
+      }
+      return function.apply(input.get());
+    }
+  }
+
+  private static final class RecoverFunction<F> implements Function<Result<F>, F> {
+    @NonNull
+    private final Function<? super Throwable, F> function;
+
+    RecoverFunction(@NonNull final Function<? super Throwable, F> function) {
+      this.function = checkNotNull(function);
+    }
+
+    @NonNull
+    @Override
+    @SuppressWarnings("unchecked")
+    public F apply(@NonNull final Result<F> input) {
+      return input.recover(function);
+    }
+  }
+
+  private static final class AttemptRecoverFunction<F> implements Function<Result<F>, Result<F>> {
+    @NonNull
+    private final Function<? super Throwable, Result<F>> function;
+
+    AttemptRecoverFunction(@NonNull final Function<? super Throwable, Result<F>> function) {
+      this.function = checkNotNull(function);
+    }
+
+    @NonNull
+    @Override
+    @SuppressWarnings("unchecked")
+    public Result<F> apply(@NonNull final Result<F> input) {
+      return input.attemptRecover(function);
     }
   }
 
