@@ -48,7 +48,7 @@ public @interface RecycleConfig {
   /**
    * When the {@link RecyclerView} recycles a view, rebind and all handlers with {@code null}.
    */
-  int CLEAR_HANDLERS = 2;
+  int CLEAR_HANDLERS = 1 << 1;
 
   /**
    * When the {@link RecyclerView} recycles a view, rebind both the item from the {@link Repository}
