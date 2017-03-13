@@ -21,8 +21,8 @@ include ':extensions:database'
 include ':extensions:net'
 include ':testapp'
 
-gradle.ext.versionCode = 10300
-gradle.ext.versionName = '1.4.0-SNAPSHOT'
+gradle.ext.versionCode = 10400
+gradle.ext.versionName = '1.4.0-alpha1'
 
 gradle.ext.bintrayRepo = 'Agera'
 gradle.ext.bintrayName = 'agera'
