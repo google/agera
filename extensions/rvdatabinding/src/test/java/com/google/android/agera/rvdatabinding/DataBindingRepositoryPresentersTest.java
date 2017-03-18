@@ -352,7 +352,6 @@ public class DataBindingRepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .itemId(ITEM_ID)
             .forItem();
-
     itemRepositoryPresenter.bind(STRING, 0, viewHolder);
   }
 
@@ -421,7 +420,6 @@ public class DataBindingRepositoryPresentersTest {
             .forList();
 
     resultRepositoryPresenter.recycle(viewHolder);
-
 
     verify(viewDataBinding).setVariable(ITEM_ID, null);
     verify(viewDataBinding).setVariable(HANDLER_ID, null);
@@ -510,7 +508,6 @@ public class DataBindingRepositoryPresentersTest {
             .layoutForItem(layoutForItem)
             .itemId(ITEM_ID)
             .forResultList();
-
     assertThat(resultListRepositoryPresenter.getLayoutResId(STRING_LIST_RESULT, 1),
         is(DYNAMIC_LAYOUT_ID));
   }
@@ -556,7 +553,6 @@ public class DataBindingRepositoryPresentersTest {
             .itemId(ITEM_ID)
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .forList();
-
     assertThat(listRepositoryPresenter.getItemId(STRING_LIST, 0), is(STABLE_ID));
   }
 

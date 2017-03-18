@@ -104,6 +104,17 @@ public class RepositoryPresentersTest {
   }
 
   @Test
+  public void shouldBindRepositoryPresenterOfItem() {
+    final RepositoryPresenter<String> itemRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .bindWith(binder)
+            .forItem();
+    itemRepositoryPresenter.bind(STRING, 0, viewHolder);
+    verify(binder).bind(STRING, view);
+  }
+
+  @Test
   public void shouldBindRepositoryPresenterOfList() {
     final RepositoryPresenter<List<String>> listRepositoryPresenter =
         repositoryPresenterOf(String.class)
