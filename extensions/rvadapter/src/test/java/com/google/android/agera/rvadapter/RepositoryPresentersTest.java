@@ -78,7 +78,6 @@ public class RepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .bindWith(binder)
             .forResult();
-    resultRepositoryPresenter.getItemCount(STRING_RESULT);
     resultRepositoryPresenter.bind(STRING_RESULT, 0, viewHolder);
     verify(binder).bind(STRING, view);
   }
@@ -89,7 +88,6 @@ public class RepositoryPresentersTest {
         repositoryPresenterOf(String.class)
             .layout(LAYOUT_ID)
             .forResult();
-    resultRepositoryPresenter.getItemCount(STRING_RESULT);
     resultRepositoryPresenter.bind(STRING_RESULT, 0, viewHolder);
   }
 
@@ -101,7 +99,6 @@ public class RepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .bindWith(binder)
             .forResultList();
-    resultListRepositoryPresenter.getItemCount(STRING_LIST_RESULT);
     resultListRepositoryPresenter.bind(STRING_LIST_RESULT, 1, viewHolder);
     verify(binder).bind(SECOND_STRING, view);
   }
@@ -113,7 +110,6 @@ public class RepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .bindWith(binder)
             .forList();
-    listRepositoryPresenter.getItemCount(STRING_LIST);
     listRepositoryPresenter.bind(STRING_LIST, 1, viewHolder);
     verify(binder).bind(SECOND_STRING, view);
   }
@@ -126,7 +122,6 @@ public class RepositoryPresentersTest {
             .bindWith(binder)
             .recycleWith(recycler)
             .forList();
-    listRepositoryPresenter.getItemCount(STRING_LIST);
     listRepositoryPresenter.bind(STRING_LIST, 1, viewHolder);
     listRepositoryPresenter.recycle(viewHolder);
     verify(recycler).accept(view);
@@ -139,7 +134,6 @@ public class RepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .bindWith(binder)
             .forList();
-    listRepositoryPresenter.getItemCount(STRING_LIST);
     listRepositoryPresenter.bind(STRING_LIST, 1, viewHolder);
     listRepositoryPresenter.recycle(viewHolder);
   }
@@ -201,7 +195,6 @@ public class RepositoryPresentersTest {
         repositoryPresenterOf(String.class)
             .layoutForItem(layoutForItem)
             .forResultList();
-    resultListRepositoryPresenter.getItemCount(STRING_LIST_RESULT);
     assertThat(resultListRepositoryPresenter.getLayoutResId(STRING_LIST_RESULT, 1),
         is(DYNAMIC_LAYOUT_ID));
   }
@@ -218,7 +211,6 @@ public class RepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .forResult();
-    resultRepositoryPresenter.getItemCount(STRING_RESULT);
     assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
   }
 
@@ -229,7 +221,6 @@ public class RepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .forResultList();
-    resultListRepositoryPresenter.getItemCount(STRING_LIST_RESULT);
     assertThat(resultListRepositoryPresenter.getItemId(STRING_LIST_RESULT, 1), is(STABLE_ID));
   }
 
@@ -240,7 +231,6 @@ public class RepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .forList();
-    listRepositoryPresenter.getItemCount(STRING_LIST);
     assertThat(listRepositoryPresenter.getItemId(STRING_LIST, 1), is(STABLE_ID));
   }
 
@@ -252,7 +242,6 @@ public class RepositoryPresentersTest {
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .bindWith(binder)
             .forList();
-    resultRepositoryPresenter.getItemCount(STRING_LIST);
     assertThat(resultRepositoryPresenter.getItemId(STRING_LIST, 1), is(STABLE_ID));
   }
 

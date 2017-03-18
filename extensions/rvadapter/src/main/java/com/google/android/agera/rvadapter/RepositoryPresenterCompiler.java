@@ -35,6 +35,7 @@ import com.google.android.agera.Receiver;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderRecycleStableIdCompile;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
@@ -121,6 +122,9 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
     private final Function<Object, Long> stableIdForItem;
     @NonNull
     private final Receiver<View> recycler;
+    @NonNull
+    private WeakReference<Object> dataRef = new WeakReference<>(null);
+    @NonNull
     private List items = emptyList();
 
     CompiledRepositoryPresenter(
@@ -138,19 +142,18 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
 
     @Override
     public int getItemCount(@NonNull final Object data) {
-      items = converter.apply(data);
-      return items.size();
+      return getItems(data).size();
     }
 
     @Override
     public int getLayoutResId(@NonNull final Object data, final int index) {
-      return layoutId.apply(items.get(index));
+      return layoutId.apply(getItems(data).get(index));
     }
 
     @Override
     public void bind(@NonNull final Object data, final int index,
         @NonNull final RecyclerView.ViewHolder holder) {
-      binder.bind(items.get(index), holder.itemView);
+      binder.bind(getItems(data).get(index), holder.itemView);
     }
 
     @Override
@@ -160,7 +163,16 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
 
     @Override
     public long getItemId(@NonNull final Object data, final int index) {
-      return stableIdForItem.apply(items.get(index));
+      return stableIdForItem.apply(getItems(data).get(index));
+    }
+
+    @NonNull
+    private List getItems(@NonNull final Object data) {
+      if (this.dataRef.get() != data) {
+        items = converter.apply(data);
+        this.dataRef = new WeakReference<>(data);
+      }
+      return items;
     }
   }
 }

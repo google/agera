@@ -101,7 +101,6 @@ public class DataBindingRepositoryPresentersTest {
             .handler(HANDLER_ID, HANDLER)
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .forResult();
-    resultRepositoryPresenter.getItemCount(STRING_RESULT);
 
     resultRepositoryPresenter.bind(STRING_RESULT, 0, viewHolder);
 
@@ -198,7 +197,6 @@ public class DataBindingRepositoryPresentersTest {
             .itemId(ITEM_ID)
             .handler(HANDLER_ID, HANDLER)
             .forResultList();
-    resultListRepositoryPresenter.getItemCount(STRING_LIST_RESULT);
 
     resultListRepositoryPresenter.bind(STRING_LIST_RESULT, 1, viewHolder);
 
@@ -354,7 +352,6 @@ public class DataBindingRepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .itemId(ITEM_ID)
             .forItem();
-    itemRepositoryPresenter.getItemCount(STRING);
 
     itemRepositoryPresenter.bind(STRING, 0, viewHolder);
   }
@@ -366,7 +363,6 @@ public class DataBindingRepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .itemId(ITEM_ID)
             .forList();
-    listRepositoryPresenter.getItemCount(STRING_LIST);
 
     listRepositoryPresenter.bind(STRING_LIST, 1, viewHolder);
 
@@ -386,7 +382,6 @@ public class DataBindingRepositoryPresentersTest {
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .onRecycle(DO_NOTHING)
             .forList();
-    resultRepositoryPresenter.getItemCount(STRING_LIST);
 
     resultRepositoryPresenter.recycle(viewHolder);
 
@@ -405,7 +400,6 @@ public class DataBindingRepositoryPresentersTest {
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .onRecycle(CLEAR_ITEM)
             .forList();
-    resultRepositoryPresenter.getItemCount(STRING_LIST);
 
     resultRepositoryPresenter.recycle(viewHolder);
 
@@ -425,7 +419,6 @@ public class DataBindingRepositoryPresentersTest {
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .onRecycle(CLEAR_ALL)
             .forList();
-    resultRepositoryPresenter.getItemCount(STRING_LIST);
 
     resultRepositoryPresenter.recycle(viewHolder);
 
@@ -449,7 +442,6 @@ public class DataBindingRepositoryPresentersTest {
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .onRecycle(CLEAR_HANDLERS)
             .forList();
-    resultRepositoryPresenter.getItemCount(STRING_LIST);
 
     resultRepositoryPresenter.recycle(viewHolder);
 
@@ -518,7 +510,6 @@ public class DataBindingRepositoryPresentersTest {
             .layoutForItem(layoutForItem)
             .itemId(ITEM_ID)
             .forResultList();
-    resultListRepositoryPresenter.getItemCount(STRING_LIST_RESULT);
 
     assertThat(resultListRepositoryPresenter.getLayoutResId(STRING_LIST_RESULT, 1),
         is(DYNAMIC_LAYOUT_ID));
@@ -532,7 +523,6 @@ public class DataBindingRepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .itemIdForItem(itemIdForItem)
             .forResultList();
-    resultListRepositoryPresenter.getItemCount(STRING_LIST_RESULT);
     resultListRepositoryPresenter.bind(STRING_LIST_RESULT, 1, viewHolder);
   }
 
@@ -544,7 +534,6 @@ public class DataBindingRepositoryPresentersTest {
             .itemId(ITEM_ID)
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .forResult();
-    resultRepositoryPresenter.getItemCount(STRING_RESULT);
     assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
   }
 
@@ -556,7 +545,6 @@ public class DataBindingRepositoryPresentersTest {
             .itemId(ITEM_ID)
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .forResultList();
-    resultListRepositoryPresenter.getItemCount(STRING_LIST_RESULT);
     assertThat(resultListRepositoryPresenter.getItemId(STRING_LIST_RESULT, 0), is(STABLE_ID));
   }
 
@@ -568,7 +556,6 @@ public class DataBindingRepositoryPresentersTest {
             .itemId(ITEM_ID)
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .forList();
-    listRepositoryPresenter.getItemCount(STRING_LIST);
 
     assertThat(listRepositoryPresenter.getItemId(STRING_LIST, 0), is(STABLE_ID));
   }

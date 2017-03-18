@@ -39,6 +39,7 @@ import com.google.android.agera.rvadapter.RepositoryPresenter;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerStableIdRecycleCompile;
 import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPItemBinding;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
@@ -147,6 +148,9 @@ final class DataBindingRepositoryPresenterCompiler
     private final int recycleConfig;
     @NonNull
     private SparseArray<Object> handlers;
+    @NonNull
+    private WeakReference<Object> dataRef = new WeakReference<>(null);
+    @NonNull
     private List items = emptyList();
 
     CompiledRepositoryPresenter(
@@ -165,19 +169,18 @@ final class DataBindingRepositoryPresenterCompiler
 
     @Override
     public int getItemCount(@NonNull final Object data) {
-      items = converter.apply(data);
-      return items.size();
+      return getItems(data).size();
     }
 
     @Override
     public int getLayoutResId(@NonNull final Object data, final int index) {
-      return layoutId.apply(items.get(index));
+      return layoutId.apply(getItems(data).get(index));
     }
 
     @Override
     public void bind(@NonNull final Object data, final int index,
         @NonNull final RecyclerView.ViewHolder holder) {
-      final Object item = items.get(index);
+      final Object item = getItems(data).get(index);
       final View view = holder.itemView;
       final ViewDataBinding viewDataBinding = DataBindingUtil.bind(view);
       final Integer itemVariable = itemId.apply(item);
@@ -213,7 +216,16 @@ final class DataBindingRepositoryPresenterCompiler
 
     @Override
     public long getItemId(@NonNull final Object data, final int index) {
-      return stableIdForItem.apply(items.get(index));
+      return stableIdForItem.apply(getItems(data).get(index));
+    }
+
+    @NonNull
+    private List getItems(@NonNull final Object data) {
+      if (this.dataRef.get() != data) {
+        items = converter.apply(data);
+        this.dataRef = new WeakReference<>(data);
+      }
+      return items;
     }
   }
 }
