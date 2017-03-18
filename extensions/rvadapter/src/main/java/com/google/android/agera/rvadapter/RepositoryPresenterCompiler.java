@@ -16,9 +16,14 @@
 package com.google.android.agera.rvadapter;
 
 import static com.google.android.agera.Binders.nullBinder;
+import static com.google.android.agera.Functions.identityFunction;
+import static com.google.android.agera.Functions.itemAsList;
+import static com.google.android.agera.Functions.resultAsList;
+import static com.google.android.agera.Functions.resultListAsList;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Preconditions.checkNotNull;
 import static com.google.android.agera.Receivers.nullReceiver;
+import static java.util.Collections.emptyList;
 
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
@@ -30,6 +35,7 @@ import com.google.android.agera.Receiver;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderRecycleStableIdCompile;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
@@ -45,25 +51,29 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
   @NonNull
   @Override
   public RepositoryPresenter forItem() {
-    return new ItemBasicRepositoryPresenter<>(layoutForItem, binder, recycler, stableIdForItem);
+    return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
+        itemAsList());
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<List> forList() {
-    return new ListBasicRepositoryPresenter(layoutForItem, binder, recycler, stableIdForItem);
+    return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
+        (Function) identityFunction());
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result> forResult() {
-    return new SingleResultRepositoryPresenter(layoutForItem, binder, recycler, stableIdForItem);
+    return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
+        (Function) resultAsList());
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result<List>> forResultList() {
-    return new ListResultRepositoryPresenter(layoutForItem, binder, recycler, stableIdForItem);
+    return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
+        (Function) resultListAsList());
   }
 
   @NonNull
@@ -101,165 +111,68 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
     return this;
   }
 
-  private abstract static class BasicRepositoryPresenter<TVal, T>
-      extends RepositoryPresenter<T> {
+  private static final class CompiledRepositoryPresenter extends RepositoryPresenter {
+    @NonNull
+    private final Function<Object, List<Object>> converter;
     @NonNull
     private final Function<Object, Integer> layoutId;
     @NonNull
-    private final Binder<TVal, View> binder;
+    private final Binder<Object, View> binder;
     @NonNull
-    private final Function<TVal, Long> stableIdForItem;
+    private final Function<Object, Long> stableIdForItem;
     @NonNull
     private final Receiver<View> recycler;
-
-    BasicRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<TVal, View> binder,
-        @NonNull final Receiver<View> recycler,
-        @NonNull final Function<TVal, Long> stableIdForItem) {
-      this.layoutId = checkNotNull(layoutId);
-      this.binder = checkNotNull(binder);
-      this.recycler = checkNotNull(recycler);
-      this.stableIdForItem = stableIdForItem;
-    }
-
     @NonNull
-    protected abstract TVal getValue(@NonNull final T data, final int index);
+    private WeakReference<Object> dataRef = new WeakReference<>(null);
+    @NonNull
+    private List items = emptyList();
 
-    @Override
-    public final int getLayoutResId(@NonNull final T data, final int index) {
-      return layoutId.apply(getValue(data, index));
+    CompiledRepositoryPresenter(
+        @NonNull final Function<Object, Integer> layoutId,
+        @NonNull final Binder<Object, View> binder,
+        @NonNull final Function<Object, Long> stableIdForItem,
+        @NonNull final Receiver<View> recycler,
+        @NonNull final Function<Object, List<Object>> converter) {
+      this.converter = converter;
+      this.layoutId = layoutId;
+      this.binder = binder;
+      this.stableIdForItem = stableIdForItem;
+      this.recycler = recycler;
     }
 
     @Override
-    public long getItemId(@NonNull T data, int index) {
-      return stableIdForItem.apply(getValue(data, index));
+    public int getItemCount(@NonNull final Object data) {
+      return getItems(data).size();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public void bind(@NonNull final T data, final int index,
+    public int getLayoutResId(@NonNull final Object data, final int index) {
+      return layoutId.apply(getItems(data).get(index));
+    }
+
+    @Override
+    public void bind(@NonNull final Object data, final int index,
         @NonNull final RecyclerView.ViewHolder holder) {
-      binder.bind(getValue(data, index), holder.itemView);
+      binder.bind(getItems(data).get(index), holder.itemView);
     }
 
     @Override
     public void recycle(@NonNull final RecyclerView.ViewHolder holder) {
-      super.recycle(holder);
       recycler.accept(holder.itemView);
     }
-  }
-
-  private static final class ItemBasicRepositoryPresenter<T>
-      extends BasicRepositoryPresenter<T, T> {
-
-    public ItemBasicRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<T, View> binder,
-        @NonNull final Receiver<View> recycler,
-        @NonNull final Function<T, Long> stableIdForItem) {
-      super(layoutId, binder, recycler, stableIdForItem);
-    }
 
     @Override
-    public int getItemCount(@NonNull final T data) {
-      return 1;
+    public long getItemId(@NonNull final Object data, final int index) {
+      return stableIdForItem.apply(getItems(data).get(index));
     }
 
     @NonNull
-    @Override
-    protected T getValue(@NonNull final T data, final int index) {
-      return data;
-    }
-  }
-
-  private static final class ListBasicRepositoryPresenter<T>
-      extends BasicRepositoryPresenter<T, List<T>> {
-
-    public ListBasicRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<T, View> binder,
-        @NonNull final Receiver<View> recycler,
-        @NonNull final Function<T, Long> stableIdForItem) {
-      super(layoutId, binder, recycler, stableIdForItem);
-    }
-
-    @Override
-    public int getItemCount(@NonNull final List<T> data) {
-      return data.size();
-    }
-
-    @NonNull
-    @Override
-    protected T getValue(@NonNull final List<T> data, final int index) {
-      return data.get(index);
-    }
-  }
-
-  private abstract static class ResultRepositoryPresenter<TVal, T>
-      extends BasicRepositoryPresenter<TVal, Result<T>> {
-
-    ResultRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<TVal, View> binder,
-        @NonNull final Receiver<View> recycler,
-        @NonNull final Function<TVal, Long> stableIdForItem) {
-      super(layoutId, binder, recycler, stableIdForItem);
-    }
-
-    @NonNull
-    @Override
-    protected TVal getValue(@NonNull Result<T> data, int index) {
-      return getResultValue(data.get(), index);
-    }
-
-    @Override
-    public final int getItemCount(@NonNull final Result<T> data) {
-      return data.failed() ? 0 : getResultCount(data.get());
-    }
-
-    protected abstract int getResultCount(@NonNull T data);
-
-    @NonNull
-    protected abstract TVal getResultValue(@NonNull T data, int index);
-  }
-
-  private static final class SingleResultRepositoryPresenter<T>
-      extends ResultRepositoryPresenter<T, T> {
-    public SingleResultRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<T, View> binder,
-        @NonNull final Receiver<View> recycler,
-        @NonNull final Function<T, Long> stableIdForItem) {
-      super(layoutId, binder, recycler, stableIdForItem);
-    }
-
-    @Override
-    protected int getResultCount(@NonNull final T data) {
-      return 1;
-    }
-
-    @NonNull
-    @Override
-    protected T getResultValue(@NonNull final T data, final int index) {
-      return data;
-    }
-  }
-
-  private static final class ListResultRepositoryPresenter<T>
-      extends ResultRepositoryPresenter<T, List<T>> {
-
-    public ListResultRepositoryPresenter(@NonNull final Function<Object, Integer> layoutId,
-        @NonNull final Binder<T, View> binder,
-        @NonNull final Receiver<View> recycler,
-        @NonNull final Function<T, Long> stableIdForItem) {
-      super(layoutId, binder, recycler, stableIdForItem);
-    }
-
-    @Override
-    protected int getResultCount(@NonNull final List<T> data) {
-      return data.size();
-    }
-
-    @NonNull
-    @Override
-    protected T getResultValue(@NonNull final List<T> data, final int index) {
-      return data.get(index);
+    private List getItems(@NonNull final Object data) {
+      if (this.dataRef.get() != data) {
+        items = converter.apply(data);
+        this.dataRef = new WeakReference<>(data);
+      }
+      return items;
     }
   }
 }

@@ -15,12 +15,16 @@
  */
 package com.google.android.agera.rvdatabinding;
 
+import static com.google.android.agera.Functions.identityFunction;
+import static com.google.android.agera.Functions.itemAsList;
+import static com.google.android.agera.Functions.resultAsList;
+import static com.google.android.agera.Functions.resultListAsList;
 import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Preconditions.checkNotNull;
-import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_HANDLERS;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ITEM;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.DO_NOTHING;
+import static java.util.Collections.emptyList;
 
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
@@ -29,14 +33,13 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
 import android.view.View;
-import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
-import com.google.android.agera.Receiver;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerStableIdRecycleCompile;
 import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPItemBinding;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
@@ -79,57 +82,41 @@ final class DataBindingRepositoryPresenterCompiler
   @NonNull
   @Override
   public RepositoryPresenter forItem() {
-    return repositoryPresenterOf(null)
-        .layoutForItem(layoutFactory)
-        .stableIdForItem(stableIdForItem)
-        .bindWith(new ViewBinder(itemId, handlers))
-        .recycleWith(new ViewRecycler(recycleConfig, handlers))
-        .forItem();
+    return new CompiledRepositoryPresenter(itemId, layoutFactory, stableIdForItem, handlers,
+        recycleConfig, itemAsList());
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<List<Object>> forList() {
-    return repositoryPresenterOf(null)
-        .layoutForItem(layoutFactory)
-        .stableIdForItem(stableIdForItem)
-        .bindWith(new ViewBinder(itemId, handlers))
-        .recycleWith(new ViewRecycler(recycleConfig, handlers))
-        .forList();
+    return new CompiledRepositoryPresenter(itemId, layoutFactory, stableIdForItem, handlers,
+        recycleConfig, (Function) identityFunction());
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result<Object>> forResult() {
-    return repositoryPresenterOf(Object.class)
-        .layoutForItem(layoutFactory)
-        .stableIdForItem(stableIdForItem)
-        .bindWith(new ViewBinder(itemId, handlers))
-        .recycleWith(new ViewRecycler(recycleConfig, handlers))
-        .forResult();
+    return new CompiledRepositoryPresenter(itemId, layoutFactory, stableIdForItem, handlers,
+        recycleConfig, (Function) resultAsList());
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result<List<Object>>> forResultList() {
-    return repositoryPresenterOf(null)
-        .layoutForItem(layoutFactory)
-        .stableIdForItem(stableIdForItem)
-        .bindWith(new ViewBinder(itemId, handlers))
-        .recycleWith(new ViewRecycler(recycleConfig, handlers))
-        .forResultList();
+    return new CompiledRepositoryPresenter(itemId, layoutFactory,
+        stableIdForItem, handlers, recycleConfig, (Function) resultListAsList());
   }
 
   @NonNull
   @Override
-  public Object layout(@LayoutRes int layoutId) {
+  public Object layout(@LayoutRes final int layoutId) {
     this.layoutFactory = staticFunction(layoutId);
     return this;
   }
 
   @NonNull
   @Override
-  public Object layoutForItem(@NonNull Function layoutForItem) {
+  public Object layoutForItem(@NonNull final Function layoutForItem) {
     this.layoutFactory = checkNotNull(layoutForItem);
     return this;
   }
@@ -148,19 +135,53 @@ final class DataBindingRepositoryPresenterCompiler
     return this;
   }
 
-  private static final class ViewBinder implements Binder<Object, View> {
+  private static final class CompiledRepositoryPresenter extends RepositoryPresenter {
+    @NonNull
     private final Function<Object, Integer> itemId;
     @NonNull
-    private final SparseArray<Object> handlers;
+    private final Function<Object, List<Object>> converter;
+    @NonNull
+    private final Function<Object, Integer> layoutId;
+    @NonNull
+    private final Function<Object, Long> stableIdForItem;
+    @RecycleConfig
+    private final int recycleConfig;
+    @NonNull
+    private SparseArray<Object> handlers;
+    @NonNull
+    private WeakReference<Object> dataRef = new WeakReference<>(null);
+    @NonNull
+    private List items = emptyList();
 
-    ViewBinder(@NonNull final Function<Object, Integer> itemId,
-        @NonNull final SparseArray<Object> handlers) {
+    CompiledRepositoryPresenter(
+        @NonNull final Function<Object, Integer> itemId,
+        @NonNull final Function<Object, Integer> layoutId,
+        @NonNull final Function<Object, Long> stableIdForItem,
+        @NonNull final SparseArray<Object> handlers,
+        final int recycleConfig, @NonNull final Function<Object, List<Object>> converter) {
       this.itemId = itemId;
-      this.handlers = checkNotNull(handlers);
+      this.converter = converter;
+      this.layoutId = layoutId;
+      this.stableIdForItem = stableIdForItem;
+      this.recycleConfig = recycleConfig;
+      this.handlers = handlers;
     }
 
     @Override
-    public void bind(@NonNull final Object item, @NonNull final View view) {
+    public int getItemCount(@NonNull final Object data) {
+      return getItems(data).size();
+    }
+
+    @Override
+    public int getLayoutResId(@NonNull final Object data, final int index) {
+      return layoutId.apply(getItems(data).get(index));
+    }
+
+    @Override
+    public void bind(@NonNull final Object data, final int index,
+        @NonNull final RecyclerView.ViewHolder holder) {
+      final Object item = getItems(data).get(index);
+      final View view = holder.itemView;
       final ViewDataBinding viewDataBinding = DataBindingUtil.bind(view);
       final Integer itemVariable = itemId.apply(item);
       viewDataBinding.setVariable(itemVariable, item);
@@ -171,24 +192,11 @@ final class DataBindingRepositoryPresenterCompiler
       }
       viewDataBinding.executePendingBindings();
     }
-  }
-
-  private static final class ViewRecycler implements Receiver<View> {
-    @RecycleConfig
-    private final int recycleConfig;
-    @NonNull
-    private SparseArray<Object> handlers;
-
-    ViewRecycler(
-        @RecycleConfig final int recycleConfig,
-        @NonNull final SparseArray<Object> handlers) {
-      this.recycleConfig = recycleConfig;
-      this.handlers = checkNotNull(handlers);
-    }
 
     @Override
-    public void accept(@NonNull final View view) {
+    public void recycle(@NonNull final RecyclerView.ViewHolder holder) {
       if (recycleConfig != 0) {
+        final View view = holder.itemView;
         final ViewDataBinding viewDataBinding = DataBindingUtil.bind(view);
         if ((recycleConfig & CLEAR_ITEM) != 0) {
           final Object tag = view.getTag(R.id.agera__rvdatabinding__item_id);
@@ -204,6 +212,20 @@ final class DataBindingRepositoryPresenterCompiler
         }
         viewDataBinding.executePendingBindings();
       }
+    }
+
+    @Override
+    public long getItemId(@NonNull final Object data, final int index) {
+      return stableIdForItem.apply(getItems(data).get(index));
+    }
+
+    @NonNull
+    private List getItems(@NonNull final Object data) {
+      if (this.dataRef.get() != data) {
+        items = converter.apply(data);
+        this.dataRef = new WeakReference<>(data);
+      }
+      return items;
     }
   }
 }

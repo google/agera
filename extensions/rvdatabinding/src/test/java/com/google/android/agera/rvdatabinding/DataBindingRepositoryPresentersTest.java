@@ -530,7 +530,7 @@ public class DataBindingRepositoryPresentersTest {
             .layout(LAYOUT_ID)
             .itemId(ITEM_ID)
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
-        .forResult();
+            .forResult();
     assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
   }
 
