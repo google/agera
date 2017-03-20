@@ -83,8 +83,7 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
 
   @NonNull
   @Override
-  public RPTypedCollectionCompile bindCollectionWith(
-      @NonNull final Binder collectionBinder) {
+  public RPTypedCollectionCompile bindCollectionWith(@NonNull final Binder collectionBinder) {
     this.collectionBinder = collectionBinder;
     return this;
   }
@@ -184,9 +183,8 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
     @Override
     public void bind(@NonNull final Object data, final int index,
         @NonNull final RecyclerView.ViewHolder holder) {
-      final Object item = getItems(data).get(index);
-      binder.bind(item, holder.itemView);
-      collectionBinder.bind(item, holder.itemView);
+      binder.bind(getItems(data).get(index), holder.itemView);
+      collectionBinder.bind(data, holder.itemView);
     }
 
     @Override

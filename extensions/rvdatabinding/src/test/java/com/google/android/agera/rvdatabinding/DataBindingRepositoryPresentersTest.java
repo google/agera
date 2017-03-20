@@ -19,13 +19,16 @@ import static android.databinding.DataBinderMapper.setDataBinding;
 import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.present;
 import static com.google.android.agera.Result.success;
+import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
 import static com.google.android.agera.rvadapter.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ALL;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_HANDLERS;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ITEM;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.DO_NOTHING;
+import static java.lang.String.valueOf;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
@@ -35,6 +38,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import android.databinding.ViewDataBinding;
 import android.support.annotation.LayoutRes;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import com.google.android.agera.Binder;
@@ -54,6 +58,7 @@ import org.robolectric.annotation.Config;
 @Config(manifest = Config.NONE)
 public class DataBindingRepositoryPresentersTest {
   private static final String STRING = "string";
+  private static final String FIRST_STRING_CHARACTER = "s";
   private static final String SECOND_STRING = "string2";
   private static final Result<String> STRING_RESULT = present(STRING);
   private static final List<String> STRING_LIST = asList(STRING, SECOND_STRING);
@@ -68,9 +73,8 @@ public class DataBindingRepositoryPresentersTest {
   private static final int ITEM_ID = 3;
   private static final int HANDLER_ID = 4;
   private static final int SECOND_HANDLER_ID = 5;
+  private static final int COLLECTION_ID = 6;
   private static final long STABLE_ID = 2;
-  @Mock
-  private Binder<String, View> binder;
   @Mock
   private Function<String, Integer> layoutForItem;
   @Mock
@@ -108,6 +112,48 @@ public class DataBindingRepositoryPresentersTest {
     verify(viewDataBinding).setVariable(ITEM_ID, STRING);
     verify(viewDataBinding).setVariable(HANDLER_ID, HANDLER);
     verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, SECOND_HANDLER);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldBindRepositoryPresenterOfCollection() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .forCollection(new Function<String, List<String>>() {
+              @NonNull
+              @Override
+              public List<String> apply(@NonNull final String input) {
+                return singletonList(valueOf(input.charAt(0)));
+              }
+            });
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, FIRST_STRING_CHARACTER);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldBindRepositoryPresenterCollectionOfCollection() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .collectionId(COLLECTION_ID)
+            .forCollection(new Function<String, List<String>>() {
+              @NonNull
+              @Override
+              public List<String> apply(@NonNull final String input) {
+                return singletonList(valueOf(input.charAt(0)));
+              }
+            });
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, FIRST_STRING_CHARACTER);
+    verify(viewDataBinding).setVariable(COLLECTION_ID, STRING);
     verify(viewDataBinding).executePendingBindings();
     verifyNoMoreInteractions(viewDataBinding);
   }
