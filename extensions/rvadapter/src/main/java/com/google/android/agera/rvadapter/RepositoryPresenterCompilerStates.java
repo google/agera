@@ -82,25 +82,37 @@ public interface RepositoryPresenterCompilerStates {
    * Compiler state to specify how to generate stable IDs when {@link
    * android.support.v7.widget.RecyclerView.Adapter#setHasStableIds(boolean)} is true.
    */
-  interface RPStableId<TVal, TRet> {
+  interface RPStableId<TVal, TRet, TRetItem> {
 
     /**
      * Specifies a {@link Function} providing a stable id for the given item. Called only if stable
-     * IDs are enabled with {@link RepositoryAdapter#setHasStableIds RepositoryAdapter.setHasStableIds(true)},
-     * and therefore this method is optional with a default implementation of returning {@link
-     * RecyclerView#NO_ID}. If stable IDs are enabled, the returned ID and the layout returned by
+     * IDs are enabled with {@link RepositoryAdapter#setHasStableIds}, and therefore this method is
+     * optional with a default implementation of returning {@link RecyclerView#NO_ID}. If stable IDs
+     * are enabled, the returned ID and the layout returned by
      * {@link RPLayout#layoutForItem(Function)} or {@link RPLayout#layout(int)} for the given item
      * should together uniquely identify this item in the whole {@link RecyclerView} throughout all
      * changes.
      */
     @NonNull
     TRet stableIdForItem(@NonNull Function<? super TVal, Long> stableIdForItem);
+
+    /**
+     * Specifies a {@code stable:Id} for the given item. Called only if stable IDs are enabled with
+     * {@link RepositoryAdapter#setHasStableIds}, and therefore this method is optional with a
+     * default implementation of returning {@link RecyclerView#NO_ID}. If stable IDs are enabled,
+     * the returned ID and the layout returned by {@link RPLayout#layoutForItem(Function)} or
+     * {@link RPLayout#layout(int)} for the given item should together uniquely identify this item
+     * in the whole {@link RecyclerView} throughout all changes.
+     */
+    @NonNull
+    TRetItem stableId(long stableId);
   }
 
   /**
-   * Compiler state to create the @{link RepositoryPresenter}.
+   * Compiler state to compile for the specified item container type of the associated
+   * {@link Repository}.
    */
-  interface RPCompile<TVal> {
+  interface RPItemCompile<TVal> {
 
     /**
      * Creates a {@link RepositoryPresenter} for a @{link Repository} of a single item that will be
@@ -110,18 +122,25 @@ public interface RepositoryPresenterCompilerStates {
     RepositoryPresenter<TVal> forItem();
 
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link List} where each
-     * item in the {@link List} will be bound to the {@link RecyclerView}.
-     */
-    @NonNull
-    RepositoryPresenter<List<TVal>> forList();
-
-    /**
      * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link Result} where the
      * item in the {@link Result} will be bound to the @{link RecyclerView} if present.
      */
     @NonNull
     RepositoryPresenter<Result<TVal>> forResult();
+  }
+
+  /**
+   * Compiler state to compile for the specified container type of the associated
+   * {@link Repository}.
+   */
+  interface RPCompile<TVal> extends RPItemCompile<TVal> {
+
+    /**
+     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link List} where each
+     * item in the {@link List} will be bound to the {@link RecyclerView}.
+     */
+    @NonNull
+    RepositoryPresenter<List<TVal>> forList();
 
     /**
      * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link Result} containing
@@ -135,17 +154,33 @@ public interface RepositoryPresenterCompilerStates {
   /**
    * Compiler state allowing to specify Recycle or compile.
    */
-  interface RPRecycleCompile<TVal> extends RPRecycle<RPCompile<TVal>>, RPCompile<TVal> {}
+  interface RPRecycleItemCompile<TVal, TRec>
+      extends RPRecycle<TRec>, RPItemCompile<TVal> {}
 
   /**
    * Compiler state allowing to specify view binder, view recycler, function or compile.
    */
-  interface RPViewBinderRecycleCompile<TVal> extends RPRecycleCompile<TVal>,
-      RPViewBinder<TVal, RPRecycleCompile<TVal>> {}
+  interface RPViewBinderRecycleItemCompile<TVal, TVBin>
+      extends RPRecycleItemCompile<TVal, RPCompile<TVal>>,
+      RPViewBinder<TVal, TVBin> {}
+
+  /**
+   * Compiler state allowing to specify Recycle or compile.
+   */
+  interface RPRecycleCompile<TVal, TRec> extends RPRecycle<TRec>,
+      RPCompile<TVal> {}
+
+  /**
+   * Compiler state allowing to specify view binder, view recycler, function or compile.
+   */
+  interface RPViewBinderRecycleCompile<TVal, TVBin> extends RPRecycleCompile<TVal, RPCompile<TVal>>,
+      RPViewBinder<TVal, TVBin> {}
 
   /**
    * Compiler state allowing to specify view binder, view recycler, stable id function or compile.
    */
-  interface RPViewBinderRecycleStableIdCompile<TVal> extends RPViewBinderRecycleCompile<TVal>,
-      RPStableId<TVal, RPViewBinderRecycleCompile<TVal>> {}
+  interface RPViewBinderRecycleStableIdCompile<TVal, TVBRC>
+      extends RPViewBinderRecycleCompile<TVal, TVBRC>,
+      RPStableId<TVal, RPViewBinderRecycleCompile<TVal, RPRecycleCompile<TVal, RPCompile<TVal>>>,
+          RPViewBinderRecycleItemCompile<TVal, RPRecycleItemCompile<TVal, RPCompile<TVal>>>> {}
 }

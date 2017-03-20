@@ -40,11 +40,12 @@ import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLa
 import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerStableIdRecycleCompile;
 import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPItemBinding;
 import java.lang.ref.WeakReference;
+import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPRecycleItemCompile;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-final class DataBindingRepositoryPresenterCompiler
-    implements DBRPItemBinding, DBRPHandlerStableIdRecycleCompile, RPLayout {
+final class DataBindingRepositoryPresenterCompiler implements DBRPItemBinding,
+    DBRPHandlerStableIdRecycleCompile, DBRPRecycleItemCompile, RPLayout {
   @NonNull
   private final SparseArray<Object> handlers;
   private Function<Object, Integer> layoutFactory;
@@ -125,6 +126,13 @@ final class DataBindingRepositoryPresenterCompiler
   @Override
   public Object stableIdForItem(@NonNull final Function stableIdForItem) {
     this.stableIdForItem = stableIdForItem;
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object stableId(final long stableId) {
+    this.stableIdForItem = staticFunction(stableId);
     return this;
   }
 

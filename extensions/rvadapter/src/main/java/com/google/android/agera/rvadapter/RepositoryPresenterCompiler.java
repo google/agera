@@ -34,12 +34,15 @@ import com.google.android.agera.Function;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderRecycleItemCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderRecycleStableIdCompile;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
-final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycleStableIdCompile {
+final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycleStableIdCompile,
+    RPViewBinderRecycleItemCompile {
+  @NonNull
   private Function<Object, Integer> layoutForItem;
   @NonNull
   private Binder binder = nullBinder();
@@ -101,6 +104,13 @@ final class RepositoryPresenterCompiler implements RPLayout, RPViewBinderRecycle
   @Override
   public Object stableIdForItem(@NonNull final Function stableIdForItem) {
     this.stableIdForItem = stableIdForItem;
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public Object stableId(final long stableId) {
+    this.stableIdForItem(staticFunction(stableId));
     return this;
   }
 
