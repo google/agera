@@ -53,62 +53,6 @@ public interface RepositoryPresenterCompilerStates {
   }
 
   /**
-   * Compiler state to specify how to bind the {@link Repository} item to the view inflated by the
-   * layout.
-   */
-  interface RPViewBinder<TVal, TRet> {
-
-    /**
-     * Specifies a {@link Binder} to bind a single item in the {@link Repository} to an inflated
-     * {@code View}.
-     */
-    @NonNull
-    TRet bindWith(@NonNull Binder<TVal, View> viewBinder);
-  }
-
-  /**
-   * Compiler state to specify how to recycle the {@code View}.
-   */
-  interface RPRecycle<TRet> {
-
-    /**
-     * Specifies a {@link Receiver} to recycle the {@code View}.
-     */
-    @NonNull
-    TRet recycleWith(@NonNull Receiver<View> recycler);
-  }
-
-  /**
-   * Compiler state to specify how to generate stable IDs when {@link
-   * android.support.v7.widget.RecyclerView.Adapter#setHasStableIds(boolean)} is true.
-   */
-  interface RPStableId<TVal, TRet, TRetItem> {
-
-    /**
-     * Specifies a {@link Function} providing a stable id for the given item. Called only if stable
-     * IDs are enabled with {@link RepositoryAdapter#setHasStableIds}, and therefore this method is
-     * optional with a default implementation of returning {@link RecyclerView#NO_ID}. If stable IDs
-     * are enabled, the returned ID and the layout returned by
-     * {@link RPLayout#layoutForItem(Function)} or {@link RPLayout#layout(int)} for the given item
-     * should together uniquely identify this item in the whole {@link RecyclerView} throughout all
-     * changes.
-     */
-    @NonNull
-    TRet stableIdForItem(@NonNull Function<? super TVal, Long> stableIdForItem);
-
-    /**
-     * Specifies a {@code stable:Id} for the given item. Called only if stable IDs are enabled with
-     * {@link RepositoryAdapter#setHasStableIds}, and therefore this method is optional with a
-     * default implementation of returning {@link RecyclerView#NO_ID}. If stable IDs are enabled,
-     * the returned ID and the layout returned by {@link RPLayout#layoutForItem(Function)} or
-     * {@link RPLayout#layout(int)} for the given item should together uniquely identify this item
-     * in the whole {@link RecyclerView} throughout all changes.
-     */
-    @NonNull
-    TRetItem stableId(long stableId);
-  }
-
-  /**
    * Compiler state to compile for the specified item container type of the associated
    * {@link Repository}.
    */
@@ -130,10 +74,10 @@ public interface RepositoryPresenterCompilerStates {
   }
 
   /**
-   * Compiler state to compile for the specified container type of the associated
+   * Compiler state to compile for the pre-defined collection container type of the associated
    * {@link Repository}.
    */
-  interface RPCompile<TVal> extends RPItemCompile<TVal> {
+  interface RPSpecificCollectionCompile<TVal> {
 
     /**
      * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link List} where each
@@ -152,35 +96,45 @@ public interface RepositoryPresenterCompilerStates {
   }
 
   /**
-   * Compiler state allowing to specify Recycle or compile.
+   * Compiler state to specify how to bind the {@link Repository} item to the view inflated by the
+   * layout.
    */
-  interface RPRecycleItemCompile<TVal, TRec>
-      extends RPRecycle<TRec>, RPItemCompile<TVal> {}
+  interface RPMain<T> extends RPItemCompile<T>, RPSpecificCollectionCompile<T> {
 
-  /**
-   * Compiler state allowing to specify view binder, view recycler, function or compile.
-   */
-  interface RPViewBinderRecycleItemCompile<TVal, TVBin>
-      extends RPRecycleItemCompile<TVal, RPCompile<TVal>>,
-      RPViewBinder<TVal, TVBin> {}
+    /**
+     * Specifies a {@link Binder} to bind a single item in the {@link Repository} to an inflated
+     * {@code View}.
+     */
+    @NonNull
+    RPMain<T> bindWith(@NonNull Binder<T, View> viewBinder);
 
-  /**
-   * Compiler state allowing to specify Recycle or compile.
-   */
-  interface RPRecycleCompile<TVal, TRec> extends RPRecycle<TRec>,
-      RPCompile<TVal> {}
+    /**
+     * Specifies a {@link Receiver} to recycle the {@code View}.
+     */
+    @NonNull
+    RPMain<T> recycleWith(@NonNull Receiver<View> recycler);
 
-  /**
-   * Compiler state allowing to specify view binder, view recycler, function or compile.
-   */
-  interface RPViewBinderRecycleCompile<TVal, TVBin> extends RPRecycleCompile<TVal, RPCompile<TVal>>,
-      RPViewBinder<TVal, TVBin> {}
+    /**
+     * Specifies a {@link Function} providing a stable id for the given item. Called only if stable
+     * IDs are enabled with {@link RepositoryAdapter#setHasStableIds}, and therefore this method is
+     * optional with a default implementation of returning {@link RecyclerView#NO_ID}. If stable IDs
+     * are enabled, the returned ID and the layout returned by
+     * {@link RPLayout#layoutForItem(Function)} or {@link RPLayout#layout(int)} for the given item
+     * should together uniquely identify this item in the whole {@link RecyclerView} throughout all
+     * changes.
+     */
+    @NonNull
+    RPMain<T> stableIdForItem(@NonNull Function<? super T, Long> stableIdForItem);
 
-  /**
-   * Compiler state allowing to specify view binder, view recycler, stable id function or compile.
-   */
-  interface RPViewBinderRecycleStableIdCompile<TVal, TVBRC>
-      extends RPViewBinderRecycleCompile<TVal, TVBRC>,
-      RPStableId<TVal, RPViewBinderRecycleCompile<TVal, RPRecycleCompile<TVal, RPCompile<TVal>>>,
-          RPViewBinderRecycleItemCompile<TVal, RPRecycleItemCompile<TVal, RPCompile<TVal>>>> {}
+    /**
+     * Specifies a {@code stable:Id} for the given item. Called only if stable IDs are enabled with
+     * {@link RepositoryAdapter#setHasStableIds}, and therefore this method is optional with a
+     * default implementation of returning {@link RecyclerView#NO_ID}. If stable IDs are enabled,
+     * the returned ID and the layout returned by {@link RPLayout#layoutForItem(Function)} or
+     * {@link RPLayout#layout(int)} for the given item should together uniquely identify this item
+     * in the whole {@link RecyclerView} throughout all changes.
+     */
+    @NonNull
+    RPItemCompile<T> stableId(long stableId);
+  }
 }

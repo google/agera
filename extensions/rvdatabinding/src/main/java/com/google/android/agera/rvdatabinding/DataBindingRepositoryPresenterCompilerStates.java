@@ -16,12 +16,14 @@
 package com.google.android.agera.rvdatabinding;
 
 import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
 import com.google.android.agera.Function;
 import com.google.android.agera.Repository;
+import com.google.android.agera.rvadapter.RepositoryAdapter;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPItemCompile;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPStableId;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPSpecificCollectionCompile;
 
 /**
  * Container of the compiler state interfaces supporting the creation of a data binding
@@ -32,69 +34,58 @@ public interface DataBindingRepositoryPresenterCompilerStates {
   /**
    * Compiler state to specify how to bind the {@code View} using data binding.
    */
-  interface DBRPItemBinding<TVal, TRet> {
+  interface DBRPMain<T> extends RPItemCompile<T>, RPSpecificCollectionCompile<T> {
 
     /**
      * Specifies a data binding @{code itemId} from the previously given {@code layout} to bind a
      * single item in the {@link Repository}.
      */
     @NonNull
-    TRet itemId(int itemId);
+    DBRPMain<T> itemId(int itemId);
 
     /**
      * Specifies a {@link Function} to return a data binding @{code itemId} from the previously
      * given {@code layout} to bind a single item in the {@link Repository}.
      */
     @NonNull
-    TRet itemIdForItem(@NonNull Function<TVal, Integer> itemIdForItem);
-  }
+    DBRPMain<T> itemIdForItem(@NonNull Function<T, Integer> itemIdForItem);
 
-  /**
-   * Compiler state to specify index independent handlers from the given {@code layout}.
-   */
-  interface DBRPHandlerBinding<TRet> {
     /**
      * Specifies what {@code handler} is associated with the {@code handlerId} in the previously
      * given {@code layout}.
      */
     @NonNull
-    TRet handler(int handlerId, @NonNull Object handler);
-  }
+    DBRPMain<T> handler(int handlerId, @NonNull Object handler);
 
-  /**
-   * Compiler state to specify a recycle config.
-   */
-  interface DBRPRecycle<TRet> {
     /**
      * Specifies what {@code handler} is associated with the {@code handlerId} in the previously
      * given {@code layout}.
      */
     @NonNull
-    TRet onRecycle(@RecycleConfig int recycleConfig);
+    DBRPMain<T> onRecycle(@RecycleConfig int recycleConfig);
+
+    /**
+     * Specifies a {@link Function} providing a stable id for the given item. Called only if stable
+     * IDs are enabled with {@link RepositoryAdapter#setHasStableIds}, and therefore this method is
+     * optional with a default implementation of returning {@link RecyclerView#NO_ID}. If stable IDs
+     * are enabled, the returned ID and the layout returned by
+     * {@link RPLayout#layoutForItem(Function)} or {@link RPLayout#layout(int)} for the given item
+     * should together uniquely identify this item in the whole {@link RecyclerView} throughout all
+     * changes.
+     */
+    @NonNull
+    DBRPMain<T> stableIdForItem(@NonNull Function<? super T, Long> stableIdForItem);
+
+    /**
+     * Specifies a {@code stable:Id} for the given item. Called only if stable IDs are enabled with
+     * {@link RepositoryAdapter#setHasStableIds}, and therefore this method is optional with a
+     * default implementation of returning {@link RecyclerView#NO_ID}. If stable IDs are enabled,
+     * the returned ID and the layout returned by {@link RPLayout#layoutForItem(Function)} or
+     * {@link RPLayout#layout(int)} for the given item should together uniquely identify this item
+     * in the whole {@link RecyclerView} throughout all changes.
+     */
+    @NonNull
+    RPItemCompile<T> stableId(long stableId);
   }
-
-  /**
-   * Compiler state allowing to specify handlers, stable id, recycle strategy or compile.
-   */
-  interface DBRPHandlerStableIdRecycleCompile<TVal, TCom>
-      extends DBRPHandlerBinding<DBRPHandlerStableIdRecycleCompile<TVal, TCom>>,
-      DBRPStableIdRecycleCompile<TVal, TCom, RPItemCompile<TVal>> {}
-
-  /**
-   * Compiler state allowing to specify stable id, recycle strategy or compile.
-   */
-  interface DBRPStableIdRecycleCompile<TVal, TCom, TICom>
-      extends RPStableId<TVal, DBRPRecycleCompile<TVal, TCom>,
-      DBRPRecycleItemCompile<TVal, TICom>>, DBRPRecycleCompile<TVal, TCom> {}
-
-  /**
-   * Compiler state allowing to specify recycle strategy or compile.
-   */
-  interface DBRPRecycleCompile<TVal, TRec> extends RPCompile<TVal>, DBRPRecycle<TRec> {}
-
-  /**
-   * Compiler state allowing to specify recycle strategy or compile.
-   */
-  interface DBRPRecycleItemCompile<TVal, TRec>
-      extends RPItemCompile<TVal>, DBRPRecycle<TRec> {}
 }
+

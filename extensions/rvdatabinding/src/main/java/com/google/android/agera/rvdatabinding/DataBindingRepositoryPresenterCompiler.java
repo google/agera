@@ -36,16 +36,14 @@ import android.view.View;
 import com.google.android.agera.Function;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPItemCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
-import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPHandlerStableIdRecycleCompile;
-import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPItemBinding;
+import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPMain;
 import java.lang.ref.WeakReference;
-import com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenterCompilerStates.DBRPRecycleItemCompile;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-final class DataBindingRepositoryPresenterCompiler implements DBRPItemBinding,
-    DBRPHandlerStableIdRecycleCompile, DBRPRecycleItemCompile, RPLayout {
+final class DataBindingRepositoryPresenterCompiler implements DBRPMain, RPLayout {
   @NonNull
   private final SparseArray<Object> handlers;
   private Function<Object, Integer> layoutFactory;
@@ -61,21 +59,21 @@ final class DataBindingRepositoryPresenterCompiler implements DBRPItemBinding,
 
   @NonNull
   @Override
-  public Object handler(final int handlerId, @NonNull final Object handler) {
+  public DBRPMain handler(final int handlerId, @NonNull final Object handler) {
     handlers.put(handlerId, handler);
     return this;
   }
 
   @NonNull
   @Override
-  public Object itemId(final int itemId) {
+  public DBRPMain itemId(final int itemId) {
     this.itemId = staticFunction(itemId);
     return this;
   }
 
   @NonNull
   @Override
-  public Object itemIdForItem(@NonNull final Function itemIdForItem) {
+  public DBRPMain itemIdForItem(@NonNull final Function itemIdForItem) {
     this.itemId = checkNotNull(itemIdForItem);
     return this;
   }
@@ -83,22 +81,22 @@ final class DataBindingRepositoryPresenterCompiler implements DBRPItemBinding,
   @NonNull
   @Override
   public RepositoryPresenter forItem() {
-    return new CompiledRepositoryPresenter(itemId, layoutFactory, stableIdForItem, handlers,
-        recycleConfig, itemAsList());
+    return new CompiledRepositoryPresenter(itemId, layoutFactory, stableIdForItem,
+        handlers, recycleConfig, itemAsList());
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<List<Object>> forList() {
-    return new CompiledRepositoryPresenter(itemId, layoutFactory, stableIdForItem, handlers,
-        recycleConfig, (Function) identityFunction());
+    return new CompiledRepositoryPresenter(itemId, layoutFactory, stableIdForItem,
+        handlers, recycleConfig, (Function) identityFunction());
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result<Object>> forResult() {
-    return new CompiledRepositoryPresenter(itemId, layoutFactory, stableIdForItem, handlers,
-        recycleConfig, (Function) resultAsList());
+    return new CompiledRepositoryPresenter(itemId, layoutFactory, stableIdForItem,
+        handlers, recycleConfig, (Function) resultAsList());
   }
 
   @NonNull
@@ -110,7 +108,7 @@ final class DataBindingRepositoryPresenterCompiler implements DBRPItemBinding,
 
   @NonNull
   @Override
-  public Object layout(@LayoutRes final int layoutId) {
+  public Object layout(@LayoutRes int layoutId) {
     this.layoutFactory = staticFunction(layoutId);
     return this;
   }
@@ -124,21 +122,21 @@ final class DataBindingRepositoryPresenterCompiler implements DBRPItemBinding,
 
   @NonNull
   @Override
-  public Object stableIdForItem(@NonNull final Function stableIdForItem) {
+  public DBRPMain stableIdForItem(@NonNull final Function stableIdForItem) {
     this.stableIdForItem = stableIdForItem;
     return this;
   }
 
   @NonNull
   @Override
-  public Object stableId(final long stableId) {
+  public RPItemCompile stableId(final long stableId) {
     this.stableIdForItem = staticFunction(stableId);
     return this;
   }
 
   @NonNull
   @Override
-  public Object onRecycle(@RecycleConfig final int recycleConfig) {
+  public DBRPMain onRecycle(@RecycleConfig final int recycleConfig) {
     this.recycleConfig = recycleConfig;
     return this;
   }
@@ -166,7 +164,8 @@ final class DataBindingRepositoryPresenterCompiler implements DBRPItemBinding,
         @NonNull final Function<Object, Integer> layoutId,
         @NonNull final Function<Object, Long> stableIdForItem,
         @NonNull final SparseArray<Object> handlers,
-        final int recycleConfig, @NonNull final Function<Object, List<Object>> converter) {
+        final int recycleConfig,
+        @NonNull final Function<Object, List<Object>> converter) {
       this.itemId = itemId;
       this.converter = converter;
       this.layoutId = layoutId;

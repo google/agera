@@ -19,10 +19,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPRecycleCompile;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPViewBinderRecycleStableIdCompile;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPMain;
 import java.util.List;
 
 /**
@@ -37,9 +35,7 @@ public final class RepositoryPresenters {
    */
   @SuppressWarnings({"unchecked", "UnusedParameters"})
   @NonNull
-  public static <T> RPLayout<T, RPViewBinderRecycleStableIdCompile<T,
-      RPRecycleCompile<T, RPCompile<T>>>>
-  repositoryPresenterOf(@Nullable final Class<T> type) {
+  public static <T> RPLayout<T, RPMain<T>> repositoryPresenterOf(@Nullable final Class<T> type) {
     return new RepositoryPresenterCompiler();
   }
 
