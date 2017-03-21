@@ -75,7 +75,6 @@ public class DataBindingRepositoryPresentersTest {
   private static final int HANDLER_ID = 4;
   private static final int SECOND_HANDLER_ID = 5;
   private static final int COLLECTION_ID = 6;
-  private static final int OTHER_COLLECTION_ID = 7;
   private static final long STABLE_ID = 2;
   @Mock
   private Function<String, Integer> layoutForItem;
@@ -114,6 +113,19 @@ public class DataBindingRepositoryPresentersTest {
     verify(viewDataBinding).setVariable(ITEM_ID, STRING);
     verify(viewDataBinding).setVariable(HANDLER_ID, HANDLER);
     verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, SECOND_HANDLER);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldBindRepositoryPresenterWithoutItem() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .forItem();
+
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
     verify(viewDataBinding).executePendingBindings();
     verifyNoMoreInteractions(viewDataBinding);
   }
@@ -750,6 +762,28 @@ public class DataBindingRepositoryPresentersTest {
             .stableIdForItem(Functions.<String, Long>staticFunction(STABLE_ID))
             .forList();
     assertThat(listRepositoryPresenter.getItemId(STRING_LIST, 0), is(STABLE_ID));
+  }
+
+  @Test
+  public void shouldHandleRebindWithSameData() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .forItem();
+
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, STRING);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+    reset(viewDataBinding);
+
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, STRING);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
   }
 
   @Test

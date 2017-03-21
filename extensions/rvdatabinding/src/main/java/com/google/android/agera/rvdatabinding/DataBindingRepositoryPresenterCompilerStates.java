@@ -39,14 +39,14 @@ public interface DataBindingRepositoryPresenterCompilerStates {
   interface DBRPMain<T> extends RPItemCompile<T> {
 
     /**
-     * Specifies a data binding @{code itemId} from the previously given {@code layout} to bind a
+     * Specifies a data binding {@code itemId} from the previously given {@code layout} to bind a
      * single item in the {@link Repository}.
      */
     @NonNull
     DBRPMain<T> itemId(int itemId);
 
     /**
-     * Specifies a {@link Function} to return a data binding @{code itemId} from the previously
+     * Specifies a {@link Function} to return a data binding {@code itemId} from the previously
      * given {@code layout} to bind a single item in the {@link Repository}.
      */
     @NonNull
@@ -67,7 +67,7 @@ public interface DataBindingRepositoryPresenterCompilerStates {
     DBRPMain<T> onRecycle(@RecycleConfig int recycleConfig);
 
     /**
-     * Specifies a data binding @{code itemId} from the previously given {@code layout} to bind the
+     * Specifies a data binding {@code itemId} from the previously given {@code layout} to bind the
      * whole collection (the repository value) to.
      */
     @NonNull
@@ -97,14 +97,14 @@ public interface DataBindingRepositoryPresenterCompilerStates {
     RPItemCompile<T> stableId(long stableId);
 
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link List} where each
+     * Creates a {@link RepositoryPresenter} for a {@link Repository} of a {@link List} where each
      * item in the {@link List} will be bound to the {@link RecyclerView}.
      */
     @NonNull
     RepositoryPresenter<List<T>> forList();
 
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link Result} containing
+     * Creates a {@link RepositoryPresenter} for a {@link Repository} of a {@link Result} containing
      * a {@link List} where each item in the {@link List} will be bound to the {@link
      * RecyclerView}.
      */
@@ -112,7 +112,7 @@ public interface DataBindingRepositoryPresenterCompilerStates {
     RepositoryPresenter<Result<List<T>>> forResultList();
 
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a type that can be
+     * Creates a {@link RepositoryPresenter} for a {@link Repository} of a type that can be
      * converted to a {@link List} of items using the {@code converter}.
      */
     @NonNull

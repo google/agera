@@ -47,11 +47,12 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 final class DataBindingRepositoryPresenterCompiler
     implements DBRPMain, RPLayout, RPTypedCollectionCompile {
+  private static final int BR_NO_ID = -1;
   @NonNull
   private final SparseArray<Object> handlers;
   private Function<Object, Integer> layoutFactory;
-  private Function<Object, Integer> itemId = staticFunction(0);
-  private int collectionId = -1;
+  private Function<Object, Integer> itemId = staticFunction(BR_NO_ID);
+  private int collectionId = BR_NO_ID;
   @NonNull
   private Function<Object, Long> stableIdForItem = staticFunction(RecyclerView.NO_ID);
   @RecycleConfig
@@ -212,11 +213,11 @@ final class DataBindingRepositoryPresenterCompiler
       final View view = holder.itemView;
       final ViewDataBinding viewDataBinding = DataBindingUtil.bind(view);
       final Integer itemVariable = itemId.apply(item);
-      if (itemVariable > 0) {
+      if (itemVariable != BR_NO_ID) {
         viewDataBinding.setVariable(itemVariable, item);
         view.setTag(R.id.agera__rvdatabinding__item_id, itemVariable);
       }
-      if (collectionId > 0) {
+      if (collectionId != BR_NO_ID) {
         viewDataBinding.setVariable(collectionId, data);
         view.setTag(R.id.agera__rvdatabinding__collection_id, collectionId);
       }

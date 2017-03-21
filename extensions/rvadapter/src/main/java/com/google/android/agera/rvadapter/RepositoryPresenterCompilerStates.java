@@ -45,7 +45,7 @@ public interface RepositoryPresenterCompilerStates {
     TRet layout(@LayoutRes int layoutId);
 
     /**
-     * Specifies a {@link Function} to return a @{code layoutId} that be inflated given the item in
+     * Specifies a {@link Function} to return a {@code layoutId} that be inflated given the item in
      * the {@link Repository}.
      */
     @NonNull
@@ -59,15 +59,15 @@ public interface RepositoryPresenterCompilerStates {
   interface RPItemCompile<TVal> {
 
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a single item that will be
+     * Creates a {@link RepositoryPresenter} for a {@link Repository} of a single item that will be
      * bound to the {@link RecyclerView}.
      */
     @NonNull
     RepositoryPresenter<TVal> forItem();
 
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link Result} where the
-     * item in the {@link Result} will be bound to the @{link RecyclerView} if present.
+     * Creates a {@link RepositoryPresenter} for a {@link Repository} of a {@link Result} where the
+     * item in the {@link Result} will be bound to the {@link RecyclerView} if present.
      */
     @NonNull
     RepositoryPresenter<Result<TVal>> forResult();
@@ -79,7 +79,7 @@ public interface RepositoryPresenterCompilerStates {
    */
   interface RPTypedCollectionCompile<TVal, TCol> {
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a type that can be
+     * Creates a {@link RepositoryPresenter} for a {@link Repository} of a type that can be
      * converted to a {@link List} of items using the {@code converter}.
      */
     @NonNull
@@ -142,14 +142,14 @@ public interface RepositoryPresenterCompilerStates {
 
 
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link List} where each
+     * Creates a {@link RepositoryPresenter} for a {@link Repository} of a {@link List} where each
      * item in the {@link List} will be bound to the {@link RecyclerView}.
      */
     @NonNull
     RepositoryPresenter<List<T>> forList();
 
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link Result} containing
+     * Creates a {@link RepositoryPresenter} for a {@link Repository} of a {@link Result} containing
      * a {@link List} where each item in the {@link List} will be bound to the {@link
      * RecyclerView}.
      */
@@ -157,7 +157,7 @@ public interface RepositoryPresenterCompilerStates {
     RepositoryPresenter<Result<List<T>>> forResultList();
 
     /**
-     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a type that can be
+     * Creates a {@link RepositoryPresenter} for a {@link Repository} of a type that can be
      * converted to a {@link List} of items using the {@code converter}.
      */
     @NonNull

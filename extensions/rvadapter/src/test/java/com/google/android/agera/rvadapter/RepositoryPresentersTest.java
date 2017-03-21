@@ -15,6 +15,7 @@
  */
 package com.google.android.agera.rvadapter;
 
+import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.present;
 import static com.google.android.agera.Result.success;
 import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
@@ -42,7 +43,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
@@ -55,8 +55,8 @@ public class RepositoryPresentersTest {
   private static final Result<String> STRING_RESULT = present(STRING);
   private static final List<String> STRING_LIST = asList(STRING, SECOND_STRING);
   private static final Result<List<String>> STRING_LIST_RESULT = success(STRING_LIST);
-  private static final Result<String> FAILURE = Result.<String>failure();
-  private static final Result<List<String>> LIST_FAILURE = Result.<List<String>>failure();
+  private static final Result<String> FAILURE = failure();
+  private static final Result<List<String>> LIST_FAILURE = failure();
   private static final int LAYOUT_ID = 0;
   private static final int DYNAMIC_LAYOUT_ID = 1;
   private static final long STABLE_ID = 2;
@@ -67,7 +67,7 @@ public class RepositoryPresentersTest {
   @Mock
   private Receiver<View> recycler;
   @Mock
-  private Function<String,Integer> layoutForItem;
+  private Function<String, Integer> layoutForItem;
   private RecyclerView.ViewHolder viewHolder;
   @Mock
   private View view;
@@ -75,7 +75,7 @@ public class RepositoryPresentersTest {
   @Before
   public void setUp() {
     initMocks(this);
-    viewHolder = new RecyclerView.ViewHolder(view){};
+    viewHolder = new RecyclerView.ViewHolder(view) {};
     when(layoutForItem.apply(SECOND_STRING)).thenReturn(DYNAMIC_LAYOUT_ID);
   }
 
@@ -98,7 +98,6 @@ public class RepositoryPresentersTest {
             .forResult();
     resultRepositoryPresenter.bind(STRING_RESULT, 0, viewHolder);
   }
-
 
   @Test
   public void shouldBindRepositoryPresenterOfResultList() {
@@ -264,7 +263,6 @@ public class RepositoryPresentersTest {
     assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
   }
 
-
   @Test
   public void shouldReturnStableIdForRepositoryPresenterOfItem() {
     final RepositoryPresenter<String> resultRepositoryPresenter =
@@ -334,7 +332,6 @@ public class RepositoryPresentersTest {
         .forResult();
   }
 
-
   @Test
   public void shouldHandleRebindWithNewData() {
     final RepositoryPresenter<String> resultRepositoryPresenter =
@@ -351,6 +348,24 @@ public class RepositoryPresentersTest {
     resultRepositoryPresenter.bind(SECOND_STRING, 0, viewHolder);
 
     verify(binder).bind(SECOND_STRING, view);
+  }
+
+  @Test
+  public void shouldHandleRebindWithSameData() {
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .bindWith(binder)
+            .forItem();
+
+    resultRepositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(binder).bind(STRING, view);
+    reset(binder);
+
+    resultRepositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(binder).bind(STRING, view);
   }
 
   @Test
