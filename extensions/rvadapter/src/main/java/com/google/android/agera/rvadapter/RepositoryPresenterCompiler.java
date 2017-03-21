@@ -183,8 +183,9 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
     @Override
     public void bind(@NonNull final Object data, final int index,
         @NonNull final RecyclerView.ViewHolder holder) {
-      binder.bind(getItems(data).get(index), holder.itemView);
+      final Object item = getItems(data).get(index);
       collectionBinder.bind(data, holder.itemView);
+      binder.bind(item, holder.itemView);
     }
 
     @Override

@@ -37,7 +37,6 @@ import android.view.View;
 import com.google.android.agera.Function;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCollectionCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPItemCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPTypedCollectionCompile;
@@ -49,12 +48,10 @@ import java.util.List;
 final class DataBindingRepositoryPresenterCompiler
     implements DBRPMain, RPLayout, RPTypedCollectionCompile {
   @NonNull
-  private static final Function NO_ID = staticFunction(-1);
-  @NonNull
   private final SparseArray<Object> handlers;
   private Function<Object, Integer> layoutFactory;
-  private Function<Object, Integer> itemId = NO_ID;
-  private Function<Object, Integer> collectionId = NO_ID;
+  private Function<Object, Integer> itemId = staticFunction(0);
+  private int collectionId = -1;
   @NonNull
   private Function<Object, Long> stableIdForItem = staticFunction(RecyclerView.NO_ID);
   @RecycleConfig
@@ -157,24 +154,14 @@ final class DataBindingRepositoryPresenterCompiler
 
   @NonNull
   @Override
-  public RPCollectionCompile collectionId(final int collectionId) {
-    this.collectionId = staticFunction(collectionId);
-    return this;
-  }
-
-  @NonNull
-  @Override
-  public RPTypedCollectionCompile collectionIdForCollection(
-      @NonNull final Function collectionIdForCollection) {
-    this.collectionId = collectionIdForCollection;
+  public DBRPMain collectionId(final int collectionId) {
+    this.collectionId = collectionId;
     return this;
   }
 
   private static final class CompiledRepositoryPresenter extends RepositoryPresenter {
     @NonNull
     private final Function<Object, Integer> itemId;
-    @NonNull
-    private final Function<Object, Integer> collectionId;
     @NonNull
     private final Function<Object, List<Object>> converter;
     @NonNull
@@ -183,6 +170,7 @@ final class DataBindingRepositoryPresenterCompiler
     private final Function<Object, Long> stableIdForItem;
     @RecycleConfig
     private final int recycleConfig;
+    private final int collectionId;
     @NonNull
     private SparseArray<Object> handlers;
     @NonNull
@@ -197,7 +185,7 @@ final class DataBindingRepositoryPresenterCompiler
         @NonNull final SparseArray<Object> handlers,
         final int recycleConfig,
         @NonNull final Function<Object, List<Object>> converter,
-        @NonNull final Function<Object, Integer> collectionId) {
+        @NonNull final int collectionId) {
       this.itemId = itemId;
       this.collectionId = collectionId;
       this.converter = converter;
@@ -224,14 +212,13 @@ final class DataBindingRepositoryPresenterCompiler
       final View view = holder.itemView;
       final ViewDataBinding viewDataBinding = DataBindingUtil.bind(view);
       final Integer itemVariable = itemId.apply(item);
-      if (itemVariable > -1) {
+      if (itemVariable > 0) {
         viewDataBinding.setVariable(itemVariable, item);
         view.setTag(R.id.agera__rvdatabinding__item_id, itemVariable);
       }
-      final Integer collectionVariable = collectionId.apply(data);
-      if (collectionVariable > -1) {
-        viewDataBinding.setVariable(collectionVariable, data);
-        view.setTag(R.id.agera__rvdatabinding__collection_id, collectionVariable);
+      if (collectionId > 0) {
+        viewDataBinding.setVariable(collectionId, data);
+        view.setTag(R.id.agera__rvdatabinding__collection_id, collectionId);
       }
       for (int i = 0; i < handlers.size(); i++) {
         final int variableId = handlers.keyAt(i);

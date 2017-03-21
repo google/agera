@@ -155,22 +155,6 @@ public class DataBindingRepositoryPresentersTest {
   }
 
   @Test
-  public void shouldBindRepositoryPresenterCollectionOfVariableCollectionId() {
-    final RepositoryPresenter<String> repositoryPresenter =
-        dataBindingRepositoryPresenterOf(String.class)
-            .layout(LAYOUT_ID)
-            .itemId(ITEM_ID)
-            .collectionIdForCollection(staticFunction(OTHER_COLLECTION_ID))
-            .forCollection(new StringToFirstCharStringList());
-    repositoryPresenter.bind(STRING, 0, viewHolder);
-
-    verify(viewDataBinding).setVariable(ITEM_ID, FIRST_STRING_CHARACTER);
-    verify(viewDataBinding).setVariable(OTHER_COLLECTION_ID, STRING);
-    verify(viewDataBinding).executePendingBindings();
-    verifyNoMoreInteractions(viewDataBinding);
-  }
-
-  @Test
   public void shouldHandleRecycleOfRepositoryPresenterWithoutItemId() {
     final RepositoryPresenter<String> repositoryPresenter =
         dataBindingRepositoryPresenterOf(String.class)

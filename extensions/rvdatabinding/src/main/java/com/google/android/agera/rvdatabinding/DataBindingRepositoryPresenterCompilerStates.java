@@ -19,13 +19,13 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import com.google.android.agera.Function;
 import com.google.android.agera.Repository;
+import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryAdapter;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPCollectionCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPItemCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPSpecificCollectionCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPTypedCollectionCompile;
+import java.util.List;
 
 /**
  * Container of the compiler state interfaces supporting the creation of a data binding
@@ -36,8 +36,7 @@ public interface DataBindingRepositoryPresenterCompilerStates {
   /**
    * Compiler state to specify how to bind the {@code View} using data binding.
    */
-  interface DBRPMain<T> extends RPItemCompile<T>,
-      RPSpecificCollectionCompile<T>, RPCollectionCompile<T> {
+  interface DBRPMain<T> extends RPItemCompile<T> {
 
     /**
      * Specifies a data binding @{code itemId} from the previously given {@code layout} to bind a
@@ -68,19 +67,11 @@ public interface DataBindingRepositoryPresenterCompilerStates {
     DBRPMain<T> onRecycle(@RecycleConfig int recycleConfig);
 
     /**
-     * Specifies a data binding @{code itemId} from the previously given {@code layout} to bind a
-     * single item in the {@link Repository}.
+     * Specifies a data binding @{code itemId} from the previously given {@code layout} to bind the
+     * whole collection (the repository value) to.
      */
     @NonNull
-    RPCollectionCompile<T> collectionId(int collectionId);
-
-    /**
-     * Specifies a {@link Function} to return a data binding @{code itemId} from the previously
-     * given {@code layout} to bind a single item in the {@link Repository}.
-     */
-    @NonNull
-    <TCol> RPTypedCollectionCompile<T, TCol> collectionIdForCollection(
-        @NonNull Function<TCol, Integer> collectionIdForCollection);
+    DBRPMain<T> collectionId(int collectionId);
 
     /**
      * Specifies a {@link Function} providing a stable id for the given item. Called only if stable
@@ -104,6 +95,28 @@ public interface DataBindingRepositoryPresenterCompilerStates {
      */
     @NonNull
     RPItemCompile<T> stableId(long stableId);
+
+    /**
+     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link List} where each
+     * item in the {@link List} will be bound to the {@link RecyclerView}.
+     */
+    @NonNull
+    RepositoryPresenter<List<T>> forList();
+
+    /**
+     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a {@link Result} containing
+     * a {@link List} where each item in the {@link List} will be bound to the {@link
+     * RecyclerView}.
+     */
+    @NonNull
+    RepositoryPresenter<Result<List<T>>> forResultList();
+
+    /**
+     * Creates a {@link RepositoryPresenter} for a @{link Repository} of a type that can be
+     * converted to a {@link List} of items using the {@code converter}.
+     */
+    @NonNull
+    <TCol> RepositoryPresenter<TCol> forCollection(@NonNull Function<TCol, List<T>> converter);
   }
 }
 
