@@ -118,7 +118,8 @@ public interface RepositoryPresenterCompilerStates {
      * converted to a {@link List} of items using the {@code converter}.
      */
     @NonNull
-    RepositoryPresenter<TCol> forCollection(@NonNull Function<TCol, List<TVal>> converter);
+    <TColE extends TCol> RepositoryPresenter<TColE> forCollection(
+        @NonNull Function<TColE, List<TVal>> converter);
   }
 
   /**

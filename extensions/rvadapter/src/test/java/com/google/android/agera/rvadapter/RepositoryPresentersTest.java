@@ -24,6 +24,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -41,6 +42,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
@@ -330,6 +332,25 @@ public class RepositoryPresentersTest {
         .layout(LAYOUT_ID)
         .stableIdForItem(Functions.<CharSequence, Long>staticFunction(STABLE_ID))
         .forResult();
+  }
+
+
+  @Test
+  public void shouldHandleRebindWithNewData() {
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .bindWith(binder)
+            .forItem();
+
+    resultRepositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(binder).bind(STRING, view);
+    reset(binder);
+
+    resultRepositoryPresenter.bind(SECOND_STRING, 0, viewHolder);
+
+    verify(binder).bind(SECOND_STRING, view);
   }
 
   @Test
