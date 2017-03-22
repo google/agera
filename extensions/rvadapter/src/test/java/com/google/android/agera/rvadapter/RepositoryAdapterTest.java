@@ -96,6 +96,7 @@ public final class RepositoryAdapterTest {
   private MutableRepository repository;
   private Repository secondRepository;
   private RepositoryAdapter repositoryAdapter;
+  private RepositoryAdapter repositoryAdapterWithoutStatic;
   private Adapter repositoryAdapterWhileResumed;
   private Adapter repositoryAdapterWhileStarted;
 
@@ -121,6 +122,9 @@ public final class RepositoryAdapterTest {
         .addItem(ITEM, itemRepositoryPresenter)
         .addAdditionalObservable(updateDispatcher)
         .build();
+    repositoryAdapterWithoutStatic = repositoryAdapter()
+        .add(repository, repositoryPresenter)
+        .build();
   }
 
   @Test
@@ -135,6 +139,13 @@ public final class RepositoryAdapterTest {
 
     verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
     verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
+  }
+
+
+  @Test
+  public void shouldReturnItemIdFromFirstPresenterWithoutStatic() {
+    when(repositoryPresenter.getItemId(REPOSITORY_ITEM, 0)).thenReturn(10L);
+    assertThat(repositoryAdapterWithoutStatic.getItemId(0), is(10L));
   }
 
   @Test

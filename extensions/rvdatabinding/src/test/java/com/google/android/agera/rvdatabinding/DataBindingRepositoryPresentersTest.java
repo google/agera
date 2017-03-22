@@ -16,18 +16,23 @@
 package com.google.android.agera.rvdatabinding;
 
 import static android.databinding.DataBinderMapper.setDataBinding;
+import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.present;
 import static com.google.android.agera.Result.success;
 import static com.google.android.agera.rvadapter.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ALL;
+import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_COLLECTION;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_HANDLERS;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ITEM;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.DO_NOTHING;
+import static java.lang.String.valueOf;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -35,9 +40,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import android.databinding.ViewDataBinding;
 import android.support.annotation.LayoutRes;
-import android.support.v7.widget.RecyclerView;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.view.View;
-import com.google.android.agera.Binder;
 import com.google.android.agera.Function;
 import com.google.android.agera.Functions;
 import com.google.android.agera.Result;
@@ -54,6 +59,7 @@ import org.robolectric.annotation.Config;
 @Config(manifest = Config.NONE)
 public class DataBindingRepositoryPresentersTest {
   private static final String STRING = "string";
+  private static final String FIRST_STRING_CHARACTER = "s";
   private static final String SECOND_STRING = "string2";
   private static final Result<String> STRING_RESULT = present(STRING);
   private static final List<String> STRING_LIST = asList(STRING, SECOND_STRING);
@@ -68,9 +74,8 @@ public class DataBindingRepositoryPresentersTest {
   private static final int ITEM_ID = 3;
   private static final int HANDLER_ID = 4;
   private static final int SECOND_HANDLER_ID = 5;
+  private static final int COLLECTION_ID = 6;
   private static final long STABLE_ID = 2;
-  @Mock
-  private Binder<String, View> binder;
   @Mock
   private Function<String, Integer> layoutForItem;
   @Mock
@@ -79,12 +84,12 @@ public class DataBindingRepositoryPresentersTest {
   private ViewDataBinding viewDataBinding;
   @Mock
   private View view;
-  private RecyclerView.ViewHolder viewHolder;
+  private ViewHolder viewHolder;
 
   @Before
   public void setUp() {
     initMocks(this);
-    viewHolder = new RecyclerView.ViewHolder(view){};
+    viewHolder = new ViewHolder(view) {};
     setDataBinding(viewDataBinding, LAYOUT_ID);
     setDataBinding(viewDataBinding, DYNAMIC_LAYOUT_ID);
     when(view.getTag()).thenReturn("string");
@@ -108,6 +113,69 @@ public class DataBindingRepositoryPresentersTest {
     verify(viewDataBinding).setVariable(ITEM_ID, STRING);
     verify(viewDataBinding).setVariable(HANDLER_ID, HANDLER);
     verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, SECOND_HANDLER);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldBindRepositoryPresenterWithoutItem() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .forItem();
+
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldBindRepositoryPresenterOfCollection() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .forCollection(new Function<String, List<String>>() {
+              @NonNull
+              @Override
+              public List<String> apply(@NonNull final String input) {
+                return singletonList(valueOf(input.charAt(0)));
+              }
+            });
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, FIRST_STRING_CHARACTER);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldBindRepositoryPresenterCollectionOfCollection() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .collectionId(COLLECTION_ID)
+            .forCollection(new StringToFirstCharStringList());
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, FIRST_STRING_CHARACTER);
+    verify(viewDataBinding).setVariable(COLLECTION_ID, STRING);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldHandleRecycleOfRepositoryPresenterWithoutItemId() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .onRecycle(CLEAR_ALL)
+            .forItem();
+
+    repositoryPresenter.recycle(viewHolder);
+
     verify(viewDataBinding).executePendingBindings();
     verifyNoMoreInteractions(viewDataBinding);
   }
@@ -180,6 +248,112 @@ public class DataBindingRepositoryPresentersTest {
             .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
             .onRecycle(CLEAR_HANDLERS)
             .forResult();
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldNotRecycleRepositoryPresenterOfCollectionWithNoRecycling() {
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(DO_NOTHING)
+            .collectionId(COLLECTION_ID)
+            .forCollection(new StringToFirstCharStringList());
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfCollectionWithItemRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ITEM)
+            .collectionId(COLLECTION_ID)
+            .forCollection(new StringToFirstCharStringList());
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfCollectionWithAllRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    when(view.getTag(R.id.agera__rvdatabinding__collection_id)).thenReturn(COLLECTION_ID);
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_ALL)
+            .collectionId(COLLECTION_ID)
+            .forCollection(new StringToFirstCharStringList());
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, null);
+    verify(viewDataBinding).setVariable(HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(SECOND_HANDLER_ID, null);
+    verify(viewDataBinding).setVariable(COLLECTION_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfCollectionWithCollectionRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    when(view.getTag(R.id.agera__rvdatabinding__collection_id)).thenReturn(COLLECTION_ID);
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_COLLECTION)
+            .collectionId(COLLECTION_ID)
+            .forCollection(new StringToFirstCharStringList());
+
+    resultRepositoryPresenter.recycle(viewHolder);
+
+    verify(viewDataBinding).setVariable(COLLECTION_ID, null);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRecycleRepositoryPresenterOfCollectionWithHandlerRecycling() {
+    when(view.getTag(R.id.agera__rvdatabinding__item_id)).thenReturn(ITEM_ID);
+    when(view.getTag(R.id.agera__rvdatabinding__collection_id)).thenReturn(COLLECTION_ID);
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .handler(HANDLER_ID, HANDLER)
+            .handler(SECOND_HANDLER_ID, SECOND_HANDLER)
+            .onRecycle(CLEAR_HANDLERS)
+            .collectionId(COLLECTION_ID)
+            .forCollection(new StringToFirstCharStringList());
 
     resultRepositoryPresenter.recycle(viewHolder);
 
@@ -591,7 +765,59 @@ public class DataBindingRepositoryPresentersTest {
   }
 
   @Test
+  public void shouldHandleRebindWithSameData() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .forItem();
+
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, STRING);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+    reset(viewDataBinding);
+
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, STRING);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldHandleRebindWithNewData() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .forItem();
+
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, STRING);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+    reset(viewDataBinding);
+
+    repositoryPresenter.bind(SECOND_STRING, 0, viewHolder);
+
+    verify(viewDataBinding).setVariable(ITEM_ID, SECOND_STRING);
+    verify(viewDataBinding).executePendingBindings();
+    verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
   public void shouldHavePrivateConstructor() {
     assertThat(DataBindingRepositoryPresenters.class, hasPrivateConstructor());
+  }
+
+  private static final class StringToFirstCharStringList implements Function<String, List<String>> {
+    @NonNull
+    @Override
+    public List<String> apply(@NonNull final String input) {
+      return singletonList(valueOf(input.charAt(0)));
+    }
   }
 }

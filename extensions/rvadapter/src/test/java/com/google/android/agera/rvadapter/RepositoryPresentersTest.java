@@ -15,17 +15,22 @@
  */
 package com.google.android.agera.rvadapter;
 
+import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.present;
 import static com.google.android.agera.Result.success;
 import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
 import static com.google.android.agera.rvadapter.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
+import static java.lang.String.valueOf;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import com.google.android.agera.Binder;
@@ -45,21 +50,24 @@ import org.robolectric.annotation.Config;
 @Config(manifest = Config.NONE)
 public class RepositoryPresentersTest {
   private static final String STRING = "string";
+  private static final String FIRST_STRING_CHARACTER = "s";
   private static final String SECOND_STRING = "string2";
   private static final Result<String> STRING_RESULT = present(STRING);
   private static final List<String> STRING_LIST = asList(STRING, SECOND_STRING);
   private static final Result<List<String>> STRING_LIST_RESULT = success(STRING_LIST);
-  private static final Result<String> FAILURE = Result.<String>failure();
-  private static final Result<List<String>> LIST_FAILURE = Result.<List<String>>failure();
+  private static final Result<String> FAILURE = failure();
+  private static final Result<List<String>> LIST_FAILURE = failure();
   private static final int LAYOUT_ID = 0;
   private static final int DYNAMIC_LAYOUT_ID = 1;
   private static final long STABLE_ID = 2;
   @Mock
   private Binder<String, View> binder;
   @Mock
+  private Binder<String, View> collectionBinder;
+  @Mock
   private Receiver<View> recycler;
   @Mock
-  private Function<String,Integer> layoutForItem;
+  private Function<String, Integer> layoutForItem;
   private RecyclerView.ViewHolder viewHolder;
   @Mock
   private View view;
@@ -67,7 +75,7 @@ public class RepositoryPresentersTest {
   @Before
   public void setUp() {
     initMocks(this);
-    viewHolder = new RecyclerView.ViewHolder(view){};
+    viewHolder = new RecyclerView.ViewHolder(view) {};
     when(layoutForItem.apply(SECOND_STRING)).thenReturn(DYNAMIC_LAYOUT_ID);
   }
 
@@ -90,7 +98,6 @@ public class RepositoryPresentersTest {
             .forResult();
     resultRepositoryPresenter.bind(STRING_RESULT, 0, viewHolder);
   }
-
 
   @Test
   public void shouldBindRepositoryPresenterOfResultList() {
@@ -123,6 +130,42 @@ public class RepositoryPresentersTest {
             .forList();
     listRepositoryPresenter.bind(STRING_LIST, 1, viewHolder);
     verify(binder).bind(SECOND_STRING, view);
+  }
+
+  @Test
+  public void shouldBindRepositoryPresenterOfCollection() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .bindWith(binder)
+            .forCollection(new Function<String, List<String>>() {
+              @NonNull
+              @Override
+              public List<String> apply(@NonNull final String input) {
+                return singletonList(valueOf(input.charAt(0)));
+              }
+            });
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+    verify(binder).bind(FIRST_STRING_CHARACTER, view);
+  }
+
+  @Test
+  public void shouldBindRepositoryPresenterCollectionOfCollection() {
+    final RepositoryPresenter<String> repositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .bindWith(binder)
+            .bindCollectionWith(collectionBinder)
+            .forCollection(new Function<String, List<String>>() {
+              @NonNull
+              @Override
+              public List<String> apply(@NonNull final String input) {
+                return singletonList(valueOf(input.charAt(0)));
+              }
+            });
+    repositoryPresenter.bind(STRING, 0, viewHolder);
+    verify(binder).bind(FIRST_STRING_CHARACTER, view);
+    verify(collectionBinder).bind(STRING, view);
   }
 
   @Test
@@ -220,7 +263,6 @@ public class RepositoryPresentersTest {
     assertThat(resultRepositoryPresenter.getItemId(STRING_RESULT, 0), is(STABLE_ID));
   }
 
-
   @Test
   public void shouldReturnStableIdForRepositoryPresenterOfItem() {
     final RepositoryPresenter<String> resultRepositoryPresenter =
@@ -288,6 +330,42 @@ public class RepositoryPresentersTest {
         .layout(LAYOUT_ID)
         .stableIdForItem(Functions.<CharSequence, Long>staticFunction(STABLE_ID))
         .forResult();
+  }
+
+  @Test
+  public void shouldHandleRebindWithNewData() {
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .bindWith(binder)
+            .forItem();
+
+    resultRepositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(binder).bind(STRING, view);
+    reset(binder);
+
+    resultRepositoryPresenter.bind(SECOND_STRING, 0, viewHolder);
+
+    verify(binder).bind(SECOND_STRING, view);
+  }
+
+  @Test
+  public void shouldHandleRebindWithSameData() {
+    final RepositoryPresenter<String> resultRepositoryPresenter =
+        repositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .bindWith(binder)
+            .forItem();
+
+    resultRepositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(binder).bind(STRING, view);
+    reset(binder);
+
+    resultRepositoryPresenter.bind(STRING, 0, viewHolder);
+
+    verify(binder).bind(STRING, view);
   }
 
   @Test

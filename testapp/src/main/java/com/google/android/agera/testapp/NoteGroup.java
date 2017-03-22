@@ -19,22 +19,31 @@ import android.support.annotation.NonNull;
 import java.util.List;
 
 public final class NoteGroup {
+  @NonNull
+  private final String name;
   private final long id;
   @NonNull
   private final List<Note> notes;
 
-  private NoteGroup(final long id, @NonNull final List<Note> notes) {
+  private NoteGroup(@NonNull final String name, final long id, @NonNull final List<Note> notes) {
+    this.name = name;
     this.id = id;
     this.notes = notes;
   }
 
   @NonNull
-  public static NoteGroup noteGroup(final long id, @NonNull final List<Note> notes) {
-    return new NoteGroup(id, notes);
+  public static NoteGroup noteGroup(
+      @NonNull final String name, final long id, @NonNull final List<Note> notes) {
+    return new NoteGroup(name, id, notes);
   }
 
   public long getId() {
     return id;
+  }
+
+  @NonNull
+  public String getName() {
+    return name;
   }
 
   @NonNull

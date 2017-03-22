@@ -22,6 +22,7 @@ import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ALL;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_HANDLERS;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ITEM;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -61,6 +62,17 @@ public class DataBindingLayoutPresentersTest {
     initMocks(this);
     setDataBinding(viewDataBinding, LAYOUT_ID);
     when(view.getTag()).thenReturn("string");
+  }
+
+
+  @Test
+  public void shouldReturnLayoutForLayoutResId() {
+    final LayoutPresenter layoutPresenter =
+        dataBindingLayoutPresenterFor(LAYOUT_ID)
+            .onRecycle(CLEAR_ITEM)
+            .build();
+
+    assertThat(layoutPresenter.getLayoutResId(), is(LAYOUT_ID));
   }
 
   @Test

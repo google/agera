@@ -15,5 +15,6 @@
   ~ limitations under the License.
   -->
 <resources>
-    <item name="agera__rvdatabinding__item_id" type="id"/>
+  <item name="agera__rvdatabinding__item_id" type="id"/>
+  <item name="agera__rvdatabinding__collection_id" type="id"/>
 </resources>
