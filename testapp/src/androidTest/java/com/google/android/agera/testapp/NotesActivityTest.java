@@ -35,7 +35,9 @@ public class NotesActivityTest {
   @Rule
   public ActivityTestRule<NotesActivity> activityRule = new ActivityTestRule<>(NotesActivity.class);
   public static final String FIRST_TEXT = "First Text";
+  public static final String COL_FIRST_TEXT = "F First Text";
   public static final String SECOND_TEXT = "Second Text";
+  public static final String COL_SECOND_TEXT = "S Second Text";
   public static final String THIRD_TEXT = "Third Text";
 
   @Test
@@ -47,10 +49,10 @@ public class NotesActivityTest {
     onView(withId(R.id.add)).perform(click());
     onView(withId(R.id.edit)).perform(clearText(), typeText(SECOND_TEXT));
     onView(withText(R.string.add)).inRoot(isDialog()).perform(click());
-    onView(withText(FIRST_TEXT)).perform(click());
+    onView(withText(COL_FIRST_TEXT)).perform(click());
     onView(withId(R.id.edit)).perform(clearText(), typeText(THIRD_TEXT));
     onView(withText(R.string.edit)).inRoot(isDialog()).perform(click());
-    onView(withText(SECOND_TEXT)).perform(longClick());
+    onView(withText(COL_SECOND_TEXT)).perform(longClick());
     onView(withId(R.id.clear)).perform(click());
   }
 }
