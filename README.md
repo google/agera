@@ -1,4 +1,5 @@
 ![Agera](https://raw.githubusercontent.com/google/agera/master/doc/images/agera.png)
+
 Reactive Programming for Android
 ================================
 [![Build Status](https://travis-ci.org/google/agera.svg?branch=master)](https://travis-ci.org/google/agera)
@@ -23,7 +24,7 @@ Learn about Agera
 ------------------
 
 - [Agera Explained](https://github.com/google/agera/wiki)
-- [Agera Codelab] (https://codelabs.developers.google.com/codelabs/android-agera)
+- [Agera Codelab](https://codelabs.developers.google.com/codelabs/android-agera)
 
 Experimental Sample Extensions
 ------------------------------------

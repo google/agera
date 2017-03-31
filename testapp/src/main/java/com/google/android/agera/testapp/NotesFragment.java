@@ -26,6 +26,7 @@ import static com.google.android.agera.rvadapter.LayoutPresenters.layout;
 import static com.google.android.agera.rvadapter.RepositoryAdapter.repositoryAdapter;
 import static com.google.android.agera.rvadapter.RepositoryPresenters.repositoryPresenterOf;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
+import static com.google.android.agera.testapp.NoteGroupToID.noteGroupToID;
 import static com.google.android.agera.testapp.NotesStore.notesStore;
 import static com.google.android.agera.testapp.RowHandler.rowBinder;
 import static java.text.DateFormat.getInstance;
@@ -34,6 +35,7 @@ import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -45,6 +47,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import com.google.android.agera.Function;
 import com.google.android.agera.Receiver;
 import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
@@ -183,4 +186,5 @@ public final class NotesFragment extends Fragment {
     pool.clear();
     notesStore.closeDatabase();
   }
+
 }
