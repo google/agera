@@ -447,7 +447,10 @@ public class RepositoryAdapter extends RecyclerView.Adapter<ViewHolder>
     int resolvedRepositoryIndex = this.resolvedRepositoryIndex;
     int resolvedItemIndex = this.resolvedItemIndex;
     final RepositoryPresenter<Object> presenter = presenters[resolvedRepositoryIndex];
-    presenterForViewHolder.put(holder, presenter);
+    final RepositoryPresenter<Object> oldPresenter = presenterForViewHolder.put(holder, presenter);
+    if (oldPresenter != null && !presenter.equals(oldPresenter)) {
+      oldPresenter.recycle(holder);
+    }
     presenter.bind(data[resolvedRepositoryIndex], resolvedItemIndex, holder);
   }
 
