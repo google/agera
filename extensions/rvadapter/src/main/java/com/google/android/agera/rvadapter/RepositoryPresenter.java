@@ -17,8 +17,11 @@ package com.google.android.agera.rvadapter;
 
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
+import android.support.v7.util.ListUpdateCallback;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.Adapter;
 import com.google.android.agera.Repository;
+import com.google.android.agera.rvadapter.RepositoryAdapter.Builder;
 
 /**
  * Contains logic to present the content of a {@link Repository}.
@@ -74,4 +77,64 @@ public abstract class RepositoryPresenter<T> {
    *     object will be of that custom type.
    */
   public void recycle(@NonNull final RecyclerView.ViewHolder holder) {}
+
+  /**
+   * Produces a sequence of fine-grained events (addition, removal, changing and moving of
+   * individual items) to the given {@code listUpdateCallback} capturing the changes of data to be
+   * presented by this {@link RepositoryPresenter}, in response to an update. Implementation should
+   * do either of the following:
+   * <ul>
+   * <li>Produce and dispatch the fine-grained events that accurately describe the changes, and then
+   *     return true;
+   * <li>Refuse to produce the fine-grained events by returning false. This is the base
+   *     implementation.
+   * </ul>
+   *
+   * <p>While a {@link RepositoryAdapter} is {@link RepositoryAdapter#hasObservers() in use} (for
+   * example, attached to a {@code RecyclerView}), when it receives an update from a presented
+   * {@link Repository}, the associated {@code RepositoryPresenter} will be asked to produce a
+   * sequence of fine-grained events capturing the update; when the {@code RepositoryAdapter}
+   * receives an update from one of the {@linkplain Builder#addAdditionalObservable additional
+   * observables}, then all {@code RepositoryPresenter}s will be asked. If all affected
+   * {@code RepositoryPresenter}s produced fine-grained events, then {@code RepositoryAdapter} will
+   * apply the new data and notify the {@code RecyclerView} of the aggregated sequence of events;
+   * otherwise the adapter will call {@link Adapter#notifyDataSetChanged()}, and pause all update
+   * processing (both data and events) until fresh data is needed, hinted by the next call to
+   * {@link RepositoryAdapter#getItemCount()}.
+   *
+   * <p>Notes for implementation:
+   * <ul>
+   * <li>If the update comes from the paired repository, then {@code oldData} is the previously
+   *     presented repository value, and {@code newData} is the value newly obtained from the
+   *     repository. The new value has not been applied and is not exposed through the adapter.
+   *     Note that repositories are allowed to dispatch updates while maintaining
+   *     {@code oldData.equals(newData)} or even {@code oldData == newData}, depending on the
+   *     repository implementation.
+   * <li>If the update comes from an additional observable, then it is guaranteed that
+   *     {@code oldData == newData}, because the value is not reloaded from the repository.
+   * <li>A {@code RepositoryPresenter} may not have a chance to produce fine-grained events in
+   *     response to an update. This can happen when an earlier presenter returns false from this
+   *     method, or the adapter is not {@link RepositoryAdapter#hasObservers() in use} (for example,
+   *     not attached to any {@code RecyclerView}).
+   * <li>{@code RepositoryAdapter} guarantees that, if this method is not called, then
+   *     {@link #getItemCount} will be called before this {@code RepositoryPresenter} is asked to
+   *     present any item from the new data. {@link #getItemCount} may be called again when there is
+   *     a chance that the last data passed into the method may not be the latest.
+   * <li>A {@code RepositoryPresenter} presenting a static item (added with {@link Builder#addItem})
+   *     will not be able to produce any events for any item views presented for the static item.
+   * </ul>
+   *
+   * @param oldData The data previously presented by this {@code RepositoryPresenter}.
+   * @param newData The data to be presented by this {@code RepositoryPresenter} following the
+   *     update.
+   * @param listUpdateCallback A callback to record the sequence of fine-grained events to be
+   *     dispatched via the {@code RepositoryAdapter} to the {@code RecyclerView}. To be used within
+   *     this method call only. Positions and counts are relative to this presenter.
+   * @return Whether the sequence of calls to {@code listUpdateCallback} during the execution of
+   *     this method has completely and accurately described all changes.
+   */
+  public boolean getUpdates(@NonNull final T oldData, @NonNull final T newData,
+      @NonNull final ListUpdateCallback listUpdateCallback) {
+    return false;
+  }
 }

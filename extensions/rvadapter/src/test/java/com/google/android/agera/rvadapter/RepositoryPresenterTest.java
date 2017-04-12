@@ -17,12 +17,16 @@ package com.google.android.agera.rvadapter;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
 import android.support.annotation.NonNull;
+import android.support.v7.util.ListUpdateCallback;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
@@ -32,6 +36,20 @@ public final class RepositoryPresenterTest {
   @Test
   public void shouldReturnDefaultItemId() throws Exception {
     assertThat(new TestRepositoryPresenter().getItemId(new Object(), 0), is(RecyclerView.NO_ID));
+  }
+
+  @Test
+  public void shouldHaveDefaultRecycleImplementation() throws Exception {
+    final View view = new View(RuntimeEnvironment.application);
+    final RecyclerView.ViewHolder viewHolder = new RecyclerView.ViewHolder(view) {};
+    new TestRepositoryPresenter().recycle(viewHolder);
+  }
+
+  @Test
+  public void shouldHaveDefaultGetUpdatesImplementation() throws Exception {
+    final boolean returnValue = new TestRepositoryPresenter().getUpdates(
+        new Object(), new Object(), mock(ListUpdateCallback.class));
+    assertThat(returnValue, is(false));
   }
 
   private static final class TestRepositoryPresenter extends RepositoryPresenter<Object> {
