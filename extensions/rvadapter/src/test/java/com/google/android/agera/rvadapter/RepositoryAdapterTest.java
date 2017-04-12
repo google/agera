@@ -50,6 +50,7 @@ import com.google.android.agera.MutableRepository;
 import com.google.android.agera.Repository;
 import com.google.android.agera.UpdateDispatcher;
 import java.util.List;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,8 +61,10 @@ import org.robolectric.annotation.Config;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = NONE)
+@SuppressWarnings("unchecked")
 public final class RepositoryAdapterTest {
-  private static final int NBR_OF_STATIC = 2;
+  private static final int MULTI_ITEM_COUNT = 3;
+  private static final int STATIC_ITEM_COUNT = 6;
   private static final List<String> REPOSITORY_LIST = asList("a", "b", "c");
   private static final String REPOSITORY_ITEM = "d";
   private static final String ALTERNATIVE_REPOSITORY_ITEM = "e";
@@ -73,9 +76,15 @@ public final class RepositoryAdapterTest {
   @Mock
   private RepositoryPresenter secondRepositoryPresenter;
   @Mock
-  private RepositoryPresenter itemRepositoryPresenter;
+  private RepositoryPresenter singleItemRepositoryPresenter;
+  @Mock
+  private RepositoryPresenter multiItemRepositoryPresenter;
+  @Mock
+  private RepositoryPresenter zeroItemRepositoryPresenter;
   @Mock
   private LayoutPresenter layoutPresenter;
+  @Mock
+  private LayoutPresenter secondLayoutPresenter;
   @Mock
   private ViewHolder viewHolder;
   @Mock
@@ -113,13 +122,18 @@ public final class RepositoryAdapterTest {
     when(layoutInflater.inflate(LAYOUT_ID, viewGroup, false)).thenReturn(view);
     when(repositoryPresenter.getItemCount(REPOSITORY_ITEM)).thenReturn(1);
     when(secondRepositoryPresenter.getItemCount(REPOSITORY_LIST)).thenReturn(3);
-    when(itemRepositoryPresenter.getItemCount(ITEM)).thenReturn(1);
+    when(singleItemRepositoryPresenter.getItemCount(ITEM)).thenReturn(1);
+    when(multiItemRepositoryPresenter.getItemCount(ITEM)).thenReturn(MULTI_ITEM_COUNT);
+    when(zeroItemRepositoryPresenter.getItemCount(ITEM)).thenReturn(0);
 
-    repositoryAdapter = repositoryAdapter()
-        .add(repository, repositoryPresenter)
-        .add(secondRepository, secondRepositoryPresenter)
-        .addLayout(layoutPresenter)
-        .addItem(ITEM, itemRepositoryPresenter)
+    repositoryAdapter = repositoryAdapter()               // total | static | stable IDs assigned
+        .add(repository, repositoryPresenter)             //     1 | 0      |
+        .add(secondRepository, secondRepositoryPresenter) //     4 | 0      |
+        .addLayout(layoutPresenter)                       //     5 | 1      | [@4] 0
+        .addItem(ITEM, singleItemRepositoryPresenter)     //     6 | 2      | [@5] 1
+        .addItem(ITEM, multiItemRepositoryPresenter)      //     9 | 5      | [@6-8] 2-4
+        .addLayout(secondLayoutPresenter)                 //    10 | 6      | [@9] 5
+        .addItem(ITEM, zeroItemRepositoryPresenter)       //    10 | 6      |
         .addAdditionalObservable(updateDispatcher)
         .build();
     repositoryAdapterWithoutStatic = repositoryAdapter()
@@ -127,18 +141,24 @@ public final class RepositoryAdapterTest {
         .build();
   }
 
+  @After
+  public void tearDown() {
+    verify(singleItemRepositoryPresenter, never()).getItemId(any(), anyInt());
+    verify(multiItemRepositoryPresenter, never()).getItemId(any(), anyInt());
+    verify(zeroItemRepositoryPresenter, never()).getItemId(any(), anyInt());
+  }
+
   @Test
   public void shouldReturnItemCountFromPresenters() {
-    assertThat(repositoryAdapter.getItemCount(), is(6));
+    assertThat(repositoryAdapter.getItemCount(), is(10));
   }
 
   @Test
   public void shouldReturnItemIdFromFirstPresenter() {
     when(repositoryPresenter.getItemId(REPOSITORY_ITEM, 0)).thenReturn(10L);
-    assertThat(repositoryAdapter.getItemId(0), is(10L + NBR_OF_STATIC));
+    assertThat(repositoryAdapter.getItemId(0), is(10L + STATIC_ITEM_COUNT));
 
     verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
-    verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
   }
 
 
@@ -151,31 +171,22 @@ public final class RepositoryAdapterTest {
   @Test
   public void shouldReturnItemIdFromSecondPresenter() {
     when(secondRepositoryPresenter.getItemId(REPOSITORY_LIST, 0)).thenReturn(11L);
-    assertThat(repositoryAdapter.getItemId(1), is(11L + NBR_OF_STATIC));
+    assertThat(repositoryAdapter.getItemId(1), is(11L + STATIC_ITEM_COUNT));
 
     verify(repositoryPresenter, never()).getItemId(any(), anyInt());
-    verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
   }
 
   @Test
-  public void shouldReturnItemIdFromLayoutPresenter() {
-    assertThat(repositoryAdapter.getItemId(4), is(0L));
-
-    verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
-    verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
-  }
-
-  @Test
-  public void shouldReturnItemIdFromItemPresenter() {
-    assertThat(repositoryAdapter.getItemId(5), is(1L));
-
-    verify(repositoryPresenter, never()).getItemId(any(), anyInt());
-    verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
+  public void shouldReturnItemIdForStaticItems() {
+    // See comments at repositoryAdapter initialization in setUp()
+    for (int i = 4; i <= 9; i++) {
+      assertThat(repositoryAdapter.getItemId(i), is(i - 4L));
+    }
   }
 
   @Test(expected = IndexOutOfBoundsException.class)
   public void shouldThrowExceptionForOutOfBoundsIndex() {
-    repositoryAdapter.getItemId(6);
+    repositoryAdapter.getItemId(10);
   }
 
   @Test(expected = IndexOutOfBoundsException.class)
@@ -194,28 +205,25 @@ public final class RepositoryAdapterTest {
   public void shouldReturnItemViewTypeFromFirstPresenter() {
     when(repositoryPresenter.getLayoutResId(REPOSITORY_ITEM, 0)).thenReturn(1);
     assertThat(repositoryAdapter.getItemViewType(0), is(1));
-
-    verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
   }
 
   @Test
   public void shouldReturnItemViewTypeFromSecondPresenter() {
     when(secondRepositoryPresenter.getLayoutResId(REPOSITORY_LIST, 0)).thenReturn(2);
     assertThat(repositoryAdapter.getItemViewType(1), is(2));
-
-    verify(repositoryPresenter, never()).getItemId(any(), anyInt());
   }
 
   @Test
   public void shouldReturnItemViewTypeFromLayoutPresenter() {
     when(layoutPresenter.getLayoutResId()).thenReturn(34);
     assertThat(repositoryAdapter.getItemViewType(4), is(34));
-
-    verify(repositoryPresenter, never()).getItemId(any(), anyInt());
-    verify(secondRepositoryPresenter, never()).getItemId(any(), anyInt());
-    verify(itemRepositoryPresenter, never()).getItemId(any(), anyInt());
   }
 
+  @Test
+  public void shouldReturnItemViewTypeFromItemPresenter() {
+    when(multiItemRepositoryPresenter.getLayoutResId(ITEM, 2)).thenReturn(42);
+    assertThat(repositoryAdapter.getItemViewType(8), is(42));
+  }
 
   @Test
   public void shouldCreateViewHolder() {
@@ -332,6 +340,38 @@ public final class RepositoryAdapterTest {
   }
 
   @Test
+  public void shouldCallRecycleForOnViewRecycledForItemPresenter() {
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    updateDispatcher.update();
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    final ViewHolder viewHolder = new ViewHolder(view) {};
+    repositoryAdapter.onBindViewHolder(viewHolder, 5);
+
+    repositoryAdapter.onViewRecycled(viewHolder);
+
+    verify(singleItemRepositoryPresenter).recycle(viewHolder);
+  }
+
+  @Test
+  public void shouldCallRecycleForOnFailedToRecycleViewForItemPresenter() {
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    updateDispatcher.update();
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+    final ViewHolder viewHolder = new ViewHolder(view) {};
+    repositoryAdapter.onBindViewHolder(viewHolder, 5);
+
+    repositoryAdapter.onFailedToRecycleView(viewHolder);
+
+    verify(singleItemRepositoryPresenter).recycle(viewHolder);
+  }
+
+  @Test
   public void shouldBindLayoutPresenter() {
     repositoryAdapter.getItemCount(); //Trigger a refresh
 
@@ -344,6 +384,21 @@ public final class RepositoryAdapterTest {
     repositoryAdapter.onBindViewHolder(viewHolder, 4);
 
     verify(layoutPresenter).bind(view);
+  }
+
+  @Test
+  public void shouldBindItemPresenter() {
+    repositoryAdapter.getItemCount(); //Trigger a refresh
+
+    repositoryAdapter.startObserving();
+    updateDispatcher.update();
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+
+    final ViewHolder viewHolder = new ViewHolder(view) {};
+    repositoryAdapter.onBindViewHolder(viewHolder, 7);
+
+    verify(multiItemRepositoryPresenter).bind(ITEM, 1, viewHolder);
   }
 
   @Test
