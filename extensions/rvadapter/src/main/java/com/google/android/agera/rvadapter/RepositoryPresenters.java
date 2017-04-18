@@ -18,10 +18,8 @@ package com.google.android.agera.rvadapter;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import com.google.android.agera.Repository;
-import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPMain;
-import java.util.List;
 
 /**
  * Contains a basic implementation of {@link RepositoryPresenter} to present the content of a
@@ -30,8 +28,24 @@ import java.util.List;
 public final class RepositoryPresenters {
 
   /**
-   * Starts the creation of a {@link RepositoryPresenter} for a {@link Repository} containing either
-   * a {@link List}, {@link Result} or {@link Result} of {@link List} of the given {@code type}.
+   * Starts the creation of a compiled {@link RepositoryPresenter}. A compiled presenter work with
+   * item objects: firstly, the repository value is converted to a list of item objects, the list
+   * size determining the item count; then the layout resources, item IDs, binding, and change
+   * detection are all based on the individual item objects. Client code supplies the logic for each
+   * aspect of the presenter, such as:
+   * <ul>
+   * <li>{@link RPLayout#layoutForItem .layoutForItem(Function&lt;T, Integer>)} selects the layout
+   *     resource ID for each item object;
+   * <li>{@link RPMain#stableIdForItem .stableIdForItem(Function&lt;T, Long>)} provides a stable ID
+   *     per item object;
+   * <li>{@link RPMain#bindWith .bindWidth(Binder&lt;T, View>)} renders the item data onto the view;
+   * <li>{@link RPMain#forCollection .forCollection(Function&lt;V, List&lt;T>>)} specifies the
+   *     method to convert the repository value (of type {@code V}) to an item list (shortcuts are
+   *     provided for repository values of type {@code T}, {@code List<T>}, {@code Result<T>} or
+   *     {@code Result<List<T>>} that can be converted in typical ways).
+   * </ul>
+   *
+   * @param type The type of the <i>item objects</i>.
    */
   @SuppressWarnings({"unchecked", "UnusedParameters"})
   @NonNull

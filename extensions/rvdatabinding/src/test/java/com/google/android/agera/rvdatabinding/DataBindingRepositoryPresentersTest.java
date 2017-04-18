@@ -16,17 +16,17 @@
 package com.google.android.agera.rvdatabinding;
 
 import static android.databinding.DataBinderMapper.setDataBinding;
-import static com.google.android.agera.Functions.staticFunction;
 import static com.google.android.agera.Result.failure;
 import static com.google.android.agera.Result.present;
 import static com.google.android.agera.Result.success;
-import static com.google.android.agera.rvadapter.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static com.google.android.agera.rvdatabinding.DataBindingRepositoryPresenters.dataBindingRepositoryPresenterOf;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ALL;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_COLLECTION;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_HANDLERS;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ITEM;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.DO_NOTHING;
+import static com.google.android.agera.rvdatabinding.test.VerifyingWrappers.verifyingWrapper;
+import static com.google.android.agera.rvdatabinding.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static java.lang.String.valueOf;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -41,12 +41,15 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import android.databinding.ViewDataBinding;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
+import android.support.v7.util.DiffUtil;
+import android.support.v7.util.ListUpdateCallback;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.view.View;
 import com.google.android.agera.Function;
 import com.google.android.agera.Functions;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
+import com.google.android.agera.rvdatabinding.test.DiffingLogic;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -84,6 +87,8 @@ public class DataBindingRepositoryPresentersTest {
   private ViewDataBinding viewDataBinding;
   @Mock
   private View view;
+  @Mock
+  private ListUpdateCallback listUpdateCallback;
   private ViewHolder viewHolder;
 
   @Before
@@ -806,6 +811,108 @@ public class DataBindingRepositoryPresentersTest {
     verify(viewDataBinding).setVariable(ITEM_ID, SECOND_STRING);
     verify(viewDataBinding).executePendingBindings();
     verifyNoMoreInteractions(viewDataBinding);
+  }
+
+  @Test
+  public void shouldRefuseFineGrainedEventsWithoutDiffWith() {
+    final RepositoryPresenter<String> presenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .forItem();
+
+    final boolean fineGrained = presenter.getUpdates("String1", "String2", listUpdateCallback);
+
+    assertThat(fineGrained, is(false));
+  }
+
+  @Test
+  public void shouldNotifyFineGrainedEventsWithDiffWith() {
+    final List<String> oldData = asList("A:1", "B:2", "C:3");
+    final List<String> newData = asList("B:2", "A:4", "C:5");
+    final DiffingLogic diffingLogic = new DiffingLogic(oldData, newData);
+    final RepositoryPresenter<List<String>> diffingPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .diffWith(diffingLogic, false)
+            .forList();
+
+    final boolean fineGrained = diffingPresenter.getUpdates(oldData, newData, listUpdateCallback);
+
+    assertThat(fineGrained, is(true));
+    DiffUtil.calculateDiff(diffingLogic, false).dispatchUpdatesTo(
+        verifyingWrapper(listUpdateCallback));
+    verifyNoMoreInteractions(listUpdateCallback);
+  }
+
+  @Test
+  public void shouldNotifyFineGrainedEventsWithDiffWithMoveDetection() {
+    final List<String> oldData = asList("A:1", "B:2", "C:3", "D:0");
+    final List<String> newData = asList("B:2", "D:0", "A:4", "C:5");
+    final DiffingLogic diffingLogic = new DiffingLogic(oldData, newData);
+    final RepositoryPresenter<List<String>> diffingPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .diffWith(diffingLogic, true)
+            .forCollection(Functions.<List<String>>identityFunction());
+
+    final boolean fineGrained = diffingPresenter.getUpdates(oldData, newData, listUpdateCallback);
+
+    assertThat(fineGrained, is(true));
+    DiffUtil.calculateDiff(diffingLogic, true).dispatchUpdatesTo(
+        verifyingWrapper(listUpdateCallback));
+    verifyNoMoreInteractions(listUpdateCallback);
+  }
+
+  @Test
+  public void shouldNotifySingleItemFineGrainedEventsWithDiff() {
+    final Result<String> withA = success("A");
+    final Result<String> withB = success("B");
+    final Result<String> without = failure();
+    final RepositoryPresenter<Result<String>> diffingPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .diff()
+            .forResult();
+
+    boolean fineGrained = diffingPresenter.getUpdates(withA, withB, listUpdateCallback);
+
+    assertThat(fineGrained, is(true));
+    verify(listUpdateCallback).onChanged(0, 1, null);
+    verifyNoMoreInteractions(listUpdateCallback);
+
+    fineGrained = diffingPresenter.getUpdates(withA, without, listUpdateCallback);
+
+    assertThat(fineGrained, is(true));
+    verify(listUpdateCallback).onRemoved(0, 1);
+    verifyNoMoreInteractions(listUpdateCallback);
+
+    fineGrained = diffingPresenter.getUpdates(without, withB, listUpdateCallback);
+
+    assertThat(fineGrained, is(true));
+    verify(listUpdateCallback).onInserted(0, 1);
+    verifyNoMoreInteractions(listUpdateCallback);
+  }
+
+  @Test
+  public void shouldNotifyBlanketChangeEventForSameObjectForOldAndNewData() {
+    final List<String> oneList = asList("A:0", "B:1");
+    final DiffingLogic diffingLogic = new DiffingLogic(oneList, oneList);
+    final RepositoryPresenter<List<String>> diffingPresenter =
+        dataBindingRepositoryPresenterOf(String.class)
+            .layout(LAYOUT_ID)
+            .itemId(ITEM_ID)
+            .diffWith(diffingLogic, false)
+            .forList();
+
+    final boolean fineGrained = diffingPresenter.getUpdates(oneList, oneList, listUpdateCallback);
+
+    assertThat(fineGrained, is(true));
+    verify(listUpdateCallback).onChanged(0, oneList.size(), null);
+    verifyNoMoreInteractions(listUpdateCallback);
   }
 
   @Test

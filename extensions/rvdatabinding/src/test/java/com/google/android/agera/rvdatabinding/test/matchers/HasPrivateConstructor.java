@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.agera.rvadapter.test.matchers;
+package com.google.android.agera.rvdatabinding.test.matchers;
 
 import android.support.annotation.NonNull;
 import java.lang.reflect.Constructor;
