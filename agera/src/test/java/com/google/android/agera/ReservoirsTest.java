@@ -50,6 +50,7 @@ public final class ReservoirsTest {
   private static final String STRING_B = "STRING_B";
   private static final Integer INTEGER_1 = 1;
   private static final Integer INTEGER_2 = 2;
+  private static final String UNEXPECTED_MSG = "Unexpected";
 
   private MockQueue mockQueue;
   private Reservoir<String> stringReservoir;
@@ -248,80 +249,80 @@ public final class ReservoirsTest {
 
     @Override
     public boolean add(@NonNull final Object o) {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public boolean addAll(@NonNull final Collection<?> collection) {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public void clear() {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public boolean contains(@NonNull final Object object) {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public boolean containsAll(@NonNull final Collection<?> ignore) {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @NonNull
     @Override
     public Iterator<Object> iterator() {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public boolean remove(Object object) {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public boolean removeAll(@NonNull final Collection<?> ignore) {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public boolean retainAll(@NonNull final Collection<?> ignore) {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public int size() {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @NonNull
     @Override
     public Object[] toArray() {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @NonNull
     @Override
     public <T> T[] toArray(@NonNull final T[] ignore) {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public Object remove() {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public Object element() {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
 
     @Override
     public Object peek() {
-      throw new AssertionError("Unexpected");
+      throw new AssertionError(UNEXPECTED_MSG);
     }
   }
 }
