@@ -27,6 +27,8 @@ import static java.util.Collections.emptyList;
 
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
+import android.support.v7.util.DiffUtil;
+import android.support.v7.util.ListUpdateCallback;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import com.google.android.agera.Binder;
@@ -41,7 +43,12 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 @SuppressWarnings({"unchecked, rawtypes"})
-final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedCollectionCompile {
+final class RepositoryPresenterCompiler implements
+    RPLayout, RPMain, RPItemCompile, RPTypedCollectionCompile {
+  @NonNull
+  private static final Function<Object, Object> NO_KEY_FOR_ITEM = identityFunction();
+  @NonNull
+  private static final Function<Object, Object> SAME_KEY_FOR_ITEM = staticFunction(new Object());
   @NonNull
   private Function<Object, Integer> layoutForItem;
   @NonNull
@@ -51,34 +58,40 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
   @NonNull
   private Function<Object, Long> stableIdForItem = staticFunction(RecyclerView.NO_ID);
   @NonNull
+  private Function<Object, Object> keyForItem = NO_KEY_FOR_ITEM;
+  private boolean detectMoves;
+  @NonNull
   private Binder collectionBinder = nullBinder();
 
   @NonNull
   @Override
   public RepositoryPresenter forItem() {
     return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
-        itemAsList(), collectionBinder);
+        keyForItem, detectMoves, itemAsList(), collectionBinder);
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<List> forList() {
     return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
-        (Function) identityFunction(), collectionBinder);
+        keyForItem, detectMoves, (Function) identityFunction(),
+        collectionBinder);
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result> forResult() {
     return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
-        (Function) resultAsList(), collectionBinder);
+        keyForItem, detectMoves, (Function) resultAsList(),
+        collectionBinder);
   }
 
   @NonNull
   @Override
   public RepositoryPresenter<Result<List>> forResultList() {
     return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
-        (Function) resultListAsList(), collectionBinder);
+        keyForItem, detectMoves, (Function) resultListAsList(),
+        collectionBinder);
   }
 
   @NonNull
@@ -92,7 +105,7 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
   @Override
   public RepositoryPresenter forCollection(@NonNull final Function converter) {
     return new CompiledRepositoryPresenter(layoutForItem, binder, stableIdForItem, recycler,
-        converter, collectionBinder);
+        keyForItem, detectMoves, converter, collectionBinder);
   }
 
   @NonNull
@@ -137,6 +150,22 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
     return this;
   }
 
+  @NonNull
+  @Override
+  public RPMain diffWith(@NonNull final Function keyForItem, final boolean detectMoves) {
+    this.keyForItem = keyForItem;
+    this.detectMoves = detectMoves;
+    return this;
+  }
+
+  @NonNull
+  @Override
+  public RPItemCompile diff() {
+    this.keyForItem = SAME_KEY_FOR_ITEM;
+    this.detectMoves = false;
+    return this;
+  }
+
   private static final class CompiledRepositoryPresenter extends RepositoryPresenter {
     @NonNull
     private final Function<Object, List<Object>> converter;
@@ -150,6 +179,11 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
     private final Function<Object, Long> stableIdForItem;
     @NonNull
     private final Receiver<View> recycler;
+    private final boolean enableDiff;
+
+    @NonNull
+    private final Function<Object, Object> keyForItem;
+    private final boolean detectMoves;
     @NonNull
     private WeakReference<Object> dataRef = new WeakReference<>(null);
     @NonNull
@@ -160,6 +194,8 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
         @NonNull final Binder<Object, View> binder,
         @NonNull final Function<Object, Long> stableIdForItem,
         @NonNull final Receiver<View> recycler,
+        @NonNull final Function<Object, Object> keyForItem,
+        final boolean detectMoves,
         @NonNull final Function<Object, List<Object>> converter,
         @NonNull final Binder<Object, View> collectionBinder) {
       this.collectionBinder = collectionBinder;
@@ -168,6 +204,9 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
       this.binder = binder;
       this.stableIdForItem = stableIdForItem;
       this.recycler = recycler;
+      this.enableDiff = keyForItem != NO_KEY_FOR_ITEM;
+      this.keyForItem = keyForItem;
+      this.detectMoves = detectMoves;
     }
 
     @Override
@@ -184,8 +223,14 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
     public void bind(@NonNull final Object data, final int index,
         @NonNull final RecyclerView.ViewHolder holder) {
       final Object item = getItems(data).get(index);
-      collectionBinder.bind(data, holder.itemView);
-      binder.bind(item, holder.itemView);
+      final View view = holder.itemView;
+      bind(data, item, view);
+    }
+
+    protected void bind(@NonNull final Object data, @NonNull final Object item,
+        @NonNull final View view) {
+      collectionBinder.bind(data, view);
+      binder.bind(item, view);
     }
 
     @Override
@@ -205,6 +250,51 @@ final class RepositoryPresenterCompiler implements RPLayout, RPMain, RPTypedColl
         this.dataRef = new WeakReference<>(data);
       }
       return items;
+    }
+
+    @Override
+    public boolean getUpdates(@NonNull final Object oldData, @NonNull final Object newData,
+        @NonNull final ListUpdateCallback listUpdateCallback) {
+      if (!enableDiff) {
+        return false;
+      }
+
+      if (oldData == newData) {
+        // Consider this an additional observable update; send blanket change event
+        final int itemCount = getItemCount(oldData);
+        listUpdateCallback.onChanged(0, itemCount, null);
+        return true;
+      }
+
+      // Do proper diffing.
+      final List oldItems = getItems(oldData);
+      final List newItems = getItems(newData); // This conveniently saves newData to dataRef.
+      DiffUtil.calculateDiff(new DiffUtil.Callback() {
+        @Override
+        public int getOldListSize() {
+          return oldItems.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+          return newItems.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(final int oldItemPosition, final int newItemPosition) {
+          final Object oldKey = keyForItem.apply(oldItems.get(oldItemPosition));
+          final Object newKey = keyForItem.apply(newItems.get(newItemPosition));
+          return oldKey.equals(newKey);
+        }
+
+        @Override
+        public boolean areContentsTheSame(final int oldItemPosition, final int newItemPosition) {
+          final Object oldItem = oldItems.get(oldItemPosition);
+          final Object newItem = newItems.get(newItemPosition);
+          return oldItem.equals(newItem);
+        }
+      }, detectMoves).dispatchUpdatesTo(listUpdateCallback);
+      return true;
     }
   }
 }

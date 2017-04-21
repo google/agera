@@ -22,9 +22,9 @@ import com.google.android.agera.Repository;
 import com.google.android.agera.Result;
 import com.google.android.agera.rvadapter.RepositoryAdapter;
 import com.google.android.agera.rvadapter.RepositoryPresenter;
+import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPDiff;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPItemCompile;
 import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPLayout;
-import com.google.android.agera.rvadapter.RepositoryPresenterCompilerStates.RPTypedCollectionCompile;
 import java.util.List;
 
 /**
@@ -36,7 +36,7 @@ public interface DataBindingRepositoryPresenterCompilerStates {
   /**
    * Compiler state to specify how to bind the {@code View} using data binding.
    */
-  interface DBRPMain<T> extends RPItemCompile<T> {
+  interface DBRPMain<T> extends RPItemCompile<T>, RPDiff<T, DBRPMain<T>> {
 
     /**
      * Specifies a data binding {@code itemId} from the previously given {@code layout} to bind a

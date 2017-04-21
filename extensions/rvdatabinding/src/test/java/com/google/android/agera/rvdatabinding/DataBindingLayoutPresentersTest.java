@@ -16,7 +16,7 @@
 package com.google.android.agera.rvdatabinding;
 
 import static android.databinding.DataBinderMapper.setDataBinding;
-import static com.google.android.agera.rvadapter.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
+import static com.google.android.agera.rvdatabinding.test.matchers.HasPrivateConstructor.hasPrivateConstructor;
 import static com.google.android.agera.rvdatabinding.DataBindingLayoutPresenters.dataBindingLayoutPresenterFor;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_ALL;
 import static com.google.android.agera.rvdatabinding.RecycleConfig.CLEAR_HANDLERS;

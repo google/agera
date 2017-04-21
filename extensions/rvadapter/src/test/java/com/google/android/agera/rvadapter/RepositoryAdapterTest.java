@@ -27,7 +27,6 @@ import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -231,15 +230,32 @@ public final class RepositoryAdapterTest {
   }
 
   @Test
-  public void shouldUpdateOnAdditionalObservablesWhenObserving() {
+  public void shouldNotifyChangeOnStartObservingAfterUsage() {
     repositoryAdapter.registerAdapterDataObserver(observer);
+    repositoryAdapter.getItemCount(); // "usage".
 
+    // Because the adapter is not observing any data change, after the usage, it doesn't know of any
+    // change of data, so for extra guarantee, it'll notify change as soon as it starts observing.
     repositoryAdapter.startObserving();
+    runUiThreadTasksIncludingDelayedTasks();
+    repositoryAdapter.stopObserving();
+
+    verify(observer).onChanged();
+  }
+
+  @Test
+  public void shouldNotifyChangeOnAdditionalObservablesUpdateWhenObservingAndObserved() {
+    repositoryAdapter.startObserving();
+    repositoryAdapter.registerAdapterDataObserver(observer);
+    runUiThreadTasksIncludingDelayedTasks();
+    verify(observer, never()).onChanged();
+    repositoryAdapter.getItemCount(); // usage before event
+
     updateDispatcher.update();
     runUiThreadTasksIncludingDelayedTasks();
     repositoryAdapter.stopObserving();
 
-    verify(observer, times(2)).onChanged();
+    verify(observer).onChanged();
   }
 
   @Test
