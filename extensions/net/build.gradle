@@ -19,7 +19,7 @@ apply plugin: 'com.novoda.bintray-release'
 apply plugin: 'jacoco'
 
 dependencies {
-    compile project(':agera')
+    implementation project(':agera')
 }
 
 android {
